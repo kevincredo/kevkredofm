@@ -1,0 +1,7 @@
+[build]
+  publish = "radio_app"
+  command = "if [ ! -f radio_app/library-data.js ]; then curl -fsSL https://kevkredofm.netlify.app/library-data.js -o radio_app/library-data.js; fi; if [ ! -f radio_app/library.json ]; then curl -fsSL https://kevkredofm.netlify.app/library.json -o radio_app/library.json; fi"
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"

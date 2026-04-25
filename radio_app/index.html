@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#16f4d0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="KevinCredo FM">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>KevinCredo Radio</title>
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <div class="backdrop" id="backdrop"></div>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="station-mark">
+          <span class="signal-dot" aria-hidden="true"></span>
+          <div>
+            <p>KevinCredo FM</p>
+            <span id="libraryCount">Loading library</span>
+          </div>
+        </div>
+        <div class="topbar-center">
+          <span id="onAirState" class="on-air">ON AIR</span>
+          <span id="statusLine">Preparing station</span>
+        </div>
+        <div class="topbar-actions">
+          <button id="nextTopBtn" class="text-button top-next-button" data-action="next" type="button" aria-label="下一首" title="跳过当前歌曲">下一首</button>
+          <button id="openNeteaseBtn" class="text-button" type="button">网易云打开</button>
+          <button id="reloadBtn" class="icon-button" type="button" aria-label="重排播放队列" title="重排播放队列">↻</button>
+        </div>
+      </header>
+
+      <main class="radio-layout">
+        <aside class="filter-panel" aria-label="电台筛选">
+          <div class="panel-heading">
+            <span>STYLE MIX</span>
+            <strong id="channelName">All Styles</strong>
+          </div>
+          <div id="selectedStylesSummary" class="mix-summary">0 selected</div>
+          <section class="profile-panel" aria-label="用户红心存档">
+            <div class="profile-heading">
+              <span>USER SAVE</span>
+              <strong id="profileStatus">本地模式</strong>
+            </div>
+            <div class="profile-form">
+              <input id="profileUsernameInput" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="输入用户名">
+              <button id="profileLoginBtn" class="text-button profile-button" type="button">进入</button>
+            </div>
+            <button id="profileLocalBtn" class="text-button profile-local-button" type="button" hidden>切回本地</button>
+            <p id="profileHelp" class="profile-help">不输入用户名时，红心只保存在这台设备。</p>
+          </section>
+          <details id="syncPanel" class="sync-panel">
+            <summary class="sync-summary">
+              <span class="sync-summary-label">
+                <span>NETEASE SYNC</span>
+                <strong id="syncSummaryText">同步设置</strong>
+              </span>
+              <span class="sync-chevron" aria-hidden="true"></span>
+            </summary>
+            <div class="sync-body">
+              <label class="sync-field">
+                <span>网易云用户 ID</span>
+                <input id="syncUserIdInput" type="text" inputmode="numeric" autocomplete="off">
+              </label>
+              <label class="sync-field">
+                <span>同步线路（可选）</span>
+                <input id="syncProxyInput" type="url" autocomplete="off" placeholder="https://your-sync-api.example">
+              </label>
+              <button id="syncNeteaseBtn" class="text-button sync-button" type="button">同步歌单</button>
+              <p id="syncStatus" class="sync-status">只同步创建的歌单和我喜欢的音乐。</p>
+            </div>
+          </details>
+          <div id="styleFilters" class="filter-list"></div>
+          <div class="selector-actions">
+            <button id="generateMixBtn" class="text-button strong selector-button" type="button">生成序列</button>
+            <button id="clearMixBtn" class="text-button selector-button" type="button">清空</button>
+          </div>
+          <div class="mini-stats">
+            <div>
+              <span>Tracks</span>
+              <strong id="statTracks">3826</strong>
+            </div>
+            <div>
+              <span>Queue</span>
+              <strong id="statQueue">0</strong>
+            </div>
+          </div>
+          <label class="toggle-row">
+            <input id="mixToggle" type="checkbox" checked>
+            <span>DJ 平滑接歌</span>
+          </label>
+          <label class="range-row">
+            <span>交叉淡入淡出 <strong id="crossfadeValue">10s</strong></span>
+            <input id="crossfadeSlider" type="range" min="4" max="20" step="1" value="10">
+          </label>
+          <label class="range-row">
+            <span>音量</span>
+            <input id="volumeSlider" type="range" min="0" max="1" step="0.01" value="0.78">
+          </label>
+        </aside>
+
+        <section class="now-panel" aria-label="正在播放">
+          <div class="album-stage" id="albumStage">
+            <img id="coverArt" alt="" src="">
+            <div class="fallback-cover" id="fallbackCover">KC</div>
+            <div class="meter" aria-hidden="true">
+              <span></span><span></span><span></span><span></span><span></span><span></span>
+              <span></span><span></span><span></span><span></span><span></span><span></span>
+            </div>
+          </div>
+
+          <div class="track-copy">
+            <div class="track-heading-line">
+              <span class="eyebrow" id="trackMode">COMING UP</span>
+              <button id="loveCurrentBtn" class="heart-button" type="button" aria-label="红心收藏当前歌曲" aria-pressed="false" title="红心收藏当前歌曲">♡</button>
+            </div>
+            <h1 id="trackTitle">调台中</h1>
+            <p id="trackArtist">从你的 3826 首基准曲库里抽取下一首</p>
+            <p id="trackAlbum"></p>
+            <div id="genreTags" class="genre-tags"></div>
+          </div>
+
+          <div class="mix-strip">
+            <span>MIX PLAN</span>
+            <p id="mixText">正在按风格和估算 BPM 选择下一首。</p>
+          </div>
+
+          <div class="progress-area">
+            <div class="time-row">
+              <span id="elapsedTime">00:00</span>
+              <span id="durationTime">00:00</span>
+            </div>
+            <div class="progress-track" id="progressTrack">
+              <div id="progressBar"></div>
+            </div>
+          </div>
+
+          <div class="transport">
+            <button id="prevBtn" class="text-button transport-button small-transport" type="button" aria-label="上一首" title="上一首">上一首</button>
+            <button id="playPauseBtn" class="icon-button primary transport-button" type="button" aria-label="播放或暂停" title="播放或暂停">▶</button>
+            <button id="nextBtn" class="text-button transport-button skip-button" data-action="next" type="button" aria-label="下一首" title="跳过当前歌曲">下一首</button>
+          </div>
+        </section>
+
+        <aside class="queue-panel" aria-label="播放队列">
+          <section id="lovedSection" class="loved-section" hidden aria-label="红心歌曲">
+            <div class="panel-heading loved-heading">
+              <span>LOVED</span>
+              <strong id="lovedCount">0</strong>
+            </div>
+            <button id="lovedOnlyBtn" class="text-button loved-mode-button" type="button" aria-pressed="false">只播红心</button>
+            <div id="lovedList" class="loved-list"></div>
+          </section>
+          <div class="panel-heading">
+            <span>UP NEXT</span>
+            <strong>Queue</strong>
+          </div>
+          <div id="queueList" class="queue-list"></div>
+          <div class="panel-heading history-heading">
+            <span>RECENT</span>
+            <strong>History</strong>
+          </div>
+          <div id="historyList" class="history-list"></div>
+        </aside>
+      </main>
+    </div>
+
+    <div id="autoplayGate" class="autoplay-gate" hidden>
+      <div>
+        <span>READY</span>
+        <strong>浏览器需要一次点击来启动声音</strong>
+        <p>电台已经排好第一首，点击后会直接进歌。</p>
+      </div>
+      <button id="gatePlayBtn" class="text-button strong" type="button">启动电台</button>
+    </div>
+
+    <audio id="audioDeckA" preload="auto" autoplay></audio>
+    <audio id="audioDeckB" preload="auto"></audio>
+    <script src="./library-data.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,13 @@
+{
+  "name": "kevincredo-fm",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "python3 radio_app/build_portable.py"
+  },
+  "dependencies": {
+    "@netlify/blobs": "^10.0.10"
+  },
+  "devDependencies": {}
+}
