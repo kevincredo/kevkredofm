@@ -959,17 +959,11 @@ button {
   gap: 6px;
 }
 
-.track-heading-line {
-  display: inline-flex;
-  justify-self: center;
-  align-items: center;
-  gap: 10px;
-}
-
 .eyebrow {
   color: var(--mint);
   font-weight: 900;
   letter-spacing: 0.08em;
+  justify-self: center;
 }
 
 .heart-button {
@@ -982,6 +976,7 @@ button {
   color: var(--heart);
   font-size: 1.55rem;
   line-height: 1;
+  padding: 0;
 }
 
 .heart-button.active {
@@ -1139,6 +1134,12 @@ button {
   width: 58px;
   height: 58px;
   color: var(--mint);
+}
+
+.love-transport {
+  width: 58px;
+  height: 58px;
+  font-size: 1.8rem;
 }
 
 .small-transport,
@@ -1474,22 +1475,23 @@ button:active {
   }
 
   .transport {
-    gap: 8px;
+    gap: 6px;
   }
 
   .transport-button {
-    width: 70px;
+    width: 64px;
     height: 50px;
   }
 
+  .love-transport,
   .shuffle-transport {
-    width: 52px;
-    height: 52px;
+    width: 48px;
+    height: 48px;
   }
 
   .transport-button.primary {
-    width: 62px;
-    height: 62px;
+    width: 58px;
+    height: 58px;
   }
 
   .netease-login-actions,

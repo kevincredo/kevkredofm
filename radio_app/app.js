@@ -319,7 +319,7 @@ const SYNC_PROXY_STORAGE_KEY = "kevincredo-fm-sync-proxy";
 const NETEASE_EXPORT_DRAFT_STORAGE_KEY = "kevincredo-fm-netease-export-draft";
 const NETEASE_EXPORT_API_STORAGE_KEY = "kevincredo-fm-netease-export-api";
 const NETEASE_ORIGIN = "https://music.163.com";
-const NETEASE_DEFAULT_EXPORT_API_BASE = "http://localhost:3000";
+const NETEASE_DEFAULT_EXPORT_API_BASE = "http://127.0.0.1:3000";
 const CLOUD_LOVED_ENDPOINT = "/.netlify/functions/loved";
 const USERNAME_PATTERN = /^[a-z0-9_-]{2,24}$/;
 const CLOUD_SAVE_DEBOUNCE_MS = 650;
@@ -962,8 +962,26 @@ async function fetchJson(url, options = {}) {
     headers: options.headers,
     body: options.body,
   });
-  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  if (!response.ok) {
+    const detail = await readErrorResponse(response);
+    throw new Error(detail || `HTTP ${response.status}`);
+  }
   return response.json();
+}
+
+async function readErrorResponse(response) {
+  try {
+    const text = await response.text();
+    if (!text) return "";
+    try {
+      const payload = JSON.parse(text);
+      return payload.message || payload.msg || payload.error || `HTTP ${response.status}`;
+    } catch (error) {
+      return text.slice(0, 160);
+    }
+  } catch (error) {
+    return "";
+  }
 }
 
 function fetchJsonp(url) {
@@ -1210,7 +1228,7 @@ async function checkNeteaseApi() {
 async function startNeteaseQrLogin() {
   const apiBase = getExportApiBase();
   if (!apiBase || !isAllowedLocalApiBase(apiBase)) {
-    setNeteaseLoginStatus("请先填写本机助手地址，例如 http://localhost:3000。");
+    setNeteaseLoginStatus("请先填写本机助手地址，例如 http://127.0.0.1:3000。");
     return;
   }
 
@@ -1299,7 +1317,7 @@ async function checkNeteaseQrStatus(options = {}) {
 async function checkNeteaseLoginStatus(options = {}) {
   const apiBase = getExportApiBase();
   if (!apiBase || !isAllowedLocalApiBase(apiBase)) {
-    setNeteaseLoginStatus("请先填写本机助手地址，例如 http://localhost:3000。");
+    setNeteaseLoginStatus("请先填写本机助手地址，例如 http://127.0.0.1:3000。");
     return false;
   }
 
@@ -1421,7 +1439,7 @@ async function createNeteasePlaylistFromLoved() {
 
   const apiBase = getExportApiBase();
   if (!apiBase) {
-    setExportStatus("请先填写本机网易云 API，例如 http://localhost:3000。");
+    setExportStatus("请先填写本机网易云 API，例如 http://127.0.0.1:3000。");
     elements.exportPanel.open = true;
     return;
   }
@@ -1661,12 +1679,28 @@ async function copyText(text) {
 }
 
 function normalizeExportApiBase(value) {
-  return String(value || "").trim().replace(/\/$/, "");
+  const raw = String(value || "").trim().replace(/\/$/, "");
+  if (!raw) return "";
+  try {
+    const url = new URL(raw);
+    if (url.hostname === "localhost") {
+      url.hostname = "127.0.0.1";
+      return url.toString().replace(/\/$/, "");
+    }
+  } catch (error) {
+    return raw;
+  }
+  return raw;
 }
 
 function getExportApiBase() {
   const normalized = normalizeExportApiBase(elements.exportApiInput.value || NETEASE_DEFAULT_EXPORT_API_BASE);
   if (elements.exportApiInput.value !== normalized) elements.exportApiInput.value = normalized;
+  try {
+    window.localStorage.setItem(NETEASE_EXPORT_API_STORAGE_KEY, normalized);
+  } catch (error) {
+    // Ignore storage restrictions; the current input value is still usable.
+  }
   return normalized;
 }
 
@@ -1688,10 +1722,25 @@ async function requestLocalNetease(apiBase, route, params = {}, options = {}) {
   if (options.withLoginCookie && state.neteaseLoginCookie) {
     query.set("cookie", state.neteaseLoginCookie);
   }
-  return fetchJson(`${apiBase}${route}?${query}`, {
-    method: options.method || "GET",
-    credentials: "include",
-  });
+  try {
+    return await fetchJson(`${apiBase}${route}?${query}`, {
+      method: options.method || "GET",
+      credentials: "include",
+    });
+  } catch (error) {
+    throw new Error(describeLocalNeteaseError(error, apiBase));
+  }
+}
+
+function describeLocalNeteaseError(error, apiBase) {
+  const message = String(error?.message || error || "未知错误");
+  if (/failed to fetch|networkerror|load failed/i.test(message)) {
+    return `没有连上本机助手（${apiBase}）。请在当前打开网页的这台电脑上运行 npm run netease:api，并保持终端窗口打开；如果是在手机或另一台电脑上打开网页，127.0.0.1 指向的是那台设备，不能连接这台电脑的助手`;
+  }
+  if (/econnrefused|fetch failed|socket|connection|502/i.test(message)) {
+    return `本机助手已启动但网易云接口还没准备好：${message}。请等终端显示 NeteaseCloudMusicApi 启动完成后再重试`;
+  }
+  return message;
 }
 
 function extractCreatedPlaylistId(response) {

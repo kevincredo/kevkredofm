@@ -63,7 +63,7 @@ const server = http.createServer(async (request, response) => {
 });
 
 server.listen(publicPort, "127.0.0.1", () => {
-  console.log(`KevinCredo FM NetEase helper is ready: http://localhost:${publicPort}`);
+  console.log(`KevinCredo FM NetEase helper is ready: http://127.0.0.1:${publicPort}`);
   if (shouldSpawnUpstream) {
     console.log(`Proxying to NeteaseCloudMusicApi on http://127.0.0.1:${upstreamPort}`);
   } else {

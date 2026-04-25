@@ -89,7 +89,7 @@
                       <span class="import-step-number">1</span>
                       <div class="import-step-copy">
                         <strong>扫码登录网易云</strong>
-                        <p id="neteaseLoginStatus">先启动本机助手，然后用网易云 App 扫码。</p>
+                        <p id="neteaseLoginStatus">先在当前电脑启动本机助手，然后用网易云 App 扫码。</p>
                       </div>
                       <button id="neteaseQrLoginBtn" class="text-button import-step-button" type="button">扫码登录</button>
                     </section>
@@ -129,9 +129,9 @@
                       </label>
                       <label class="sync-field">
                         <span>本机助手地址</span>
-                        <input id="exportApiInput" type="url" autocomplete="off" placeholder="http://localhost:3000">
+                        <input id="exportApiInput" type="url" autocomplete="off" placeholder="http://127.0.0.1:3000">
                       </label>
-                      <p id="exportRuntimeNote" class="sync-status">Netlify 页面会连接这台电脑上的本机助手。</p>
+                      <p id="exportRuntimeNote" class="sync-status">Netlify 页面会连接当前设备上的本机助手。</p>
                       <div class="netease-login-actions">
                         <button id="checkNeteaseApiBtn" class="text-button" type="button">检测助手</button>
                         <button id="checkNeteaseLoginBtn" class="text-button" type="button">刷新登录</button>
@@ -199,10 +199,7 @@
           </div>
 
           <div class="track-copy">
-            <div class="track-heading-line">
-              <span class="eyebrow" id="trackMode">COMING UP</span>
-              <button id="loveCurrentBtn" class="heart-button" type="button" aria-label="红心收藏当前歌曲" aria-pressed="false" title="红心收藏当前歌曲">♡</button>
-            </div>
+            <span class="eyebrow" id="trackMode">COMING UP</span>
             <h1 id="trackTitle">调台中</h1>
             <p id="trackArtist">从你的 3826 首基准曲库里抽取下一首</p>
             <p id="trackAlbum"></p>
@@ -225,7 +222,9 @@
           </div>
 
           <div class="transport">
+            <button id="loveCurrentBtn" class="heart-button transport-button love-transport" type="button" aria-label="红心收藏当前歌曲" aria-pressed="false" title="红心收藏当前歌曲">♡</button>
             <button id="prevBtn" class="text-button transport-button small-transport" type="button" aria-label="上一首" title="上一首">上一首</button>
+            <button id="playPauseBtn" class="icon-button primary transport-button" type="button" aria-label="播放或暂停" title="播放或暂停">▶</button>
             <button id="reloadBtn" class="icon-button transport-button shuffle-transport" type="button" aria-label="随机重排播放队列" title="随机重排播放队列">
               <svg class="shuffle-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                 <path d="M16 3h5v5"></path>
@@ -235,7 +234,6 @@
                 <path d="M15.2 7.2c.7-.2 1.5-.3 2.3-.3H21"></path>
               </svg>
             </button>
-            <button id="playPauseBtn" class="icon-button primary transport-button" type="button" aria-label="播放或暂停" title="播放或暂停">▶</button>
             <button id="nextBtn" class="text-button transport-button skip-button" data-action="next" type="button" aria-label="下一首" title="跳过当前歌曲">下一首</button>
           </div>
         </section>
