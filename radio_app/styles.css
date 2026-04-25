@@ -215,6 +215,93 @@ button {
   font-size: 0.94rem;
 }
 
+.control-section {
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.012));
+}
+
+.music-control-section {
+  min-height: 0;
+}
+
+.account-control-section {
+  border-color: rgba(22, 244, 208, 0.12);
+  background: linear-gradient(135deg, rgba(22, 244, 208, 0.04), rgba(255, 47, 104, 0.025));
+}
+
+.account-heading {
+  padding-bottom: 2px;
+}
+
+.facet-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(0, 0, 0, 0.24);
+}
+
+.facet-tab {
+  min-height: 38px;
+  border: 0;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  background: transparent;
+  color: var(--soft);
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.facet-tab:last-child {
+  border-right: 0;
+}
+
+.facet-tab.active {
+  background: rgba(22, 244, 208, 0.14);
+  color: var(--mint);
+}
+
+.facet-tab:hover {
+  transform: none;
+}
+
+.selected-facet-list {
+  min-height: 30px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.selected-facet,
+.empty-selected {
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 9px;
+  border: 1px solid rgba(22, 244, 208, 0.22);
+  background: rgba(22, 244, 208, 0.07);
+  color: var(--mint);
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.selected-facet span {
+  color: var(--soft);
+  font-size: 0.66rem;
+}
+
+.selected-facet strong {
+  font-size: 0.76rem;
+}
+
+.empty-selected {
+  color: var(--soft);
+  border-color: rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.03);
+}
+
 .filter-list {
   flex: 1 1 160px;
   min-height: 120px;
@@ -223,6 +310,11 @@ button {
   gap: 8px;
   overflow-y: auto;
   padding-right: 2px;
+}
+
+.taxonomy-filter-list {
+  flex: 0 1 auto;
+  max-height: clamp(190px, 30vh, 340px);
 }
 
 .filter-chip {

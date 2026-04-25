@@ -29,6 +29,237 @@ const STYLE_LABELS = {
   tech_house: "Tech House",
 };
 
+const TAXONOMY = {
+  genre: {
+    title: "Genre",
+    order: [
+      "house",
+      "deep_house",
+      "tech_house",
+      "progressive_house",
+      "melodic_house",
+      "afro_house",
+      "techno",
+      "acid_techno",
+      "minimal",
+      "nu_disco",
+      "indie_dance",
+      "downtempo",
+      "ambient",
+      "electronica",
+      "edm",
+      "synthwave",
+      "lofi",
+      "breakbeat",
+      "garage",
+      "drum_bass",
+      "pop",
+      "indie_rock",
+      "rock",
+      "rnb_soul",
+      "hiphop_rap",
+      "jazz",
+      "funk_soul",
+      "latin_world",
+      "classical",
+    ],
+    labels: {
+      house: "House",
+      deep_house: "Deep House",
+      tech_house: "Tech House",
+      progressive_house: "Progressive House",
+      melodic_house: "Melodic House",
+      afro_house: "Afro House",
+      techno: "Techno",
+      acid_techno: "Acid Techno",
+      minimal: "Minimal",
+      nu_disco: "Nu-Disco",
+      indie_dance: "Indie Dance",
+      downtempo: "Downtempo",
+      ambient: "Ambient",
+      electronica: "Electronica",
+      edm: "EDM",
+      synthwave: "Synth / Retro",
+      lofi: "Lo-fi",
+      breakbeat: "Breakbeat",
+      garage: "Garage",
+      drum_bass: "Drum & Bass",
+      pop: "Pop",
+      indie_rock: "Indie Rock",
+      rock: "Rock",
+      rnb_soul: "R&B / Soul",
+      hiphop_rap: "Hip-hop / Rap",
+      jazz: "Jazz",
+      funk_soul: "Funk / Soul",
+      latin_world: "Latin / World",
+      classical: "Classical",
+    },
+  },
+  mood: {
+    title: "Mood",
+    order: [
+      "chill",
+      "groovy",
+      "warm",
+      "euphoric",
+      "dark",
+      "hypnotic",
+      "atmospheric",
+      "dreamy",
+      "melancholic",
+      "romantic",
+      "energetic",
+      "playful",
+    ],
+    labels: {
+      chill: "Chill",
+      groovy: "Groovy",
+      warm: "Warm",
+      euphoric: "Euphoric",
+      dark: "Dark",
+      hypnotic: "Hypnotic",
+      atmospheric: "Atmospheric",
+      dreamy: "Dreamy",
+      melancholic: "Melancholic",
+      romantic: "Romantic",
+      energetic: "Energetic",
+      playful: "Playful",
+    },
+  },
+  context: {
+    title: "Context",
+    order: [
+      "club",
+      "lounge",
+      "night_drive",
+      "afterhours",
+      "dinner",
+      "focus",
+      "workout",
+      "sunset",
+      "summer",
+      "travel",
+      "holiday",
+    ],
+    labels: {
+      club: "Club",
+      lounge: "Lounge",
+      night_drive: "Night Drive",
+      afterhours: "After Hours",
+      dinner: "Dinner",
+      focus: "Focus",
+      workout: "Workout",
+      sunset: "Sunset",
+      summer: "Summer",
+      travel: "Travel",
+      holiday: "Holiday",
+    },
+  },
+  era: {
+    title: "Era",
+    order: ["70s", "80s", "90s"],
+    labels: {
+      "70s": "70s",
+      "80s": "80s",
+      "90s": "90s",
+    },
+  },
+};
+
+const STYLE_TO_TAXONOMY = {
+  chill_downtempo: { genre: ["downtempo"], mood: ["chill"], context: ["lounge"] },
+  house: { genre: ["house"], mood: ["groovy"], context: ["club"] },
+  deep_house: { genre: ["deep_house", "house"], mood: ["warm", "groovy"], context: ["lounge", "club"] },
+  tech_house: { genre: ["tech_house", "house"], mood: ["groovy", "energetic"], context: ["club"] },
+  progressive_house: { genre: ["progressive_house", "house"], mood: ["euphoric", "hypnotic"], context: ["club"] },
+  melodic_house: { genre: ["melodic_house", "house"], mood: ["euphoric", "melancholic"], context: ["club"] },
+  afro_melodic: { genre: ["afro_house", "melodic_house"], mood: ["warm", "groovy"], context: ["sunset", "club"] },
+  afro_house: { genre: ["afro_house", "house"], mood: ["warm", "groovy"], context: ["club"] },
+  disco_nu_disco: { genre: ["nu_disco"], mood: ["groovy", "playful"], context: ["club"] },
+  indie_dance: { genre: ["indie_dance"], mood: ["dark", "groovy"], context: ["club", "night_drive"] },
+  edm: { genre: ["edm"], mood: ["energetic", "euphoric"], context: ["club", "workout"] },
+  techno: { genre: ["techno"], mood: ["dark", "hypnotic"], context: ["club"] },
+  acid_techno: { genre: ["acid_techno", "techno"], mood: ["hypnotic", "energetic"], context: ["club"] },
+  minimal: { genre: ["minimal", "techno"], mood: ["hypnotic"], context: ["club", "afterhours"] },
+  electronic: { genre: ["electronica"], mood: [], context: [] },
+  ambient: { genre: ["ambient"], mood: ["atmospheric", "chill"], context: ["focus"] },
+  lofi: { genre: ["lofi"], mood: ["chill", "dreamy"], context: ["focus"] },
+  retro_synth: { genre: ["synthwave"], mood: ["dreamy"], context: ["night_drive"] },
+  pop: { genre: ["pop"], mood: ["playful"], context: [] },
+  rock: { genre: ["rock"], mood: ["energetic"], context: [] },
+  indie_rock: { genre: ["indie_rock", "rock"], mood: ["melancholic"], context: [] },
+  rnb_soul: { genre: ["rnb_soul"], mood: ["romantic", "warm"], context: ["dinner"] },
+  hiphop_jazzhop: { genre: ["hiphop_rap"], mood: ["groovy"], context: [] },
+  jazz: { genre: ["jazz"], mood: ["warm"], context: ["dinner", "lounge"] },
+  funk: { genre: ["funk_soul"], mood: ["groovy", "warm"], context: ["club"] },
+  world_latin: { genre: ["latin_world"], mood: ["warm", "groovy"], context: ["summer"] },
+  classical: { genre: ["classical"], mood: ["atmospheric"], context: ["focus"] },
+  holiday: { genre: [], mood: ["warm", "playful"], context: ["holiday"] },
+};
+
+const KEYWORD_TAXONOMY_RULES = {
+  genre: [
+    ["progressive_house", ["progressive house", "progressive trance", "progressive"]],
+    ["melodic_house", ["melodic house", "melodic techno", "melodic"]],
+    ["deep_house", ["deep house", "deep-house"]],
+    ["tech_house", ["tech house", "tech-house"]],
+    ["afro_house", ["afro house", "afro-house", "organic house", "afrobeats", "afrobeat", "amapiano"]],
+    ["acid_techno", ["acid techno", "acid house", "acid"]],
+    ["minimal", ["minimal techno", "minimal", "high-tech minimal", "high tech minimal"]],
+    ["techno", ["detroit techno", "hard techno", "raw techno", "techno"]],
+    ["nu_disco", ["nu disco", "nu-disco", "disco", "french touch", "boogie"]],
+    ["indie_dance", ["indie dance", "dance-punk", "dark disco"]],
+    ["house", ["classic house", "vocal house", "garage house", "house"]],
+    ["breakbeat", ["breakbeat", "breaks", "big beat"]],
+    ["garage", ["uk garage", "2-step", "2 step", "garage"]],
+    ["drum_bass", ["drum and bass", "drum & bass", "dnb", "jungle"]],
+    ["downtempo", ["downtempo", "trip hop", "trip-hop", "lounge", "chillout"]],
+    ["ambient", ["ambient", "new age"]],
+    ["synthwave", ["synthwave", "synth-pop", "synth pop", "retrowave", "new wave"]],
+    ["lofi", ["lo-fi", "lofi", "lo fi"]],
+    ["edm", ["edm", "big room", "future house", "electro house", "dance-pop"]],
+    ["electronica", ["electronica", "electronic", "electro"]],
+    ["indie_rock", ["indie rock", "alternative rock", "alt rock"]],
+    ["rock", ["classic rock", "hard rock", "britpop", "punk", "rock"]],
+    ["rnb_soul", ["neo soul", "neo-soul", "r&b", "rnb", "soul"]],
+    ["hiphop_rap", ["hip hop", "hip-hop", "rap", "trap"]],
+    ["jazz", ["jazz", "bossa nova", "swing"]],
+    ["funk_soul", ["funk", "soul", "boogie"]],
+    ["latin_world", ["latin", "samba", "reggae", "world"]],
+    ["classical", ["classical", "orchestral", "piano", "violin"]],
+    ["pop", ["k-pop", "j-pop", "cantopop", "mandopop", "pop"]],
+  ],
+  mood: [
+    ["chill", ["chill", "chillout", "mellow", "laid back", "laid-back", "soft", "calm"]],
+    ["groovy", ["groove", "groovy", "funky", "disco", "boogie"]],
+    ["warm", ["warm", "soulful", "organic", "sunny", "balearic"]],
+    ["euphoric", ["euphoric", "uplifting", "anthem", "hands up"]],
+    ["dark", ["dark", "noir", "industrial", "goth", "warehouse"]],
+    ["hypnotic", ["hypnotic", "minimal", "trance", "acid", "driving"]],
+    ["atmospheric", ["atmospheric", "ambient", "cinematic", "space", "ethereal"]],
+    ["dreamy", ["dreamy", "dream pop", "shoegaze", "nostalgic"]],
+    ["melancholic", ["melancholy", "melancholic", "sad", "blue", "heartbreak"]],
+    ["romantic", ["romantic", "love", "sexy", "slow jam"]],
+    ["energetic", ["energetic", "energy", "banger", "peak time", "peak-time", "rave"]],
+    ["playful", ["fun", "playful", "party", "happy"]],
+  ],
+  context: [
+    ["club", ["club", "dancefloor", "dance floor", "dj set", "rave", "warehouse", "party"]],
+    ["lounge", ["lounge", "bar", "cafe", "cocktail", "hotel"]],
+    ["night_drive", ["night drive", "driving", "drive", "midnight", "neon"]],
+    ["afterhours", ["after hours", "afterhours", "late night", "late-night"]],
+    ["dinner", ["dinner", "supper", "restaurant", "date night"]],
+    ["focus", ["focus", "study", "work", "reading", "sleep"]],
+    ["workout", ["workout", "gym", "running", "run", "fitness"]],
+    ["sunset", ["sunset", "sunrise", "beach", "balearic"]],
+    ["summer", ["summer", "pool", "tropical"]],
+    ["travel", ["travel", "road trip", "journey"]],
+    ["holiday", ["christmas", "xmas", "holiday", "santa", "nye", "new year"]],
+  ],
+};
+
+const DEFAULT_FACET = { dimension: "mood", key: "chill" };
+
 const QUEUE_TARGET = 18;
 const LOVED_STORAGE_KEY = "kevincredo-fm-loved-track-ids";
 const PROFILE_USERNAME_STORAGE_KEY = "kevincredo-fm-profile-username";
@@ -46,7 +277,13 @@ const elements = {};
 const state = {
   tracks: [],
   filters: [],
-  selectedTags: new Set(),
+  filterGroups: {},
+  selectedFacets: {
+    genre: new Set(),
+    mood: new Set(),
+    context: new Set(),
+  },
+  activeFacet: "genre",
   lovedIds: new Set(),
   lovedOnly: false,
   profileUsername: "",
@@ -87,7 +324,7 @@ async function init() {
     const library = await loadLibrary();
     state.libraryMeta = library;
     state.styleLabels = { ...STYLE_LABELS, ...(library.styleLabels || {}) };
-    state.tracks = library.tracks || [];
+    state.tracks = (library.tracks || []).map(hydrateTrackTaxonomy);
     state.lovedIds = loadLovedIds();
     state.profileUsername = window.localStorage.getItem(PROFILE_USERNAME_STORAGE_KEY) || "";
     if (state.profileUsername) {
@@ -132,6 +369,8 @@ function bindElements() {
     "openNeteaseBtn",
     "reloadBtn",
     "styleFilters",
+    "facetTabs",
+    "selectedFacetList",
     "channelName",
     "selectedStylesSummary",
     "generateMixBtn",
@@ -218,6 +457,9 @@ function wireEvents() {
   elements.gatePlayBtn.addEventListener("click", startFromGate);
   elements.generateMixBtn.addEventListener("click", generateStyleSequence);
   elements.clearMixBtn.addEventListener("click", clearStyleMix);
+  elements.facetTabs.querySelectorAll("[data-facet]").forEach((button) => {
+    button.addEventListener("click", () => switchFacet(button.dataset.facet));
+  });
   elements.profileLoginBtn.addEventListener("click", () => activateProfile(elements.profileUsernameInput.value));
   elements.profileUsernameInput.addEventListener("keydown", (event) => {
     if (event.key === "Enter") activateProfile(elements.profileUsernameInput.value);
@@ -298,54 +540,224 @@ function wireEvents() {
   });
 }
 
-function buildFilters(library) {
-  const styleCounts = new Map();
-  state.tracks.forEach((track) => {
-    (track.styleTags || []).forEach((tag) => {
-      styleCounts.set(tag, (styleCounts.get(tag) || 0) + 1);
+function hydrateTrackTaxonomy(track) {
+  const taxonomy = normalizeTaxonomy(track.taxonomy || {});
+  const text = searchableTrackText(track);
+
+  (track.styleTags || []).forEach((tag) => {
+    const mapped = STYLE_TO_TAXONOMY[tag];
+    if (!mapped) return;
+    addMany(taxonomy.genre, mapped.genre);
+    addMany(taxonomy.mood, mapped.mood);
+    addMany(taxonomy.context, mapped.context);
+  });
+
+  Object.entries(KEYWORD_TAXONOMY_RULES).forEach(([dimension, rules]) => {
+    rules.forEach(([key, needles]) => {
+      if (needles.some((needle) => text.includes(needle))) addUnique(taxonomy[dimension], key);
     });
   });
 
-  const archiveOrder = (library.styleStats || []).map(([tag]) => tag);
-  const orderedTags = [...new Set([...archiveOrder, ...styleCounts.keys()])]
-    .filter((tag) => styleCounts.has(tag))
-    .sort((a, b) => {
-      const ai = archiveOrder.indexOf(a);
-      const bi = archiveOrder.indexOf(b);
-      if (ai === -1 && bi === -1) return styleCounts.get(b) - styleCounts.get(a);
+  inferEnergyTaxonomy(track, taxonomy);
+  inferEraTaxonomy(track, taxonomy, text);
+  sortTaxonomy(taxonomy);
+  return {
+    ...track,
+    taxonomy,
+  };
+}
+
+function normalizeTaxonomy(value) {
+  return {
+    genre: uniqueStrings(value.genre),
+    mood: uniqueStrings(value.mood),
+    context: uniqueStrings(value.context),
+    era: uniqueStrings(value.era),
+  };
+}
+
+function searchableTrackText(track) {
+  return [
+    track.name,
+    ...(track.artists || []),
+    track.album,
+    ...(track.playlistNames || []),
+    ...(track.onlineGenres || []),
+    ...(track.onlineTags || []),
+    ...(track.styleLabels || []),
+  ].filter(Boolean).join(" ").toLowerCase();
+}
+
+function inferEnergyTaxonomy(track, taxonomy) {
+  const bpm = Number(track.estimatedBpm);
+  const energy = Number(track.energy);
+  const genres = new Set(taxonomy.genre);
+  if ((genres.has("house") || genres.has("techno") || genres.has("edm") || genres.has("nu_disco")) && bpm >= 118) {
+    addUnique(taxonomy.context, "club");
+  }
+  if (Number.isFinite(bpm) && bpm >= 124 && Number.isFinite(energy) && energy >= 0.72) {
+    addUnique(taxonomy.mood, "energetic");
+  }
+  if (Number.isFinite(energy) && energy <= 0.42) {
+    addUnique(taxonomy.mood, "chill");
+  }
+  if ((genres.has("ambient") || genres.has("downtempo") || genres.has("lofi")) && !taxonomy.context.length) {
+    addUnique(taxonomy.context, "focus");
+  }
+}
+
+function inferEraTaxonomy(track, taxonomy, text) {
+  const candidates = [
+    [/\b(70s|1970s|197[0-9]|seventies)\b/, "70s"],
+    [/\b(80s|1980s|198[0-9]|eighties)\b/, "80s"],
+    [/\b(90s|1990s|199[0-9]|nineties)\b/, "90s"],
+  ];
+  candidates.forEach(([pattern, key]) => {
+    if (pattern.test(text)) addUnique(taxonomy.era, key);
+  });
+}
+
+function addMany(target, values) {
+  (values || []).forEach((value) => addUnique(target, value));
+}
+
+function addUnique(target, value) {
+  const key = String(value || "").trim();
+  if (key && !target.includes(key)) target.push(key);
+}
+
+function uniqueStrings(values) {
+  const seen = new Set();
+  const result = [];
+  (Array.isArray(values) ? values : []).forEach((value) => {
+    const key = String(value || "").trim();
+    if (!key || seen.has(key)) return;
+    seen.add(key);
+    result.push(key);
+  });
+  return result;
+}
+
+function sortTaxonomy(taxonomy) {
+  Object.keys(taxonomy).forEach((dimension) => {
+    const order = TAXONOMY[dimension]?.order || [];
+    taxonomy[dimension].sort((a, b) => {
+      const ai = order.indexOf(a);
+      const bi = order.indexOf(b);
+      if (ai === -1 && bi === -1) return a.localeCompare(b);
       if (ai === -1) return 1;
       if (bi === -1) return -1;
       return ai - bi;
     });
-
-  state.filters = orderedTags.map((tag) => ({
-    key: tag,
-    label: state.styleLabels[tag] || titleCase(tag),
-    count: styleCounts.get(tag),
-  }));
-  if (!state.selectedTags.size && state.filters[0]) {
-    state.selectedTags.add(state.filters[0].key);
-  }
-
-  elements.styleFilters.innerHTML = "";
-  state.filters.forEach((filter) => {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "filter-chip";
-    button.dataset.filter = filter.key;
-    button.setAttribute("aria-pressed", "false");
-    button.innerHTML = `<span>${escapeHtml(filter.label)}</span><span>${filter.count}</span>`;
-    button.addEventListener("click", () => toggleStyleFilter(filter.key));
-    elements.styleFilters.appendChild(button);
   });
+}
+
+function buildFilters(library) {
+  state.filterGroups = buildFacetFilters(library);
+  state.filters = Object.values(state.filterGroups).flat();
+  if (!getSelectedFacetPairs().length) {
+    const defaultGroup = state.filterGroups[DEFAULT_FACET.dimension] || [];
+    const fallbackGroup = state.filterGroups.genre || [];
+    const defaultFilter = defaultGroup.find((filter) => filter.key === DEFAULT_FACET.key)
+      || defaultGroup[0]
+      || fallbackGroup[0];
+    if (defaultFilter) {
+      state.activeFacet = defaultFilter.dimension;
+      state.selectedFacets[defaultFilter.dimension].add(defaultFilter.key);
+    }
+  }
+  renderFacetTabs();
+  renderFacetFilters();
+  renderSelectedFacetList();
   syncFilterButtons();
 }
 
-function toggleStyleFilter(key) {
-  if (state.selectedTags.has(key)) {
-    state.selectedTags.delete(key);
+function buildFacetFilters() {
+  return Object.keys(TAXONOMY).reduce((groups, dimension) => {
+    if (dimension === "era") return groups;
+    const counts = new Map();
+    state.tracks.forEach((track) => {
+      (getTrackFacetValues(track, dimension) || []).forEach((key) => {
+        counts.set(key, (counts.get(key) || 0) + 1);
+      });
+    });
+    const order = TAXONOMY[dimension].order || [];
+    groups[dimension] = Array.from(counts.entries())
+      .map(([key, count]) => ({
+        dimension,
+        key,
+        count,
+        label: getFacetLabel(dimension, key),
+      }))
+      .sort((a, b) => {
+        const ai = order.indexOf(a.key);
+        const bi = order.indexOf(b.key);
+        if (ai !== -1 || bi !== -1) {
+          if (ai === -1) return 1;
+          if (bi === -1) return -1;
+          return ai - bi;
+        }
+        return b.count - a.count || a.label.localeCompare(b.label);
+      });
+    return groups;
+  }, {});
+}
+
+function renderFacetTabs() {
+  elements.facetTabs.querySelectorAll("[data-facet]").forEach((button) => {
+    const active = button.dataset.facet === state.activeFacet;
+    button.classList.toggle("active", active);
+    button.setAttribute("aria-selected", String(active));
+  });
+}
+
+function renderFacetFilters() {
+  const filters = state.filterGroups[state.activeFacet] || [];
+  elements.styleFilters.innerHTML = "";
+  filters.forEach((filter) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "filter-chip";
+    button.dataset.facet = filter.dimension;
+    button.dataset.filter = filter.key;
+    button.setAttribute("aria-pressed", "false");
+    button.innerHTML = `<span>${escapeHtml(filter.label)}</span><span>${filter.count}</span>`;
+    button.addEventListener("click", () => toggleFacetFilter(filter.dimension, filter.key));
+    elements.styleFilters.appendChild(button);
+  });
+}
+
+function renderSelectedFacetList() {
+  const selected = getSelectedFacetPairs();
+  if (!selected.length) {
+    elements.selectedFacetList.innerHTML = `<span class="empty-selected">Full library</span>`;
+    return;
+  }
+  elements.selectedFacetList.innerHTML = selected.map(({ dimension, key }) => `
+    <button type="button" class="selected-facet" data-facet="${escapeHtml(dimension)}" data-filter="${escapeHtml(key)}">
+      <span>${escapeHtml(TAXONOMY[dimension].title)}</span>
+      <strong>${escapeHtml(getFacetLabel(dimension, key))}</strong>
+    </button>
+  `).join("");
+  elements.selectedFacetList.querySelectorAll(".selected-facet").forEach((button) => {
+    button.addEventListener("click", () => toggleFacetFilter(button.dataset.facet, button.dataset.filter));
+  });
+}
+
+function switchFacet(dimension) {
+  if (!TAXONOMY[dimension] || dimension === state.activeFacet) return;
+  state.activeFacet = dimension;
+  renderFacetTabs();
+  renderFacetFilters();
+  syncFilterButtons();
+}
+
+function toggleFacetFilter(dimension, key) {
+  if (!state.selectedFacets[dimension]) return;
+  if (state.selectedFacets[dimension].has(key)) {
+    state.selectedFacets[dimension].delete(key);
   } else {
-    state.selectedTags.add(key);
+    state.selectedFacets[dimension].add(key);
   }
   state.failedIds.clear();
   fillQueue(true);
@@ -354,7 +766,7 @@ function toggleStyleFilter(key) {
 }
 
 function clearStyleMix() {
-  state.selectedTags.clear();
+  Object.values(state.selectedFacets).forEach((set) => set.clear());
   state.failedIds.clear();
   fillQueue(true);
   renderAll();
@@ -562,13 +974,14 @@ function mergePlaylistMembership(track, playlist) {
   track.playlistNames = Array.from(names);
   track.playlistCount = Math.max(track.playlistCount || 1, track.playlistNames.length);
   if (playlist.isLikedMusic) track.inLikedMusic = true;
+  track.taxonomy = hydrateTrackTaxonomy(track).taxonomy;
 }
 
 function normalizeSyncedTrack(song, playlist) {
   const album = song.al || song.album || {};
   const artists = song.ar || song.artists || [];
   const styleTags = inferStyleTagsFromText(`${playlist.name} ${song.name || ""}`);
-  return {
+  const track = {
     id: String(song.id || ""),
     name: song.name || "Untitled",
     artists: artists.map((artist) => artist.name).filter(Boolean),
@@ -597,6 +1010,7 @@ function normalizeSyncedTrack(song, playlist) {
     createdPlaylistCount: playlist.isLikedMusic ? 0 : 1,
     inLikedMusic: Boolean(playlist.isLikedMusic),
   };
+  return hydrateTrackTaxonomy(track);
 }
 
 function inferStyleTagsFromText(value) {
@@ -1232,9 +1646,19 @@ function chunkArray(items, size) {
 
 function getFilteredTracks() {
   if (state.lovedOnly) return getLovedTracks();
-  const selected = getSelectedTags();
+  const selected = getSelectedFacetPairs();
   if (!selected.length) return state.tracks;
-  return state.tracks.filter((track) => selectedStyleMatches(track).length > 0);
+  return state.tracks.filter((track) => selectedFacetMatches(track).length > 0);
+}
+
+function getWeightedFilteredTracks() {
+  if (state.lovedOnly) return getLovedTracks();
+  const selected = getSelectedFacetPairs();
+  if (!selected.length) return state.tracks;
+  return state.tracks.flatMap((track) => {
+    const matches = selectedFacetMatches(track);
+    return matches.length ? Array.from({ length: matches.length }, () => track) : [];
+  });
 }
 
 function fillQueue(reset = false) {
@@ -1250,21 +1674,23 @@ function fillQueue(reset = false) {
 }
 
 function pickTrack(reference = null) {
-  const pool = getFilteredTracks().filter((track) => {
-    if (state.failedIds.has(track.id)) return false;
-    if (state.current && state.current.id === track.id) return false;
-    if (state.queue.some((queued) => queued.id === track.id)) return false;
-    if (state.recentIds.includes(track.id)) return false;
+  const source = getWeightedFilteredTracks();
+  const pool = source.filter((track) => {
+    const id = trackId(track);
+    if (state.failedIds.has(id)) return false;
+    if (state.current && trackId(state.current) === id) return false;
+    if (state.queue.some((queued) => trackId(queued) === id)) return false;
+    if (state.recentIds.includes(id)) return false;
     return true;
   });
-  const fallback = getFilteredTracks().filter((track) => !state.failedIds.has(track.id));
+  const fallback = getFilteredTracks().filter((track) => !state.failedIds.has(trackId(track)));
   const candidates = pool.length ? pool : fallback;
   if (!candidates.length) return null;
 
   if (!reference) {
     const weighted = [];
     candidates.forEach((track) => {
-      const weight = Math.max(1, Math.min(9, (track.playlistCount || 1) + selectedStyleMatches(track).length * 2));
+      const weight = Math.max(1, Math.min(9, (track.playlistCount || 1) + selectedFacetMatches(track).length * 2));
       for (let i = 0; i < weight; i += 1) weighted.push(track);
     });
     return weighted[Math.floor(Math.random() * weighted.length)];
@@ -1523,6 +1949,8 @@ function updateProgress() {
 }
 
 function renderAll() {
+  renderFacetTabs();
+  renderSelectedFacetList();
   syncFilterButtons();
   renderProfile();
   renderNeteaseExport();
@@ -1537,7 +1965,7 @@ function renderAll() {
 
 function syncFilterButtons() {
   elements.styleFilters.querySelectorAll(".filter-chip").forEach((button) => {
-    const active = state.selectedTags.has(button.dataset.filter);
+    const active = Boolean(state.selectedFacets[button.dataset.facet]?.has(button.dataset.filter));
     button.classList.toggle("active", active);
     button.setAttribute("aria-pressed", String(active));
   });
@@ -1548,10 +1976,10 @@ function renderTrack(track, mode) {
   elements.trackTitle.textContent = track.name || "Untitled";
   elements.trackArtist.textContent = artistLine(track);
   elements.trackAlbum.textContent = track.album ? `Album: ${track.album}` : "";
-  elements.genreTags.innerHTML = [
-    ...(track.styleLabels || (track.styleTags || []).map((tag) => state.styleLabels[tag] || titleCase(tag))).slice(0, 4),
-    `${track.estimatedBpm || "--"} BPM`,
-  ].map((label) => `<span>${escapeHtml(label)}</span>`).join("");
+  elements.genreTags.innerHTML = getDisplayTags(track)
+    .concat(`${track.estimatedBpm || "--"} BPM`)
+    .map((label) => `<span>${escapeHtml(label)}</span>`)
+    .join("");
   elements.albumStage.classList.toggle("no-cover", !track.picUrl);
   elements.coverArt.src = track.picUrl || "";
   elements.coverArt.alt = track.album ? `${track.album} cover` : "";
@@ -1669,9 +2097,9 @@ function mixScore(fromTrack, toTrack) {
 }
 
 function selectionScore(track) {
-  const selected = getSelectedTags();
+  const selected = getSelectedFacetPairs();
   if (!selected.length) return 0;
-  const matched = selectedStyleMatches(track).length;
+  const matched = selectedFacetMatches(track).length;
   if (!matched) return -100;
   return matched * 14 + (matched / selected.length) * 18;
 }
@@ -1682,16 +2110,28 @@ function bpmDistance(a, b) {
 }
 
 function sharedStyles(a, b) {
-  const left = new Set(a.styleTags || []);
-  return (b.styleTags || []).filter((tag) => left.has(tag));
+  const left = new Set(getTrackMixKeys(a).map((item) => `${item.dimension}:${item.key}`));
+  return getTrackMixKeys(b).filter((item) => left.has(`${item.dimension}:${item.key}`));
 }
 
 function sharedStyleLabels(a, b) {
-  return sharedStyles(a, b).slice(0, 3).map((tag) => state.styleLabels[tag] || titleCase(tag)).join(" · ");
+  return sharedStyles(a, b).slice(0, 3).map((item) => getFacetLabel(item.dimension, item.key)).join(" · ");
 }
 
 function labelLine(track) {
-  return (track.styleLabels || []).slice(0, 2).join(" · ") || getMixLabel();
+  const labels = [
+    ...getTrackFacetValues(track, "genre").slice(0, 2).map((key) => getFacetLabel("genre", key)),
+    ...getTrackFacetValues(track, "mood").slice(0, 1).map((key) => getFacetLabel("mood", key)),
+  ];
+  return labels.slice(0, 3).join(" · ") || getMixLabel();
+}
+
+function getDisplayTags(track) {
+  return [
+    ...getTrackFacetValues(track, "genre").slice(0, 2).map((key) => getFacetLabel("genre", key)),
+    ...getTrackFacetValues(track, "mood").slice(0, 2).map((key) => getFacetLabel("mood", key)),
+    ...getTrackFacetValues(track, "context").slice(0, 1).map((key) => getFacetLabel("context", key)),
+  ].slice(0, 5);
 }
 
 function queueMeta(track) {
@@ -1699,35 +2139,50 @@ function queueMeta(track) {
   return `${labels}${labels ? " · " : ""}${track.estimatedBpm || "--"} BPM`;
 }
 
-function getSelectedTags() {
-  return Array.from(state.selectedTags);
+function getTrackFacetValues(track, dimension) {
+  return uniqueStrings(track?.taxonomy?.[dimension] || []);
 }
 
-function selectedStyleMatches(track) {
-  const tags = new Set(track.styleTags || []);
-  return getSelectedTags().filter((tag) => tags.has(tag));
+function getTrackMixKeys(track) {
+  return ["genre", "mood", "context"].flatMap((dimension) => (
+    getTrackFacetValues(track, dimension).map((key) => ({ dimension, key }))
+  ));
 }
 
-function getStyleLabel(key) {
-  return (state.filters.find((filter) => filter.key === key) || {}).label || titleCase(key);
+function getSelectedFacetPairs() {
+  return ["genre", "mood", "context"].flatMap((dimension) => (
+    Array.from(state.selectedFacets[dimension] || []).map((key) => ({ dimension, key }))
+  ));
+}
+
+function selectedFacetMatches(track) {
+  const selected = getSelectedFacetPairs();
+  if (!selected.length) return [];
+  return selected.filter(({ dimension, key }) => getTrackFacetValues(track, dimension).includes(key));
+}
+
+function getFacetLabel(dimension, key) {
+  return TAXONOMY[dimension]?.labels?.[key]
+    || state.styleLabels[key]
+    || titleCase(key);
 }
 
 function getMixLabel() {
   if (state.lovedOnly) return "Loved Tracks";
-  const selected = getSelectedTags();
+  const selected = getSelectedFacetPairs();
   if (!selected.length) return "All Styles";
-  const labels = selected.map(getStyleLabel);
+  const labels = selected.map(({ dimension, key }) => getFacetLabel(dimension, key));
   if (labels.length <= 2) return labels.join(" + ");
   return `${labels.slice(0, 2).join(" + ")} +${labels.length - 2}`;
 }
 
 function getMixSummary() {
-  if (state.lovedOnly) return `${getLovedTracks().length} loved tracks · heart-only mode`;
-  const selected = getSelectedTags();
+  if (state.lovedOnly) return `${getLovedTracks().length} 首红心 · 只播红心`;
+  const selected = getSelectedFacetPairs();
   const poolCount = getFilteredTracks().length;
-  if (!selected.length) return `${poolCount} tracks · full archive`;
-  const labels = selected.map(getStyleLabel).join(" · ");
-  return `${selected.length} selected · ${poolCount} tracks · ${labels}`;
+  if (!selected.length) return `${poolCount} 首唯一歌曲 · 全曲库`;
+  const labels = selected.map(({ dimension, key }) => `${TAXONOMY[dimension].title}: ${getFacetLabel(dimension, key)}`).join(" · ");
+  return `${selected.length} 个标签 · ${poolCount} 首唯一歌曲 · 队列已去重 · ${labels}`;
 }
 
 function getLovedTracks() {
