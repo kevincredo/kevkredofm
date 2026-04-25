@@ -33,10 +33,14 @@ const QUEUE_TARGET = 18;
 const LOVED_STORAGE_KEY = "kevincredo-fm-loved-track-ids";
 const PROFILE_USERNAME_STORAGE_KEY = "kevincredo-fm-profile-username";
 const SYNC_PROXY_STORAGE_KEY = "kevincredo-fm-sync-proxy";
+const NETEASE_EXPORT_DRAFT_STORAGE_KEY = "kevincredo-fm-netease-export-draft";
+const NETEASE_EXPORT_API_STORAGE_KEY = "kevincredo-fm-netease-export-api";
 const NETEASE_ORIGIN = "https://music.163.com";
+const NETEASE_DEFAULT_EXPORT_API_BASE = "http://localhost:3000";
 const CLOUD_LOVED_ENDPOINT = "/.netlify/functions/loved";
 const USERNAME_PATTERN = /^[a-z0-9_-]{2,24}$/;
 const CLOUD_SAVE_DEBOUNCE_MS = 650;
+const NETEASE_EXPORT_CHUNK_SIZE = 80;
 
 const elements = {};
 const state = {
@@ -51,6 +55,12 @@ const state = {
   libraryMeta: null,
   syncUserId: "",
   syncing: false,
+  lastNeteaseExport: null,
+  exportingToNetease: false,
+  neteaseQrKey: "",
+  neteaseQrTimer: null,
+  neteaseLoginCookie: "",
+  neteaseLoggedIn: false,
   queue: [],
   history: [],
   current: null,
@@ -86,6 +96,10 @@ async function init() {
     state.syncUserId = String(library.scope?.user_id || "");
     elements.syncUserIdInput.value = state.syncUserId;
     elements.syncProxyInput.value = window.localStorage.getItem(SYNC_PROXY_STORAGE_KEY) || "";
+    elements.exportPlaylistNameInput.value = defaultExportPlaylistName();
+    elements.exportApiInput.value = window.localStorage.getItem(NETEASE_EXPORT_API_STORAGE_KEY) || NETEASE_DEFAULT_EXPORT_API_BASE;
+    state.lastNeteaseExport = loadLastNeteaseExport();
+    renderExportRuntimeNote();
     elements.libraryCount.textContent = `${library.trackCount || state.tracks.length} tracks from your archive`;
     elements.statTracks.textContent = String(state.tracks.length);
     buildFilters(library);
@@ -133,6 +147,28 @@ function bindElements() {
     "syncProxyInput",
     "syncNeteaseBtn",
     "syncStatus",
+    "exportPanel",
+    "exportSummaryText",
+    "exportPlaylistNameInput",
+    "exportApiInput",
+    "exportDraftBtn",
+    "copyTrackIdsBtn",
+    "downloadExportBtn",
+    "exportCreateBtn",
+    "exportStatus",
+    "exportPreview",
+    "exportRuntimeNote",
+    "uploadStatus",
+    "importLoginStep",
+    "importDraftStep",
+    "importUploadStep",
+    "checkNeteaseApiBtn",
+    "neteaseQrLoginBtn",
+    "checkNeteaseLoginBtn",
+    "neteaseLoginStatus",
+    "neteaseQrBox",
+    "neteaseQrImage",
+    "neteaseQrText",
     "loveCurrentBtn",
     "statTracks",
     "statQueue",
@@ -191,6 +227,19 @@ function wireEvents() {
   elements.syncProxyInput.addEventListener("change", () => {
     window.localStorage.setItem(SYNC_PROXY_STORAGE_KEY, elements.syncProxyInput.value.trim());
   });
+  elements.exportApiInput.addEventListener("change", () => {
+    elements.exportApiInput.value = getExportApiBase();
+    window.localStorage.setItem(NETEASE_EXPORT_API_STORAGE_KEY, elements.exportApiInput.value);
+    renderExportRuntimeNote();
+  });
+  elements.exportPlaylistNameInput.addEventListener("input", renderNeteaseExport);
+  elements.checkNeteaseApiBtn.addEventListener("click", checkNeteaseApi);
+  elements.neteaseQrLoginBtn.addEventListener("click", startNeteaseQrLogin);
+  elements.checkNeteaseLoginBtn.addEventListener("click", () => checkNeteaseLoginStatus({ manual: true }));
+  elements.exportDraftBtn.addEventListener("click", () => generateNeteaseExportDraft());
+  elements.copyTrackIdsBtn.addEventListener("click", copyNeteaseExportIds);
+  elements.downloadExportBtn.addEventListener("click", downloadNeteaseExportDraft);
+  elements.exportCreateBtn.addEventListener("click", createNeteasePlaylistFromLoved);
   elements.loveCurrentBtn.addEventListener("click", toggleLoveCurrent);
   elements.lovedOnlyBtn.addEventListener("click", toggleLovedOnly);
   elements.reloadBtn.addEventListener("click", () => {
@@ -413,8 +462,14 @@ async function requestNeteaseJson(route) {
   }
 }
 
-async function fetchJson(url) {
-  const response = await fetch(url, { cache: "no-store", credentials: "omit" });
+async function fetchJson(url, options = {}) {
+  const response = await fetch(url, {
+    method: options.method || "GET",
+    cache: "no-store",
+    credentials: options.credentials || "omit",
+    headers: options.headers,
+    body: options.body,
+  });
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
   return response.json();
 }
@@ -639,6 +694,540 @@ function setSyncStatus(text) {
   } else {
     elements.syncSummaryText.textContent = "同步设置";
   }
+}
+
+async function checkNeteaseApi() {
+  const apiBase = getExportApiBase();
+  if (!apiBase) return;
+  if (!isAllowedLocalApiBase(apiBase)) {
+    setNeteaseLoginStatus("真实导入只允许本机 API 地址，避免把登录态和红心列表发到外部。");
+    return;
+  }
+
+  setNeteaseLoginStatus("正在检测本机助手...");
+  try {
+    await requestLocalNetease(apiBase, "/login/status");
+    setNeteaseLoginStatus(`本机助手已连接。下一步扫码登录。`);
+  } catch (error) {
+    setNeteaseLoginStatus(`没有连上本机助手：${error.message}。请先运行 npm run netease:api。`);
+  }
+}
+
+async function startNeteaseQrLogin() {
+  const apiBase = getExportApiBase();
+  if (!apiBase || !isAllowedLocalApiBase(apiBase)) {
+    setNeteaseLoginStatus("请先填写本机助手地址，例如 http://localhost:3000。");
+    return;
+  }
+
+  stopNeteaseQrPolling();
+  state.neteaseQrKey = "";
+  state.neteaseLoginCookie = "";
+  state.neteaseLoggedIn = false;
+  elements.neteaseQrBox.hidden = false;
+  elements.neteaseQrImage.removeAttribute("src");
+  elements.neteaseQrText.textContent = "正在向本机 API 申请二维码...";
+  setNeteaseLoginStatus("正在生成登录二维码...");
+
+  try {
+    const keyPayload = await requestLocalNetease(apiBase, "/login/qr/key");
+    const key = String(keyPayload.data?.unikey || keyPayload.unikey || "");
+    if (!key) throw new Error("二维码 key 为空");
+    state.neteaseQrKey = key;
+
+    const qrPayload = await requestLocalNetease(apiBase, "/login/qr/create", {
+      key,
+      qrimg: "true",
+    });
+    const qrImage = qrPayload.data?.qrimg || qrPayload.qrimg || "";
+    const qrUrl = qrPayload.data?.qrurl || qrPayload.qrurl || "";
+    if (qrImage) {
+      elements.neteaseQrImage.src = qrImage;
+    } else if (qrUrl) {
+      elements.neteaseQrText.textContent = qrUrl;
+    } else {
+      throw new Error("二维码图片为空");
+    }
+
+    elements.neteaseQrText.textContent = "扫码后在手机上确认登录。";
+    setNeteaseLoginStatus("等待网易云 App 扫码确认...");
+    state.neteaseQrTimer = window.setInterval(() => checkNeteaseQrStatus({ silent: true }), 2400);
+  } catch (error) {
+    elements.neteaseQrBox.hidden = true;
+    setNeteaseLoginStatus(`二维码登录失败：${error.message}。`);
+  }
+}
+
+async function checkNeteaseQrStatus(options = {}) {
+  const apiBase = getExportApiBase();
+  if (!state.neteaseQrKey) {
+    if (!options.silent) setNeteaseLoginStatus("还没有登录二维码，请先点击扫码登录。");
+    return;
+  }
+
+  try {
+    const payload = await requestLocalNetease(apiBase, "/login/qr/check", {
+      key: state.neteaseQrKey,
+    });
+    const code = Number(payload.code || payload.data?.code || 0);
+    if (code === 800) {
+      stopNeteaseQrPolling();
+      setNeteaseLoginStatus("二维码已过期，请重新扫码登录。");
+      elements.neteaseQrText.textContent = "二维码已过期。";
+      return;
+    }
+    if (code === 801) {
+      if (!options.silent) setNeteaseLoginStatus("等待扫码...");
+      return;
+    }
+    if (code === 802) {
+      setNeteaseLoginStatus("已扫码，请在手机上确认登录。");
+      elements.neteaseQrText.textContent = "已扫码，等待手机确认。";
+      return;
+    }
+    if (code === 803) {
+      stopNeteaseQrPolling();
+      state.neteaseLoginCookie = String(payload.cookie || payload.data?.cookie || "");
+      state.neteaseLoggedIn = true;
+      elements.neteaseQrBox.hidden = true;
+      setNeteaseLoginStatus("扫码登录成功，正在读取账号状态...");
+      await checkNeteaseLoginStatus({ manual: false });
+      return;
+    }
+    if (!options.silent) {
+      setNeteaseLoginStatus(payload.message || payload.msg || `二维码状态：${code || "unknown"}`);
+    }
+  } catch (error) {
+    if (!options.silent) setNeteaseLoginStatus(`二维码状态读取失败：${error.message}。`);
+  }
+}
+
+async function checkNeteaseLoginStatus(options = {}) {
+  const apiBase = getExportApiBase();
+  if (!apiBase || !isAllowedLocalApiBase(apiBase)) {
+    setNeteaseLoginStatus("请先填写本机助手地址，例如 http://localhost:3000。");
+    return false;
+  }
+
+  if (options.manual) setNeteaseLoginStatus("正在读取网易云登录状态...");
+  try {
+    const payload = await requestLocalNetease(apiBase, "/login/status");
+    const profile = extractNeteaseProfile(payload);
+    if (profile) {
+      state.neteaseLoggedIn = true;
+      setNeteaseLoginStatus(`已登录网易云：${profile.nickname || profile.userId || "当前账号"}。`);
+      renderNeteaseExport();
+      return true;
+    }
+    if (state.neteaseLoginCookie) {
+      state.neteaseLoggedIn = true;
+      setNeteaseLoginStatus("已完成扫码授权，可以生成草稿。");
+      renderNeteaseExport();
+      return true;
+    }
+    state.neteaseLoggedIn = false;
+    setNeteaseLoginStatus("尚未登录网易云，请先扫码登录。");
+    renderNeteaseExport();
+    return false;
+  } catch (error) {
+    state.neteaseLoggedIn = false;
+    setNeteaseLoginStatus(`登录状态读取失败：${error.message}。`);
+    renderNeteaseExport();
+    return false;
+  }
+}
+
+function stopNeteaseQrPolling() {
+  if (state.neteaseQrTimer) {
+    window.clearInterval(state.neteaseQrTimer);
+    state.neteaseQrTimer = null;
+  }
+}
+
+function generateNeteaseExportDraft(options = {}) {
+  const lovedTracks = getLovedTracks();
+  const knownIds = new Set(lovedTracks.map(trackId));
+  const unknownIds = Array.from(state.lovedIds).map(String).filter((id) => id && !knownIds.has(id));
+  const trackIds = [...lovedTracks.map(trackId), ...unknownIds];
+
+  if (!trackIds.length) {
+    setExportStatus("还没有红心歌曲，先给喜欢的歌点红心。");
+    return null;
+  }
+
+  const playlistName = currentExportPlaylistName();
+  elements.exportPlaylistNameInput.value = playlistName;
+  const draft = {
+    version: 1,
+    generatedAt: new Date().toISOString(),
+    source: "KevinCredo FM local loved export",
+    profileUsername: state.profileUsername || "",
+    playlistName,
+    lovedSignature: getLovedSignature(),
+    trackCount: trackIds.length,
+    knownTrackCount: lovedTracks.length,
+    unknownTrackCount: unknownIds.length,
+    trackIds,
+    tracks: [
+      ...lovedTracks.map((track, index) => formatTrackForExport(track, index + 1)),
+      ...unknownIds.map((id, index) => ({
+        position: lovedTracks.length + index + 1,
+        id,
+        name: "",
+        artists: [],
+        album: "",
+        durationMs: null,
+        neteaseUrl: neteaseSongUrl(id),
+      })),
+    ],
+  };
+
+  state.lastNeteaseExport = draft;
+  saveLastNeteaseExport(draft);
+  renderNeteaseExport();
+  if (!options.silent) {
+    setExportStatus(`已生成草稿：${draft.trackCount} 首，歌单名「${draft.playlistName}」。`);
+    setStatus("红心歌单草稿已生成");
+  }
+  return draft;
+}
+
+async function copyNeteaseExportIds() {
+  const draft = ensureNeteaseExportDraft();
+  if (!draft) return;
+  const text = draft.trackIds.join(",");
+  try {
+    await copyText(text);
+    setExportStatus(`已复制 ${draft.trackCount} 个网易云歌曲 ID。`);
+    setStatus("网易云歌曲 ID 已复制");
+  } catch (error) {
+    setExportStatus("复制失败，浏览器没有开放剪贴板权限。");
+  }
+}
+
+function downloadNeteaseExportDraft() {
+  const draft = ensureNeteaseExportDraft();
+  if (!draft) return;
+  const blob = new Blob([JSON.stringify(draft, null, 2)], { type: "application/json;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `${safeFileName(draft.playlistName)}.json`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  setExportStatus("草稿 JSON 已下载到浏览器下载目录。");
+}
+
+async function createNeteasePlaylistFromLoved() {
+  if (state.exportingToNetease) return;
+  const draft = ensureNeteaseExportDraft();
+  if (!draft) return;
+
+  const apiBase = getExportApiBase();
+  if (!apiBase) {
+    setExportStatus("请先填写本机网易云 API，例如 http://localhost:3000。");
+    elements.exportPanel.open = true;
+    return;
+  }
+  if (!isAllowedLocalApiBase(apiBase)) {
+    setExportStatus("真实导入只允许 localhost、127.0.0.1 或 ::1，避免把红心数据发到外部。");
+    return;
+  }
+
+  const loggedIn = state.neteaseLoggedIn || await checkNeteaseLoginStatus({ manual: false });
+  if (!loggedIn) {
+    setExportStatus("请先在 NETEASE OUT 区域扫码登录网易云。");
+    return;
+  }
+
+  const ok = window.confirm(
+    `将通过本机 API ${apiBase}，在已登录的网易云账号中创建歌单「${draft.playlistName}」，并添加 ${draft.trackCount} 首红心歌曲。继续吗？`
+  );
+  if (!ok) {
+    setExportStatus("已取消写入，草稿仍保留在本机。");
+    return;
+  }
+
+  state.exportingToNetease = true;
+  elements.exportCreateBtn.disabled = true;
+  elements.exportCreateBtn.textContent = "上传中";
+  setUploadStatus("正在创建网易云歌单...");
+
+  try {
+    const created = await requestLocalNeteaseWrite(apiBase, "/playlist/create", {
+      name: draft.playlistName,
+      privacy: "0",
+    });
+    assertNeteaseApiSuccess(created, "创建歌单");
+    const playlistId = extractCreatedPlaylistId(created);
+    if (!playlistId) throw new Error("创建接口没有返回歌单 ID");
+
+    const chunks = chunkArray(draft.trackIds, NETEASE_EXPORT_CHUNK_SIZE);
+    for (let index = 0; index < chunks.length; index += 1) {
+      setUploadStatus(`歌单已创建，正在上传歌曲 ${index + 1}/${chunks.length}...`);
+      const added = await requestLocalNeteaseWrite(apiBase, "/playlist/tracks", {
+        op: "add",
+        pid: playlistId,
+        tracks: chunks[index].join(","),
+      });
+      assertNeteaseApiSuccess(added, "添加歌曲");
+    }
+
+    setExportStatus(`已写入网易云歌单：${draft.playlistName}（ID ${playlistId}）。`);
+    setUploadStatus(`上传完成：网易云歌单 ID ${playlistId}。`);
+    setStatus("红心歌单已写入网易云");
+  } catch (error) {
+    setExportStatus(`写入失败：${error.message}。草稿已保留，可先复制 ID 或下载 JSON。`);
+    setUploadStatus("上传失败，可以重新扫码或稍后再试。");
+    setStatus("网易云写入失败");
+  } finally {
+    state.exportingToNetease = false;
+    elements.exportCreateBtn.disabled = false;
+    elements.exportCreateBtn.textContent = "确认上传";
+    updateImportFlowState();
+  }
+}
+
+function renderNeteaseExport() {
+  if (!elements.exportPanel) return;
+  const lovedCount = state.lovedIds.size;
+  const draft = isCurrentNeteaseDraft(state.lastNeteaseExport) ? state.lastNeteaseExport : null;
+  elements.exportSummaryText.textContent = lovedCount ? `${lovedCount} 首待导出` : "暂无红心";
+  [elements.exportDraftBtn, elements.copyTrackIdsBtn, elements.downloadExportBtn, elements.exportCreateBtn].forEach((button) => {
+    button.disabled = lovedCount === 0;
+  });
+
+  if (!lovedCount) {
+    elements.exportPreview.innerHTML = "";
+    setExportStatus("先给歌曲点红心，再生成可导入网易云的歌单草稿。");
+    setUploadStatus("红心列表为空，暂时不能上传。");
+    updateImportFlowState();
+    return;
+  }
+
+  if (!draft) {
+    elements.exportPreview.innerHTML = "";
+    setExportStatus(`当前有 ${lovedCount} 首红心，点击生成草稿。`);
+    setUploadStatus("生成草稿后，再确认上传到网易云。");
+    updateImportFlowState();
+    return;
+  }
+
+  setExportStatus(`已生成草稿：${draft.trackCount} 首，歌单名「${draft.playlistName}」。`);
+  setUploadStatus(
+    state.neteaseLoggedIn
+      ? `准备创建「${draft.playlistName}」，共 ${draft.trackCount} 首。`
+      : "草稿已准备好，扫码登录后即可上传。"
+  );
+  const previewRows = draft.tracks.slice(0, 5).map((track) => `
+    <div class="export-preview-row">
+      <strong>${escapeHtml(track.name || track.id)}</strong>
+      <span>${escapeHtml((track.artists || []).join(" / ") || "Unknown Artist")}</span>
+    </div>
+  `).join("");
+  const moreText = draft.trackCount > 5 ? `<em>还有 ${draft.trackCount - 5} 首会一起导出</em>` : "";
+  const unknownText = draft.unknownTrackCount
+    ? `<em>${draft.unknownTrackCount} 个 ID 暂时只有编号，没有本地曲目信息</em>`
+    : "";
+  elements.exportPreview.innerHTML = `
+    <div class="export-preview-head">
+      <strong>${escapeHtml(draft.playlistName)}</strong>
+      <span>${draft.trackCount} tracks</span>
+    </div>
+    ${previewRows}
+    ${moreText}
+    ${unknownText}
+  `;
+  updateImportFlowState();
+}
+
+function ensureNeteaseExportDraft() {
+  if (isCurrentNeteaseDraft(state.lastNeteaseExport)) return state.lastNeteaseExport;
+  return generateNeteaseExportDraft({ silent: true });
+}
+
+function isCurrentNeteaseDraft(draft) {
+  return Boolean(
+    draft
+    && draft.lovedSignature === getLovedSignature()
+    && draft.trackCount === state.lovedIds.size
+    && draft.playlistName === currentExportPlaylistName()
+  );
+}
+
+function getLovedSignature() {
+  return Array.from(state.lovedIds).map(String).filter(Boolean).join("|");
+}
+
+function formatTrackForExport(track, position) {
+  return {
+    position,
+    id: trackId(track),
+    name: track.name || "",
+    artists: track.artists || [],
+    album: track.album || "",
+    durationMs: Number.isFinite(track.durationMs) ? track.durationMs : null,
+    styleLabels: track.styleLabels || [],
+    bpm: track.estimatedBpm || null,
+    neteaseUrl: neteaseSongUrl(trackId(track)),
+  };
+}
+
+function loadLastNeteaseExport() {
+  try {
+    const raw = window.localStorage.getItem(NETEASE_EXPORT_DRAFT_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return parsed && Array.isArray(parsed.trackIds) ? parsed : null;
+  } catch (error) {
+    return null;
+  }
+}
+
+function saveLastNeteaseExport(draft) {
+  try {
+    window.localStorage.setItem(NETEASE_EXPORT_DRAFT_STORAGE_KEY, JSON.stringify(draft));
+  } catch (error) {
+    setExportStatus("草稿已生成，但浏览器本地存储空间不足，无法长期保留。");
+  }
+}
+
+function setExportStatus(text) {
+  elements.exportStatus.textContent = text;
+}
+
+function setUploadStatus(text) {
+  elements.uploadStatus.textContent = text;
+}
+
+function setNeteaseLoginStatus(text) {
+  elements.neteaseLoginStatus.textContent = text;
+  updateImportFlowState();
+}
+
+function renderExportRuntimeNote() {
+  if (!elements.exportRuntimeNote) return;
+  const apiBase = getExportApiBase();
+  const pageMode = window.location.protocol === "https:" ? "Netlify 云端页面" : "本地页面";
+  elements.exportRuntimeNote.textContent = `${pageMode}会连接这台设备上的本机助手：${apiBase}`;
+}
+
+function updateImportFlowState() {
+  if (!elements.importLoginStep) return;
+  const hasLoved = state.lovedIds.size > 0;
+  const hasDraft = isCurrentNeteaseDraft(state.lastNeteaseExport);
+  const canUpload = hasLoved && hasDraft && state.neteaseLoggedIn;
+  elements.importLoginStep.classList.toggle("done", state.neteaseLoggedIn);
+  elements.importLoginStep.classList.toggle("active", !state.neteaseLoggedIn);
+  elements.importDraftStep.classList.toggle("done", hasDraft);
+  elements.importDraftStep.classList.toggle("active", state.neteaseLoggedIn && !hasDraft);
+  elements.importDraftStep.classList.toggle("disabled", !hasLoved);
+  elements.importUploadStep.classList.toggle("active", canUpload);
+  elements.importUploadStep.classList.toggle("disabled", !canUpload);
+  elements.exportCreateBtn.disabled = !canUpload || state.exportingToNetease;
+  elements.exportDraftBtn.disabled = !hasLoved;
+  elements.copyTrackIdsBtn.disabled = !hasDraft;
+  elements.downloadExportBtn.disabled = !hasDraft;
+}
+
+function defaultExportPlaylistName() {
+  const date = new Date().toISOString().slice(0, 10);
+  return `KevinCredo FM 红心 ${date}`;
+}
+
+function currentExportPlaylistName() {
+  return cleanPlaylistName(elements.exportPlaylistNameInput.value) || defaultExportPlaylistName();
+}
+
+function cleanPlaylistName(value) {
+  return String(value || "").trim().replace(/\s+/g, " ").slice(0, 40);
+}
+
+function safeFileName(value) {
+  return cleanPlaylistName(value).replace(/[^\w.-]+/g, "_").replace(/^_+|_+$/g, "") || "kevincredo_fm_loved";
+}
+
+async function copyText(text) {
+  if (navigator.clipboard && window.isSecureContext) {
+    await navigator.clipboard.writeText(text);
+    return;
+  }
+  const input = document.createElement("textarea");
+  input.value = text;
+  input.setAttribute("readonly", "");
+  input.style.position = "fixed";
+  input.style.left = "-9999px";
+  document.body.appendChild(input);
+  input.select();
+  const copied = document.execCommand("copy");
+  input.remove();
+  if (!copied) throw new Error("copy failed");
+}
+
+function normalizeExportApiBase(value) {
+  return String(value || "").trim().replace(/\/$/, "");
+}
+
+function getExportApiBase() {
+  const normalized = normalizeExportApiBase(elements.exportApiInput.value || NETEASE_DEFAULT_EXPORT_API_BASE);
+  if (elements.exportApiInput.value !== normalized) elements.exportApiInput.value = normalized;
+  return normalized;
+}
+
+function isAllowedLocalApiBase(value) {
+  try {
+    const url = new URL(value);
+    return ["localhost", "127.0.0.1", "0.0.0.0", "::1", "[::1]"].includes(url.hostname);
+  } catch (error) {
+    return false;
+  }
+}
+
+async function requestLocalNeteaseWrite(apiBase, route, params) {
+  return requestLocalNetease(apiBase, route, params, { method: "POST", withLoginCookie: true });
+}
+
+async function requestLocalNetease(apiBase, route, params = {}, options = {}) {
+  const query = new URLSearchParams({ ...params, timestamp: Date.now() });
+  if (options.withLoginCookie && state.neteaseLoginCookie) {
+    query.set("cookie", state.neteaseLoginCookie);
+  }
+  return fetchJson(`${apiBase}${route}?${query}`, {
+    method: options.method || "GET",
+    credentials: "include",
+  });
+}
+
+function extractCreatedPlaylistId(response) {
+  return String(response?.id || response?.playlist?.id || response?.data?.id || response?.data?.playlist?.id || "");
+}
+
+function extractNeteaseProfile(response) {
+  const profile = response?.data?.profile || response?.profile || response?.body?.profile || null;
+  if (profile) return profile;
+  const account = response?.data?.account || response?.account || null;
+  if (!account) return null;
+  return {
+    userId: account.id || account.userId,
+    nickname: account.userName || account.nickname || "",
+  };
+}
+
+function assertNeteaseApiSuccess(response, action) {
+  const code = Number(response?.code || response?.body?.code || response?.data?.code || 200);
+  if (code === 200 || code === 201) return;
+  if (code === 301) throw new Error("网易云登录已失效，请重新扫码登录");
+  throw new Error(response?.message || response?.msg || `${action}失败，网易云返回 code ${code}`);
+}
+
+function chunkArray(items, size) {
+  const chunks = [];
+  for (let index = 0; index < items.length; index += size) {
+    chunks.push(items.slice(index, index + size));
+  }
+  return chunks;
 }
 
 function getFilteredTracks() {
@@ -936,6 +1525,7 @@ function updateProgress() {
 function renderAll() {
   syncFilterButtons();
   renderProfile();
+  renderNeteaseExport();
   renderQueue();
   renderLoved();
   renderHistory();
