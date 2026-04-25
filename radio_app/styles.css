@@ -449,12 +449,15 @@ button {
 }
 
 .import-step {
-  min-height: 74px;
+  min-height: 0;
   display: grid;
-  grid-template-columns: 34px minmax(0, 1fr) auto;
-  align-items: center;
+  grid-template-columns: 34px minmax(0, 1fr);
+  grid-template-areas:
+    "number copy"
+    "button button";
+  align-items: start;
   gap: 10px;
-  padding: 10px;
+  padding: 12px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(255, 255, 255, 0.035);
 }
@@ -473,6 +476,7 @@ button {
 }
 
 .import-step-number {
+  grid-area: number;
   width: 34px;
   height: 34px;
   display: grid;
@@ -489,6 +493,7 @@ button {
 }
 
 .import-step-copy {
+  grid-area: copy;
   min-width: 0;
   display: grid;
   gap: 4px;
@@ -501,17 +506,22 @@ button {
 
 .import-step-copy strong {
   font-size: 0.9rem;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
 }
 
 .import-step-copy p {
   color: var(--soft);
   font-size: 0.74rem;
   line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 
 .import-step-button {
-  min-width: 78px;
-  min-height: 38px;
+  grid-area: button;
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
   border-color: rgba(22, 244, 208, 0.42);
   color: var(--mint);
 }
@@ -565,14 +575,16 @@ button {
 }
 
 .netease-qr-box {
-  min-height: 112px;
+  min-height: 0;
   display: grid;
-  grid-template-columns: 96px minmax(0, 1fr);
+  grid-template-columns: 1fr;
+  justify-items: center;
   align-items: center;
   gap: 10px;
-  padding: 9px;
+  padding: 12px;
   border: 1px solid rgba(22, 244, 208, 0.22);
   background: rgba(0, 0, 0, 0.24);
+  text-align: center;
 }
 
 .netease-qr-box[hidden] {
@@ -580,8 +592,9 @@ button {
 }
 
 .netease-qr-box img {
-  width: 96px;
-  height: 96px;
+  width: min(176px, 100%);
+  height: auto;
+  aspect-ratio: 1;
   object-fit: contain;
   background: #ffffff;
 }
@@ -593,6 +606,7 @@ button {
 
 .netease-qr-box strong {
   font-size: 0.86rem;
+  overflow-wrap: anywhere;
 }
 
 .netease-qr-box p {
@@ -600,6 +614,7 @@ button {
   color: var(--soft);
   font-size: 0.74rem;
   line-height: 1.45;
+  overflow-wrap: anywhere;
 }
 
 .export-create-button {
