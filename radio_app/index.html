@@ -28,15 +28,6 @@
         <div class="topbar-actions">
           <button id="nextTopBtn" class="text-button top-next-button" data-action="next" type="button" aria-label="下一首" title="跳过当前歌曲">下一首</button>
           <button id="openNeteaseBtn" class="text-button" type="button">网易云打开</button>
-          <button id="reloadBtn" class="icon-button" type="button" aria-label="随机重排播放队列" title="随机重排播放队列">
-            <svg class="shuffle-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-              <path d="M16 3h5v5"></path>
-              <path d="M4 7h3.5c1.9 0 3.4 1.1 4.6 2.8l.8 1.2c1.2 1.7 2.7 2.8 4.6 2.8H21"></path>
-              <path d="M16 21h5v-5"></path>
-              <path d="M4 17h3.5c1.7 0 3.1-.9 4.2-2.3"></path>
-              <path d="M15.2 7.2c.7-.2 1.5-.3 2.3-.3H21"></path>
-            </svg>
-          </button>
         </div>
       </header>
 
@@ -235,6 +226,15 @@
 
           <div class="transport">
             <button id="prevBtn" class="text-button transport-button small-transport" type="button" aria-label="上一首" title="上一首">上一首</button>
+            <button id="reloadBtn" class="icon-button transport-button shuffle-transport" type="button" aria-label="随机重排播放队列" title="随机重排播放队列">
+              <svg class="shuffle-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M16 3h5v5"></path>
+                <path d="M4 7h3.5c1.9 0 3.4 1.1 4.6 2.8l.8 1.2c1.2 1.7 2.7 2.8 4.6 2.8H21"></path>
+                <path d="M16 21h5v-5"></path>
+                <path d="M4 17h3.5c1.7 0 3.1-.9 4.2-2.3"></path>
+                <path d="M15.2 7.2c.7-.2 1.5-.3 2.3-.3H21"></path>
+              </svg>
+            </button>
             <button id="playPauseBtn" class="icon-button primary transport-button" type="button" aria-label="播放或暂停" title="播放或暂停">▶</button>
             <button id="nextBtn" class="text-button transport-button skip-button" data-action="next" type="button" aria-label="下一首" title="跳过当前歌曲">下一首</button>
           </div>
