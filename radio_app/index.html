@@ -34,6 +34,119 @@
 
       <main class="radio-layout">
         <aside class="filter-panel" aria-label="电台控制">
+          <details id="accountPanel" class="control-section account-control-section" open aria-label="用户与同步">
+            <summary class="account-summary">
+              <span class="account-summary-copy">
+                <span>ACCOUNT</span>
+                <strong>用户 / 同步 / 上传</strong>
+              </span>
+              <span class="sync-chevron" aria-hidden="true"></span>
+            </summary>
+            <div class="account-body">
+              <section class="profile-panel" aria-label="用户红心存档">
+                <div class="profile-heading">
+                  <span>USER SAVE</span>
+                  <strong id="profileStatus">本地模式</strong>
+                </div>
+                <div class="profile-form">
+                  <input id="profileUsernameInput" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="输入用户名">
+                  <button id="profileLoginBtn" class="text-button profile-button" type="button">进入</button>
+                </div>
+                <button id="profileLocalBtn" class="text-button profile-local-button" type="button" hidden>切回本地</button>
+                <p id="profileHelp" class="profile-help">不输入用户名时，红心只保存在这台设备。</p>
+              </section>
+              <details id="syncPanel" class="sync-panel">
+                <summary class="sync-summary">
+                  <span class="sync-summary-label">
+                    <span>NETEASE SYNC</span>
+                    <strong id="syncSummaryText">同步设置</strong>
+                  </span>
+                  <span class="sync-chevron" aria-hidden="true"></span>
+                </summary>
+                <div class="sync-body">
+                  <label class="sync-field">
+                    <span>网易云用户 ID</span>
+                    <input id="syncUserIdInput" type="text" inputmode="numeric" autocomplete="off">
+                  </label>
+                  <label class="sync-field">
+                    <span>同步线路（可选）</span>
+                    <input id="syncProxyInput" type="url" autocomplete="off" placeholder="https://your-sync-api.example">
+                  </label>
+                  <button id="syncNeteaseBtn" class="text-button sync-button" type="button">同步歌单</button>
+                  <p id="syncStatus" class="sync-status">只同步创建的歌单和我喜欢的音乐。</p>
+                </div>
+              </details>
+              <details id="exportPanel" class="sync-panel export-panel">
+                <summary class="sync-summary">
+                  <span class="sync-summary-label">
+                    <span>NETEASE OUT</span>
+                    <strong id="exportSummaryText">红心转歌单</strong>
+                  </span>
+                  <span class="sync-chevron" aria-hidden="true"></span>
+                </summary>
+                <div class="sync-body">
+                  <div class="import-flow" aria-label="网易云红心导入流程">
+                    <section id="importLoginStep" class="import-step active">
+                      <span class="import-step-number">1</span>
+                      <div class="import-step-copy">
+                        <strong>扫码登录网易云</strong>
+                        <p id="neteaseLoginStatus">先启动本机助手，然后用网易云 App 扫码。</p>
+                      </div>
+                      <button id="neteaseQrLoginBtn" class="text-button import-step-button" type="button">扫码登录</button>
+                    </section>
+                    <div id="neteaseQrBox" class="netease-qr-box" hidden>
+                      <img id="neteaseQrImage" alt="网易云扫码登录二维码">
+                      <div>
+                        <strong>用网易云音乐 App 扫码</strong>
+                        <p id="neteaseQrText">扫码后在手机上确认登录。</p>
+                      </div>
+                    </div>
+
+                    <section id="importDraftStep" class="import-step">
+                      <span class="import-step-number">2</span>
+                      <div class="import-step-copy">
+                        <strong>生成红心歌单草稿</strong>
+                        <p id="exportStatus">先给歌曲点红心，再生成可导入网易云的歌单草稿。</p>
+                      </div>
+                      <button id="exportDraftBtn" class="text-button import-step-button" type="button">生成草稿</button>
+                    </section>
+
+                    <section id="importUploadStep" class="import-step">
+                      <span class="import-step-number">3</span>
+                      <div class="import-step-copy">
+                        <strong>确认上传到网易云</strong>
+                        <p id="uploadStatus">确认后才会创建网易云歌单。</p>
+                      </div>
+                      <button id="exportCreateBtn" class="text-button import-step-button export-create-button" type="button">确认上传</button>
+                    </section>
+                  </div>
+                  <div id="exportPreview" class="export-preview"></div>
+                  <details class="import-settings">
+                    <summary>高级设置与备份</summary>
+                    <div class="import-settings-body">
+                      <label class="sync-field">
+                        <span>新歌单名称</span>
+                        <input id="exportPlaylistNameInput" type="text" autocomplete="off">
+                      </label>
+                      <label class="sync-field">
+                        <span>本机助手地址</span>
+                        <input id="exportApiInput" type="url" autocomplete="off" placeholder="http://localhost:3000">
+                      </label>
+                      <p id="exportRuntimeNote" class="sync-status">Netlify 页面会连接这台电脑上的本机助手。</p>
+                      <div class="netease-login-actions">
+                        <button id="checkNeteaseApiBtn" class="text-button" type="button">检测助手</button>
+                        <button id="checkNeteaseLoginBtn" class="text-button" type="button">刷新登录</button>
+                        <button id="copyTrackIdsBtn" class="text-button" type="button">复制 ID</button>
+                        <button id="downloadExportBtn" class="text-button" type="button">下载草稿</button>
+                        <a class="text-button helper-download-link" href="./netease-local-helper.mjs" download>下载助手</a>
+                      </div>
+                    </div>
+                  </details>
+                </div>
+              </details>
+            </div>
+          </details>
+
           <section class="control-section music-control-section" aria-label="音乐筛选">
             <div class="panel-heading">
               <span>STYLE MIX</span>
@@ -73,114 +186,6 @@
               <span>音量</span>
               <input id="volumeSlider" type="range" min="0" max="1" step="0.01" value="0.78">
             </label>
-          </section>
-
-          <section class="control-section account-control-section" aria-label="用户与同步">
-            <div class="panel-heading account-heading">
-              <span>ACCOUNT</span>
-              <strong>用户 / 同步 / 上传</strong>
-            </div>
-            <section class="profile-panel" aria-label="用户红心存档">
-              <div class="profile-heading">
-                <span>USER SAVE</span>
-                <strong id="profileStatus">本地模式</strong>
-              </div>
-              <div class="profile-form">
-                <input id="profileUsernameInput" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="输入用户名">
-                <button id="profileLoginBtn" class="text-button profile-button" type="button">进入</button>
-              </div>
-              <button id="profileLocalBtn" class="text-button profile-local-button" type="button" hidden>切回本地</button>
-              <p id="profileHelp" class="profile-help">不输入用户名时，红心只保存在这台设备。</p>
-            </section>
-            <details id="syncPanel" class="sync-panel">
-              <summary class="sync-summary">
-                <span class="sync-summary-label">
-                  <span>NETEASE SYNC</span>
-                  <strong id="syncSummaryText">同步设置</strong>
-                </span>
-                <span class="sync-chevron" aria-hidden="true"></span>
-              </summary>
-              <div class="sync-body">
-                <label class="sync-field">
-                  <span>网易云用户 ID</span>
-                  <input id="syncUserIdInput" type="text" inputmode="numeric" autocomplete="off">
-                </label>
-                <label class="sync-field">
-                  <span>同步线路（可选）</span>
-                  <input id="syncProxyInput" type="url" autocomplete="off" placeholder="https://your-sync-api.example">
-                </label>
-                <button id="syncNeteaseBtn" class="text-button sync-button" type="button">同步歌单</button>
-                <p id="syncStatus" class="sync-status">只同步创建的歌单和我喜欢的音乐。</p>
-              </div>
-            </details>
-            <details id="exportPanel" class="sync-panel export-panel">
-              <summary class="sync-summary">
-                <span class="sync-summary-label">
-                  <span>NETEASE OUT</span>
-                  <strong id="exportSummaryText">红心转歌单</strong>
-                </span>
-                <span class="sync-chevron" aria-hidden="true"></span>
-              </summary>
-              <div class="sync-body">
-                <div class="import-flow" aria-label="网易云红心导入流程">
-                  <section id="importLoginStep" class="import-step active">
-                    <span class="import-step-number">1</span>
-                    <div class="import-step-copy">
-                      <strong>扫码登录网易云</strong>
-                      <p id="neteaseLoginStatus">先启动本机助手，然后用网易云 App 扫码。</p>
-                    </div>
-                    <button id="neteaseQrLoginBtn" class="text-button import-step-button" type="button">扫码登录</button>
-                  </section>
-                  <div id="neteaseQrBox" class="netease-qr-box" hidden>
-                    <img id="neteaseQrImage" alt="网易云扫码登录二维码">
-                    <div>
-                      <strong>用网易云音乐 App 扫码</strong>
-                      <p id="neteaseQrText">扫码后在手机上确认登录。</p>
-                    </div>
-                  </div>
-
-                  <section id="importDraftStep" class="import-step">
-                    <span class="import-step-number">2</span>
-                    <div class="import-step-copy">
-                      <strong>生成红心歌单草稿</strong>
-                      <p id="exportStatus">先给歌曲点红心，再生成可导入网易云的歌单草稿。</p>
-                    </div>
-                    <button id="exportDraftBtn" class="text-button import-step-button" type="button">生成草稿</button>
-                  </section>
-
-                  <section id="importUploadStep" class="import-step">
-                    <span class="import-step-number">3</span>
-                    <div class="import-step-copy">
-                      <strong>确认上传到网易云</strong>
-                      <p id="uploadStatus">确认后才会创建网易云歌单。</p>
-                    </div>
-                    <button id="exportCreateBtn" class="text-button import-step-button export-create-button" type="button">确认上传</button>
-                  </section>
-                </div>
-                <div id="exportPreview" class="export-preview"></div>
-                <details class="import-settings">
-                  <summary>高级设置与备份</summary>
-                  <div class="import-settings-body">
-                    <label class="sync-field">
-                      <span>新歌单名称</span>
-                      <input id="exportPlaylistNameInput" type="text" autocomplete="off">
-                    </label>
-                    <label class="sync-field">
-                      <span>本机助手地址</span>
-                      <input id="exportApiInput" type="url" autocomplete="off" placeholder="http://localhost:3000">
-                    </label>
-                    <p id="exportRuntimeNote" class="sync-status">Netlify 页面会连接这台电脑上的本机助手。</p>
-                    <div class="netease-login-actions">
-                      <button id="checkNeteaseApiBtn" class="text-button" type="button">检测助手</button>
-                      <button id="checkNeteaseLoginBtn" class="text-button" type="button">刷新登录</button>
-                      <button id="copyTrackIdsBtn" class="text-button" type="button">复制 ID</button>
-                      <button id="downloadExportBtn" class="text-button" type="button">下载草稿</button>
-                      <a class="text-button helper-download-link" href="./netease-local-helper.mjs" download>下载助手</a>
-                    </div>
-                  </div>
-                </details>
-              </div>
-            </details>
           </section>
         </aside>
 

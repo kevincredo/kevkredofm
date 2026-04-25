@@ -221,10 +221,10 @@ const KEYWORD_TAXONOMY_RULES = {
     ["electronica", ["electronica", "electronic", "electro"]],
     ["indie_rock", ["indie rock", "alternative rock", "alt rock"]],
     ["rock", ["classic rock", "hard rock", "britpop", "punk", "rock"]],
-    ["rnb_soul", ["neo soul", "neo-soul", "r&b", "rnb", "soul"]],
+    ["rnb_soul", ["neo soul", "neo-soul", "r&b", "rnb"]],
     ["hiphop_rap", ["hip hop", "hip-hop", "rap", "trap"]],
     ["jazz", ["jazz", "bossa nova", "swing"]],
-    ["funk_soul", ["funk", "soul", "boogie"]],
+    ["funk_soul", ["funk", "boogie"]],
     ["latin_world", ["latin", "samba", "reggae", "world"]],
     ["classical", ["classical", "orchestral", "piano", "violin"]],
     ["pop", ["k-pop", "j-pop", "cantopop", "mandopop", "pop"]],
@@ -257,6 +257,58 @@ const KEYWORD_TAXONOMY_RULES = {
     ["holiday", ["christmas", "xmas", "holiday", "santa", "nye", "new year"]],
   ],
 };
+
+const ARTIST_TAXONOMY_RULES = [
+  [["zhu", "nicolas jaar", "darkside"], { genre: ["electronica", "downtempo"], mood: ["dark", "hypnotic"], context: ["afterhours"] }],
+  [["âme", "ame", "recondite", "adriatique", "colyn", "innellea", "artbat", "argy", "anyma", "massano", "kevin de vries"], { genre: ["melodic_house", "techno"], mood: ["euphoric", "hypnotic"], context: ["club"] }],
+  [["fred again..", "jamie xx", "floating points", "jon hopkins", "romy"], { genre: ["electronica", "house"], mood: ["euphoric", "melancholic"], context: ["club", "afterhours"] }],
+  [["xique-xique", "kyong sono", "kora (ca)", "mita gami", "antaares", "maz", "vxsion"], { genre: ["afro_house", "downtempo"], mood: ["warm", "groovy"], context: ["sunset"] }],
+  [["gorgon city", "hot since 82", "john summit", "chris lake", "oliver heldens", "me & my toothbrush"], { genre: ["house"], mood: ["groovy", "energetic"], context: ["club"] }],
+  [["deadmau5", "lane 8", "sultan + shepard", "armin van buuren", "tiësto", "tiesto"], { genre: ["progressive_house", "edm"], mood: ["euphoric", "energetic"], context: ["club"] }],
+  [["layton giordani", "hi-lo", "julian jeweil", "mathew jonson", "dusty kid"], { genre: ["techno"], mood: ["dark", "hypnotic"], context: ["club"] }],
+  [["boris brejcha"], { genre: ["minimal", "techno"], mood: ["hypnotic"], context: ["club"] }],
+  [["the chemical brothers", "skrillex", "chace"], { genre: ["electronica", "edm"], mood: ["energetic"], context: ["club"] }],
+  [["hvob", "bob moses", "monolink", "whomadewho", "kerala dust", "rüfüs du sol", "rufus du sol"], { genre: ["indie_dance", "electronica"], mood: ["dark", "melancholic"], context: ["night_drive", "club"] }],
+  [["l'impératrice", "l'imperatrice", "lewis ofman", "tame impala", "channel tres"], { genre: ["nu_disco", "indie_dance"], mood: ["groovy", "playful"], context: ["club"] }],
+  [["kaytranada", "kaytraminé", "kaytramine", "pharrell williams"], { genre: ["funk_soul", "hiphop_rap"], mood: ["groovy"], context: ["club"] }],
+  [["ed sheeran", "jason mraz", "lauv", "justin bieber", "charlie puth", "taylor swift", "selena gomez", "ellie goulding", "coldplay", "maroon 5", "finneas"], { genre: ["pop"], mood: ["romantic", "playful"], context: [] }],
+  [["陈奕迅", "刘德华", "周柏豪", "杨千嬅", "蔡徐坤", "宇多田ヒカル"], { genre: ["pop"], mood: ["romantic"], context: [] }],
+  [["john legend", "erykah badu", "tinashe", "jeff bernat", "miso", "the marías", "the marias"], { genre: ["rnb_soul"], mood: ["romantic", "warm"], context: ["dinner"] }],
+  [["kendrick lamar", "drake", "future", "travis scott", "rich brian", "n.w.a", "amini", "aminé", "amine"], { genre: ["hiphop_rap"], mood: ["groovy"], context: [] }],
+  [["oasis", "radiohead", "green day", "fleetwood mac", "bob dylan", "the velvet underground", "liam gallagher", "belle & sebastian"], { genre: ["rock"], mood: ["melancholic"], context: [] }],
+  [["clairo", "cuco", "billie eilish", "the xx", "bahamas", "novo amor", "damien rice", "rachael yamagata"], { genre: ["indie_rock", "pop"], mood: ["dreamy", "melancholic"], context: [] }],
+  [["norah jones", "pink martini", "kokoroko", "jacob collier", "larry carlton"], { genre: ["jazz"], mood: ["warm"], context: ["dinner", "lounge"] }],
+  [["ólafur arnalds", "olafur arnalds", "rené aubry", "rene aubry", "ozymandias"], { genre: ["classical", "ambient"], mood: ["atmospheric", "melancholic"], context: ["focus"] }],
+  [["michael mayer", "gui boratto", "ben böhmer", "ben bohmer", "marsh", "coeus"], { genre: ["progressive_house", "melodic_house"], mood: ["euphoric", "hypnotic"], context: ["club"] }],
+  [["sam paganini", "tale of us", "fisher", "kydus", "dennis cruz"], { genre: ["techno", "house"], mood: ["energetic", "hypnotic"], context: ["club"] }],
+  [["massive attack", "the blaze", "pantha du prince", "yosi horikawa", "koan sound", "high tone"], { genre: ["electronica", "downtempo"], mood: ["dark", "atmospheric"], context: ["afterhours"] }],
+  [["fkj", "rhye", "paradis", "darius", "moullinex", "hercules & love affair", "laid back"], { genre: ["nu_disco", "funk_soul"], mood: ["groovy", "warm"], context: ["lounge", "club"] }],
+  [["berlioz", "melody gardot", "kamasi washington"], { genre: ["jazz"], mood: ["warm"], context: ["dinner", "lounge"] }],
+  [["sapientdream", "shiloh dynasty", "rook1e", "timmies", "snøw", "snow", "teqkoi", "kina", "malte marten"], { genre: ["lofi"], mood: ["chill", "dreamy"], context: ["focus"] }],
+  [["keshi", "sofi de la torre", "safia", "alberto dimeo"], { genre: ["rnb_soul", "pop"], mood: ["romantic", "chill"], context: [] }],
+  [["john lennon", "paul mccartney", "the beach boys", "noel gallagher", "sting", "beck", "i dont know how but they found me"], { genre: ["rock"], mood: ["melancholic"], context: [] }],
+  [["glass animals", "sales", "forester"], { genre: ["indie_rock", "pop"], mood: ["dreamy", "playful"], context: [] }],
+  [["the chainsmokers", "lost frequencies"], { genre: ["edm", "pop"], mood: ["energetic", "playful"], context: ["club"] }],
+  [["dr. dre", "rae sremmurd", "bbno$"], { genre: ["hiphop_rap"], mood: ["groovy"], context: [] }],
+  [["justin hurwitz"], { genre: ["classical", "jazz"], mood: ["romantic"], context: ["dinner"] }],
+  [["josé gonzález", "jose gonzalez", "passenger", "billy raffoul", "stephen sanchez"], { genre: ["pop"], mood: ["romantic", "melancholic"], context: [] }],
+  [["boy harsher"], { genre: ["synthwave", "indie_dance"], mood: ["dark"], context: ["night_drive"] }],
+  [["glass beams"], { genre: ["funk_soul", "latin_world"], mood: ["groovy", "warm"], context: ["sunset"] }],
+  [["black loops", "umami"], { genre: ["deep_house", "house"], mood: ["groovy", "warm"], context: ["club"] }],
+  [["delta funktionen", "nina kraviz"], { genre: ["techno"], mood: ["dark", "hypnotic"], context: ["club"] }],
+  [["tinlicker"], { genre: ["progressive_house", "melodic_house"], mood: ["euphoric"], context: ["club"] }],
+  [["bicep", "yaeji", "soulwax"], { genre: ["house", "electronica"], mood: ["groovy"], context: ["club"] }],
+  [["pet shop boys"], { genre: ["synthwave", "pop"], mood: ["playful"], context: ["night_drive"] }],
+  [["polo & pan", "zimmer"], { genre: ["nu_disco", "electronica"], mood: ["warm", "playful"], context: ["sunset"] }],
+  [["alesso", "kream"], { genre: ["edm", "house"], mood: ["energetic", "euphoric"], context: ["club"] }],
+  [["tom misch", "alfa mist", "craig ruhnke"], { genre: ["jazz", "funk_soul"], mood: ["warm", "groovy"], context: ["dinner", "lounge"] }],
+  [["hans zimmer", "binaryh"], { genre: ["classical", "electronica"], mood: ["atmospheric"], context: ["focus"] }],
+  [["don mclean", "eagles", "creedence clearwater revival", "john mayer", "mcfly", "imagine dragons"], { genre: ["rock"], mood: ["melancholic"], context: [] }],
+  [["kanye west", "yg"], { genre: ["hiphop_rap"], mood: ["groovy"], context: [] }],
+  [["kokia", "大橋トリオ", "余佳运", "mokita", "gnash", "chelsea lankes"], { genre: ["pop"], mood: ["romantic"], context: [] }],
+  [["jacoo", "aso", "jobii"], { genre: ["lofi"], mood: ["chill", "dreamy"], context: ["focus"] }],
+  [["la femme", "tristesse contemporaine", "vox low"], { genre: ["indie_dance", "synthwave"], mood: ["dark", "playful"], context: ["night_drive"] }],
+];
 
 const DEFAULT_FACET = { dimension: "mood", key: "chill" };
 
@@ -554,10 +606,11 @@ function hydrateTrackTaxonomy(track) {
 
   Object.entries(KEYWORD_TAXONOMY_RULES).forEach(([dimension, rules]) => {
     rules.forEach(([key, needles]) => {
-      if (needles.some((needle) => text.includes(needle))) addUnique(taxonomy[dimension], key);
+      if (needles.some((needle) => taxonomyNeedleMatches(text, needle))) addUnique(taxonomy[dimension], key);
     });
   });
 
+  applyArtistTaxonomy(track, taxonomy);
   inferEnergyTaxonomy(track, taxonomy);
   inferEraTaxonomy(track, taxonomy, text);
   sortTaxonomy(taxonomy);
@@ -604,6 +657,33 @@ function inferEnergyTaxonomy(track, taxonomy) {
   if ((genres.has("ambient") || genres.has("downtempo") || genres.has("lofi")) && !taxonomy.context.length) {
     addUnique(taxonomy.context, "focus");
   }
+}
+
+function applyArtistTaxonomy(track, taxonomy) {
+  const artists = (track.artists || []).map((artist) => String(artist || "").toLowerCase());
+  if (!artists.length) return;
+  ARTIST_TAXONOMY_RULES.forEach(([needles, mapping]) => {
+    const matched = needles.some((needle) => artists.some((artist) => artistRuleMatches(artist, needle)));
+    if (!matched) return;
+    Object.entries(mapping).forEach(([dimension, values]) => addMany(taxonomy[dimension], values));
+  });
+}
+
+function artistRuleMatches(artist, needle) {
+  const value = String(needle || "").toLowerCase();
+  if (!value) return false;
+  if (value.length <= 6) return artist === value;
+  return artist === value || artist.includes(value);
+}
+
+function taxonomyNeedleMatches(text, needle) {
+  const value = String(needle || "").trim().toLowerCase();
+  if (!value) return false;
+  if (/^[a-z0-9]+(?: [a-z0-9]+)*$/.test(value)) {
+    const escaped = value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return new RegExp(`(^|[^a-z0-9])${escaped}([^a-z0-9]|$)`).test(text);
+  }
+  return text.includes(value);
 }
 
 function inferEraTaxonomy(track, taxonomy, text) {
@@ -1016,29 +1096,29 @@ function normalizeSyncedTrack(song, playlist) {
 function inferStyleTagsFromText(value) {
   const text = String(value || "").toLowerCase();
   const tags = [];
-  const add = (tag, pattern) => {
-    if (pattern.test(text) && !tags.includes(tag)) tags.push(tag);
+  const add = (tag, needles) => {
+    if (needles.some((needle) => taxonomyNeedleMatches(text, needle)) && !tags.includes(tag)) tags.push(tag);
   };
-  add("chill_downtempo", /chill|downtempo|lounge|morning|早场|夜间|sleep|ambient/);
-  add("house", /house|garage/);
-  add("deep_house", /deep/);
-  add("progressive_house", /progressive/);
-  add("tech_house", /tech house/);
-  add("melodic_house", /melodic/);
-  add("afro_melodic", /afro|organic/);
-  add("disco_nu_disco", /disco|nu-disco|nu disco|funk/);
-  add("edm", /edm|dance|electro/);
-  add("techno", /techno/);
-  add("minimal", /minimal|boris/);
-  add("rock", /rock|indie rock|punk|oasis|beatles/);
-  add("retro_synth", /synth|retro|wave|80s|1980/);
-  add("hiphop_jazzhop", /hip.?hop|rap|jazz.?hop/);
-  add("rnb_soul", /r&b|rnb|soul/);
-  add("jazz", /jazz/);
-  add("pop", /pop|流行/);
-  add("classical", /classical|piano|钢琴/);
-  add("world_latin", /latin|world|bossa|samba/);
-  add("holiday", /christmas|xmas|holiday|圣诞|nye/);
+  add("chill_downtempo", ["chill", "downtempo", "lounge", "morning", "早场", "夜间", "sleep", "ambient"]);
+  add("house", ["house", "garage"]);
+  add("deep_house", ["deep house"]);
+  add("progressive_house", ["progressive house", "progressive"]);
+  add("tech_house", ["tech house"]);
+  add("melodic_house", ["melodic house", "melodic"]);
+  add("afro_melodic", ["afro", "organic"]);
+  add("disco_nu_disco", ["disco", "nu-disco", "nu disco", "funk"]);
+  add("edm", ["edm", "dance", "electro"]);
+  add("techno", ["techno"]);
+  add("minimal", ["minimal", "boris"]);
+  add("rock", ["indie rock", "classic rock", "rock", "punk", "oasis", "beatles"]);
+  add("retro_synth", ["synth", "retro", "wave", "80s", "1980"]);
+  add("hiphop_jazzhop", ["hip hop", "hip-hop", "rap", "jazz hop", "jazz-hop"]);
+  add("rnb_soul", ["r&b", "rnb", "soul"]);
+  add("jazz", ["jazz"]);
+  add("pop", ["pop", "流行"]);
+  add("classical", ["classical", "piano", "钢琴"]);
+  add("world_latin", ["latin", "world", "bossa", "samba"]);
+  add("holiday", ["christmas", "xmas", "holiday", "圣诞", "nye"]);
   return tags;
 }
 
