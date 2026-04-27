@@ -294,6 +294,95 @@ STYLE_TO_TAXONOMY = {
     "holiday": {"genre": [], "mood": ["warm", "playful"], "context": ["holiday"]},
 }
 
+TAXONOMY_GENRE_TO_STYLE = {
+    "house": "house",
+    "deep_house": "deep_house",
+    "tech_house": "tech_house",
+    "progressive_house": "progressive_house",
+    "melodic_house": "melodic_house",
+    "afro_house": "afro_house",
+    "techno": "techno",
+    "acid_techno": "acid_techno",
+    "minimal": "minimal",
+    "nu_disco": "disco_nu_disco",
+    "indie_dance": "indie_dance",
+    "downtempo": "chill_downtempo",
+    "ambient": "ambient",
+    "electronica": "electronic",
+    "edm": "edm",
+    "synthwave": "retro_synth",
+    "lofi": "lofi",
+    "breakbeat": "electronic",
+    "garage": "house",
+    "drum_bass": "electronic",
+    "pop": "pop",
+    "indie_rock": "indie_rock",
+    "rock": "rock",
+    "rnb_soul": "rnb_soul",
+    "hiphop_rap": "hiphop_jazzhop",
+    "jazz": "jazz",
+    "funk_soul": "funk",
+    "latin_world": "world_latin",
+    "classical": "classical",
+}
+
+GENRE_DEFAULTS = {
+    "house": {"mood": ["groovy"], "context": ["club"]},
+    "deep_house": {"mood": ["warm", "groovy"], "context": ["lounge", "club"]},
+    "tech_house": {"mood": ["groovy", "energetic"], "context": ["club"]},
+    "progressive_house": {"mood": ["euphoric", "hypnotic"], "context": ["club"]},
+    "melodic_house": {"mood": ["euphoric", "melancholic"], "context": ["club"]},
+    "afro_house": {"mood": ["warm", "groovy"], "context": ["sunset", "club"]},
+    "techno": {"mood": ["dark", "hypnotic"], "context": ["club"]},
+    "acid_techno": {"mood": ["hypnotic", "energetic"], "context": ["club"]},
+    "minimal": {"mood": ["hypnotic"], "context": ["club", "afterhours"]},
+    "nu_disco": {"mood": ["groovy", "playful"], "context": ["club"]},
+    "indie_dance": {"mood": ["dark", "groovy"], "context": ["night_drive", "club"]},
+    "downtempo": {"mood": ["chill"], "context": ["lounge"]},
+    "ambient": {"mood": ["atmospheric", "chill"], "context": ["focus"]},
+    "electronica": {"mood": ["atmospheric"], "context": ["night_drive"]},
+    "edm": {"mood": ["energetic", "euphoric"], "context": ["club", "workout"]},
+    "synthwave": {"mood": ["dreamy"], "context": ["night_drive"]},
+    "lofi": {"mood": ["chill", "dreamy"], "context": ["focus"]},
+    "breakbeat": {"mood": ["energetic"], "context": ["club"]},
+    "garage": {"mood": ["groovy"], "context": ["club"]},
+    "drum_bass": {"mood": ["energetic"], "context": ["workout", "club"]},
+    "pop": {"mood": ["playful"], "context": ["travel"]},
+    "indie_rock": {"mood": ["dreamy", "melancholic"], "context": ["night_drive"]},
+    "rock": {"mood": ["energetic"], "context": ["travel"]},
+    "rnb_soul": {"mood": ["romantic", "warm"], "context": ["dinner"]},
+    "hiphop_rap": {"mood": ["groovy"], "context": ["night_drive"]},
+    "jazz": {"mood": ["warm"], "context": ["dinner", "lounge"]},
+    "funk_soul": {"mood": ["groovy", "warm"], "context": ["club"]},
+    "latin_world": {"mood": ["warm", "groovy"], "context": ["summer"]},
+    "classical": {"mood": ["atmospheric"], "context": ["focus"]},
+}
+
+METADATA_TAXONOMY_RULES = [
+    (("christmas", "xmas", "santa", "jingle", "holiday", "noël", "noel"), ["pop"], ["warm", "playful"], ["holiday"]),
+    (("jazz christmas", "swing christmas", "new orleans christmas"), ["jazz"], ["warm", "playful"], ["holiday", "lounge"]),
+    (("original mix", "extended mix", "club mix", "dub mix", "radio edit", "dj set"), ["house"], ["groovy", "energetic"], ["club"]),
+    (("remix", "rework", "edit", "bootleg"), ["electronica"], ["energetic"], ["club"]),
+    (("deep house", "defected", "toolroom", "dirtybird"), ["deep_house", "house"], ["groovy", "warm"], ["club", "lounge"]),
+    (("minimal lab", "minimal techno", "kompakt", "m_nus"), ["minimal", "techno"], ["hypnotic"], ["afterhours", "club"]),
+    (("techno", "rave", "warehouse"), ["techno"], ["dark", "hypnotic"], ["club"]),
+    (("nu-disco", "nu disco", "disco", "boogie", "funk"), ["nu_disco"], ["groovy", "playful"], ["club"]),
+    (("synth", "new wave", "retrowave", "80s", "1980s"), ["synthwave"], ["dreamy"], ["night_drive"]),
+    (("ambient", "drone", "soundscape", "sleep music"), ["ambient"], ["atmospheric", "chill"], ["focus"]),
+    (("lofi", "lo-fi", "lo fi", "study beats", "chill beats"), ["lofi"], ["chill", "dreamy"], ["focus"]),
+    (("trip hop", "downtempo", "chillout", "lounge", "cafe", "café", "cocktail"), ["downtempo"], ["chill"], ["lounge"]),
+    (("r&b", "rnb", "neo soul", "neo-soul", "slow jam"), ["rnb_soul"], ["romantic", "warm"], ["dinner"]),
+    (("hip hop", "hip-hop", "rap", "trap"), ["hiphop_rap"], ["groovy"], ["night_drive"]),
+    (("bossa", "samba", "latin", "reggae", "flamenco", "gipsy"), ["latin_world"], ["warm", "groovy"], ["summer"]),
+    (("jazz", "swing", "sax", "trumpet", "blue note"), ["jazz"], ["warm"], ["dinner", "lounge"]),
+    (("piano", "orchestra", "orchestral", "symphony", "concerto", "soundtrack", "ost", "score", "theme"), ["classical"], ["atmospheric"], ["focus"]),
+    (("indie rock", "alternative rock", "britpop", "shoegaze"), ["indie_rock"], ["melancholic", "dreamy"], ["night_drive"]),
+    (("rock", "punk", "guitar"), ["rock"], ["energetic"], ["travel"]),
+    (("mandopop", "cantopop", "j-pop", "jpop", "k-pop", "kpop"), ["pop"], ["romantic"], ["travel"]),
+]
+
+CJK_POP_RE = re.compile(r"[\u3040-\u30ff\u3400-\u9fff]")
+
 KEYWORD_TAXONOMY_RULES = {
     "genre": [
         ("progressive_house", ("progressive house", "progressive trance", "progressive")),
@@ -455,6 +544,11 @@ def main():
         if not style_tags and online_genres:
             style_tags.add("pop")
         taxonomy = infer_taxonomy(track_id, style_tags, text_for_styles, track.get("artists") or [])
+        had_taxonomy_genre = bool(taxonomy["genre"])
+        apply_metadata_fallback(track, taxonomy, style_tags, text_for_styles, playlist_names)
+        genre_confidence = cache_entry.get("confidence", "playlist+heuristic")
+        if not had_taxonomy_genre and taxonomy["genre"] and genre_confidence == "playlist+heuristic":
+            genre_confidence = "metadata+heuristic"
         tempo = cache_entry.get("tempo") or {}
         estimated_bpm = tempo.get("bpm") or estimate_bpm(track_id, style_tags)
         energy = estimate_energy(track_id, style_tags)
@@ -485,7 +579,7 @@ def main():
                 "onlineGenres": sorted(set(online_genres)),
                 "onlineTags": sorted(set(online_tags))[:18],
                 "genreSources": cache_entry.get("sources") or [],
-                "genreConfidence": cache_entry.get("confidence", "playlist+heuristic"),
+                "genreConfidence": genre_confidence,
                 "playlistNames": sorted(set(name for name in playlist_names if name)),
                 "playlistCount": len(playlist_ids),
                 "createdPlaylistCount": created_playlist_count,
@@ -493,6 +587,7 @@ def main():
             }
         )
 
+    refine_catalog_taxonomy(tracks)
     tracks.sort(key=lambda item: (item["name"].lower(), ",".join(item["artists"]), item["id"]))
     payload = {
         "generatedAt": datetime.now().astimezone().isoformat(timespec="seconds"),
@@ -567,6 +662,134 @@ def infer_taxonomy(track_id, style_tags, text, artists):
     infer_era_tags(lower, taxonomy["era"])
     sort_taxonomy(taxonomy)
     return taxonomy
+
+
+def apply_metadata_fallback(track, taxonomy, style_tags, text, playlist_names):
+    lower = text.lower()
+    for needles, genres, moods, contexts in METADATA_TAXONOMY_RULES:
+        if any(taxonomy_needle_matches(lower, needle) for needle in needles):
+            add_taxonomy_bundle(taxonomy, style_tags, genres, moods, contexts)
+
+    if not taxonomy["genre"] and CJK_POP_RE.search(" ".join([track.get("name", ""), " ".join(track.get("artists") or []), track.get("album", "")])):
+        add_taxonomy_bundle(taxonomy, style_tags, ["pop"], ["romantic"], ["travel"])
+
+    playlist_text = " ".join(playlist_names).lower()
+    if not taxonomy["genre"] and any(word in playlist_text for word in ("after hours", "afterhours", "night", "siplab", "yes thai", "tape")):
+        add_taxonomy_bundle(taxonomy, style_tags, ["downtempo", "electronica"], ["chill", "atmospheric"], ["afterhours", "lounge"])
+    if not taxonomy["genre"] and any(word in playlist_text for word in ("call it a night", "er", "111", "random", "年度歌单", "十年精选")):
+        add_taxonomy_bundle(taxonomy, style_tags, ["pop"], ["romantic"], ["travel"])
+
+    if not taxonomy["genre"]:
+        add_taxonomy_bundle(taxonomy, style_tags, ["pop"], ["playful"], ["travel"])
+
+    ensure_taxonomy_defaults(taxonomy)
+    sort_taxonomy(taxonomy)
+
+
+def add_taxonomy_bundle(taxonomy, style_tags, genres=None, moods=None, contexts=None):
+    add_many(taxonomy["genre"], genres or [])
+    add_many(taxonomy["mood"], moods or [])
+    add_many(taxonomy["context"], contexts or [])
+    for genre in genres or []:
+        style = TAXONOMY_GENRE_TO_STYLE.get(genre)
+        if style:
+            style_tags.add(style)
+
+
+def ensure_taxonomy_defaults(taxonomy):
+    for genre in list(taxonomy.get("genre") or []):
+        defaults = GENRE_DEFAULTS.get(genre, {})
+        if not taxonomy["mood"]:
+            add_many(taxonomy["mood"], defaults.get("mood", []))
+        if not taxonomy["context"]:
+            add_many(taxonomy["context"], defaults.get("context", []))
+    if taxonomy["context"] and not taxonomy["mood"]:
+        if "holiday" in taxonomy["context"]:
+            add_many(taxonomy["mood"], ["warm", "playful"])
+        elif "afterhours" in taxonomy["context"] or "night_drive" in taxonomy["context"]:
+            add_many(taxonomy["mood"], ["chill", "dark"])
+        elif "lounge" in taxonomy["context"] or "dinner" in taxonomy["context"]:
+            add_many(taxonomy["mood"], ["warm"])
+    if taxonomy["mood"] and not taxonomy["context"]:
+        if "chill" in taxonomy["mood"] or "warm" in taxonomy["mood"]:
+            add_unique(taxonomy["context"], "lounge")
+        elif "energetic" in taxonomy["mood"] or "hypnotic" in taxonomy["mood"]:
+            add_unique(taxonomy["context"], "club")
+        elif "romantic" in taxonomy["mood"]:
+            add_unique(taxonomy["context"], "dinner")
+
+
+def refine_catalog_taxonomy(tracks):
+    album_profiles = build_catalog_profiles(tracks, "album")
+    artist_profiles = build_catalog_profiles(tracks, "artist")
+    for track in tracks:
+        style_tags = set(track.get("styleTags") or [])
+        taxonomy = track.get("taxonomy") or {"genre": [], "mood": [], "context": [], "era": []}
+        before_genres = set(taxonomy.get("genre") or [])
+
+        if not taxonomy["genre"]:
+            apply_profile_taxonomy(taxonomy, style_tags, album_profiles.get(album_profile_key(track)), min_count=1)
+        if not taxonomy["genre"]:
+            apply_profile_taxonomy(taxonomy, style_tags, artist_profiles.get(artist_profile_key(track)), min_count=2)
+        if not taxonomy["genre"]:
+            add_taxonomy_bundle(taxonomy, style_tags, ["pop"], ["playful"], ["travel"])
+
+        ensure_taxonomy_defaults(taxonomy)
+        sort_taxonomy(taxonomy)
+        track["taxonomy"] = taxonomy
+        track["styleTags"] = sorted(style_tags)
+        track["styleLabels"] = [STYLE_LABELS.get(tag, tag.replace("_", " ").title()) for tag in track["styleTags"]]
+        if not before_genres and taxonomy["genre"] and track.get("genreConfidence") == "playlist+heuristic":
+            track["genreConfidence"] = "metadata+catalog+heuristic"
+        if track.get("tempoConfidence") == "genre-estimated":
+            track["estimatedBpm"] = int(round(estimate_bpm(track["id"], style_tags)))
+            track["energy"] = estimate_energy(track["id"], style_tags)
+
+
+def build_catalog_profiles(tracks, scope):
+    profiles = {}
+    for track in tracks:
+        taxonomy = track.get("taxonomy") or {}
+        if not taxonomy.get("genre"):
+            continue
+        key = album_profile_key(track) if scope == "album" else artist_profile_key(track)
+        if not key:
+            continue
+        profile = profiles.setdefault(key, {"count": 0, "genre": defaultdict(int), "mood": defaultdict(int), "context": defaultdict(int)})
+        profile["count"] += 1
+        for dimension in ("genre", "mood", "context"):
+            for value in taxonomy.get(dimension) or []:
+                profile[dimension][value] += 1
+    return profiles
+
+
+def apply_profile_taxonomy(taxonomy, style_tags, profile, min_count=1):
+    if not profile or profile["count"] < min_count:
+        return
+    genre_min = 1 if min_count == 1 else max(1, int(round(profile["count"] * 0.25)))
+    genres = profile_top_values(profile["genre"], 2, genre_min)
+    if not genres:
+        return
+    moods = profile_top_values(profile["mood"], 2, 1)
+    contexts = profile_top_values(profile["context"], 2, 1)
+    add_taxonomy_bundle(taxonomy, style_tags, genres, moods, contexts)
+
+
+def profile_top_values(counts, limit, minimum):
+    return [key for key, value in sorted(counts.items(), key=lambda item: (-item[1], item[0])) if value >= minimum][:limit]
+
+
+def artist_profile_key(track):
+    artists = track.get("artists") or []
+    return normalize_key(artists[0]) if artists else ""
+
+
+def album_profile_key(track):
+    return f"{artist_profile_key(track)}|{normalize_key(track.get('album', ''))}"
+
+
+def normalize_key(value):
+    return re.sub(r"\s+", " ", str(value or "").strip().lower())
 
 
 def apply_artist_taxonomy(artists, taxonomy):
