@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "python3 radio_app/build_portable.py",
+    "playability:audit": "node radio_app/audit_playability.mjs",
     "netease:api": "node radio_app/netease-local-helper.mjs",
     "netease:api:raw": "npx NeteaseCloudMusicApi@latest"
   },

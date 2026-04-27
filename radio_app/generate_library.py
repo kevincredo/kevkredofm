@@ -11,6 +11,7 @@ ARCHIVE = ROOT / "output" / "netease_music_archive" / "netease_created_playlists
 OUT = Path(__file__).resolve().parent / "library.json"
 DATA_JS = Path(__file__).resolve().parent / "library-data.js"
 GENRE_CACHE = Path(__file__).resolve().parent / "genre_cache.json"
+PLAYABILITY_BLOCKED_IDS = ROOT / "output" / "netease_music_archive" / "playability_blocked_ids.json"
 
 
 STYLE_LABELS = {
@@ -500,6 +501,7 @@ ARTIST_TAXONOMY_RULES = [
 def main():
     archive = json.loads(ARCHIVE.read_text(encoding="utf-8"))
     genre_cache = load_genre_cache()
+    blocked_track_ids = load_playability_blocked_ids()
     playlist_by_id = {p["playlist_id"]: p for p in archive["playlists"]}
     memberships = defaultdict(list)
     for row in archive["playlist_tracks"]:
@@ -553,6 +555,8 @@ def main():
         estimated_bpm = tempo.get("bpm") or estimate_bpm(track_id, style_tags)
         energy = estimate_energy(track_id, style_tags)
         musical_key = cache_entry.get("musicalKey") or {}
+        playable = str(track_id) not in blocked_track_ids
+        playability_status = "playable_by_browser_probe" if playable else "blocked_by_browser_probe"
 
         tracks.append(
             {
@@ -563,6 +567,9 @@ def main():
                 "durationMs": track.get("duration_ms"),
                 "popularity": track.get("popularity"),
                 "fee": track.get("fee"),
+                "playable": playable,
+                "playabilityStatus": playability_status,
+                "hiddenFromRadio": not playable,
                 "picUrl": track.get("pic_url", ""),
                 "styleTags": sorted(style_tags),
                 "styleLabels": [STYLE_LABELS.get(tag, tag.replace("_", " ").title()) for tag in sorted(style_tags)],
@@ -594,6 +601,9 @@ def main():
         "sourceArchiveGeneratedAt": archive.get("generated_at"),
         "scope": archive.get("scope", {}),
         "trackCount": len(tracks),
+        "playableTrackCount": sum(1 for track in tracks if track.get("playable") is not False),
+        "blockedTrackCount": sum(1 for track in tracks if track.get("playable") is False),
+        "playabilitySource": str(PLAYABILITY_BLOCKED_IDS.relative_to(ROOT)) if blocked_track_ids else "",
         "tracks": tracks,
         "styleStats": make_style_stats(tracks),
         "styleLabels": STYLE_LABELS,
@@ -609,6 +619,18 @@ def main():
         encoding="utf-8",
     )
     print(json.dumps({"tracks": len(tracks), "out": str(OUT), "data_js": str(DATA_JS)}, ensure_ascii=False))
+
+
+def load_playability_blocked_ids():
+    if not PLAYABILITY_BLOCKED_IDS.exists():
+        return set()
+    try:
+        data = json.loads(PLAYABILITY_BLOCKED_IDS.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return set()
+    if isinstance(data, list):
+        return {str(item) for item in data if str(item)}
+    return set()
 
 
 def load_genre_cache():

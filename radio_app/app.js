@@ -327,6 +327,7 @@ const NETEASE_EXPORT_CHUNK_SIZE = 80;
 
 const elements = {};
 const state = {
+  allTracks: [],
   tracks: [],
   filters: [],
   filterGroups: {},
@@ -376,7 +377,8 @@ async function init() {
     const library = await loadLibrary();
     state.libraryMeta = library;
     state.styleLabels = { ...STYLE_LABELS, ...(library.styleLabels || {}) };
-    state.tracks = (library.tracks || []).map(hydrateTrackTaxonomy);
+    state.allTracks = (library.tracks || []).map(hydrateTrackTaxonomy);
+    state.tracks = state.allTracks.filter(isFrontendPlayable);
     state.lovedIds = loadLovedIds();
     state.profileUsername = window.localStorage.getItem(PROFILE_USERNAME_STORAGE_KEY) || "";
     if (state.profileUsername) {
@@ -389,7 +391,7 @@ async function init() {
     elements.exportApiInput.value = window.localStorage.getItem(NETEASE_EXPORT_API_STORAGE_KEY) || NETEASE_DEFAULT_EXPORT_API_BASE;
     state.lastNeteaseExport = loadLastNeteaseExport();
     renderExportRuntimeNote();
-    elements.libraryCount.textContent = `${library.trackCount || state.tracks.length} tracks from your archive`;
+    updateLibraryCount();
     elements.statTracks.textContent = String(state.tracks.length);
     buildFilters(library);
     fillQueue(true);
@@ -411,6 +413,10 @@ async function loadLibrary() {
   const response = await fetch("./library.json", { cache: "no-store" });
   if (!response.ok) throw new Error(`Library load failed: ${response.status}`);
   return response.json();
+}
+
+function isFrontendPlayable(track) {
+  return track && track.playable !== false && track.hiddenFromRadio !== true;
 }
 
 function bindElements() {
@@ -1041,7 +1047,7 @@ function normalizeTrackList(response) {
 }
 
 function mergeSyncedTracks(tracks, playlist) {
-  const trackMap = new Map(state.tracks.map((track) => [trackId(track), track]));
+  const trackMap = new Map(state.allTracks.map((track) => [trackId(track), track]));
   let seenTracks = 0;
   let newTracks = 0;
   let updatedTracks = 0;
@@ -1058,7 +1064,8 @@ function mergeSyncedTracks(tracks, playlist) {
     }
 
     const track = normalizeSyncedTrack(song, playlist);
-    state.tracks.push(track);
+    state.allTracks.push(track);
+    if (isFrontendPlayable(track)) state.tracks.push(track);
     trackMap.set(id, track);
     newTracks += 1;
   });
@@ -1188,7 +1195,12 @@ function buildStyleStatsFromTracks() {
 }
 
 function updateLibraryCount() {
-  elements.libraryCount.textContent = `${state.tracks.length} tracks from your archive`;
+  const total = Number(state.libraryMeta?.trackCount || state.allTracks.length || state.tracks.length);
+  const playable = state.tracks.length;
+  const blocked = Number(state.libraryMeta?.blockedTrackCount || Math.max(0, total - playable));
+  elements.libraryCount.textContent = blocked
+    ? `${playable} playable tracks · ${total} archived`
+    : `${playable} tracks from your archive`;
 }
 
 function getSyncProxyBase() {
@@ -1358,9 +1370,7 @@ function stopNeteaseQrPolling() {
 
 function generateNeteaseExportDraft(options = {}) {
   const lovedTracks = getLovedTracks();
-  const knownIds = new Set(lovedTracks.map(trackId));
-  const unknownIds = Array.from(state.lovedIds).map(String).filter((id) => id && !knownIds.has(id));
-  const trackIds = [...lovedTracks.map(trackId), ...unknownIds];
+  const trackIds = lovedTracks.map(trackId);
 
   if (!trackIds.length) {
     setExportStatus("还没有红心歌曲，先给喜欢的歌点红心。");
@@ -1378,20 +1388,9 @@ function generateNeteaseExportDraft(options = {}) {
     lovedSignature: getLovedSignature(),
     trackCount: trackIds.length,
     knownTrackCount: lovedTracks.length,
-    unknownTrackCount: unknownIds.length,
+    unknownTrackCount: 0,
     trackIds,
-    tracks: [
-      ...lovedTracks.map((track, index) => formatTrackForExport(track, index + 1)),
-      ...unknownIds.map((id, index) => ({
-        position: lovedTracks.length + index + 1,
-        id,
-        name: "",
-        artists: [],
-        album: "",
-        durationMs: null,
-        neteaseUrl: neteaseSongUrl(id),
-      })),
-    ],
+    tracks: lovedTracks.map((track, index) => formatTrackForExport(track, index + 1)),
   };
 
   state.lastNeteaseExport = draft;
@@ -1504,7 +1503,7 @@ async function createNeteasePlaylistFromLoved() {
 
 function renderNeteaseExport() {
   if (!elements.exportPanel) return;
-  const lovedCount = state.lovedIds.size;
+  const lovedCount = getLovedTracks().length;
   const draft = isCurrentNeteaseDraft(state.lastNeteaseExport) ? state.lastNeteaseExport : null;
   elements.exportSummaryText.textContent = lovedCount ? `${lovedCount} 首待导出` : "暂无红心";
   [elements.exportDraftBtn, elements.copyTrackIdsBtn, elements.downloadExportBtn, elements.exportCreateBtn].forEach((button) => {
@@ -1561,16 +1560,17 @@ function ensureNeteaseExportDraft() {
 }
 
 function isCurrentNeteaseDraft(draft) {
+  const lovedTracks = getLovedTracks();
   return Boolean(
     draft
     && draft.lovedSignature === getLovedSignature()
-    && draft.trackCount === state.lovedIds.size
+    && draft.trackCount === lovedTracks.length
     && draft.playlistName === currentExportPlaylistName()
   );
 }
 
 function getLovedSignature() {
-  return Array.from(state.lovedIds).map(String).filter(Boolean).join("|");
+  return getLovedTracks().map(trackId).filter(Boolean).join("|");
 }
 
 function formatTrackForExport(track, position) {
@@ -1628,7 +1628,7 @@ function renderExportRuntimeNote() {
 
 function updateImportFlowState() {
   if (!elements.importLoginStep) return;
-  const hasLoved = state.lovedIds.size > 0;
+  const hasLoved = getLovedTracks().length > 0;
   const hasDraft = isCurrentNeteaseDraft(state.lastNeteaseExport);
   const canUpload = hasLoved && hasDraft && state.neteaseLoggedIn;
   elements.importLoginStep.classList.toggle("done", state.neteaseLoggedIn);
