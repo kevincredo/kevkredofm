@@ -322,13 +322,14 @@ const RADIO_PROGRAMS = [
     id: "day_cafe",
     name: "DAY CAFÉ",
     schedule: "10:00–18:00",
-    bpmLabel: "75–114 BPM",
-    minBpm: 70,
-    maxBpm: 114,
+    bpmLabel: "82–118 BPM",
+    minBpm: 82,
+    maxBpm: 118,
+    vocalPreference: true,
     facets: {
-      genre: ["downtempo", "lofi", "jazz", "funk_soul", "rnb_soul", "deep_house", "nu_disco", "ambient"],
-      mood: ["chill", "warm", "groovy", "dreamy"],
-      context: ["lounge", "dinner", "focus"],
+      genre: ["pop", "rnb_soul", "funk_soul", "jazz", "nu_disco", "indie_rock", "deep_house", "house", "latin_world"],
+      mood: ["warm", "groovy", "playful", "romantic", "chill"],
+      context: ["lounge", "dinner", "summer", "travel"],
     },
   },
   {
@@ -386,6 +387,33 @@ const RADIO_PROGRAMS = [
 ];
 
 const QUEUE_TARGET = 18;
+const DJ_MIN_MIX_SECONDS = 8;
+const DJ_MAX_MIX_SECONDS = 28;
+const DJ_PHRASE_BEAT_OPTIONS = [16, 32, 64];
+const DJ_DEFAULT_BEATS_PER_BAR = 4;
+const DJ_TEMPO_RATE_LIMIT = 0.04;
+const DJ_DEFAULT_MIX_SECONDS = 10;
+const KEY_TO_SEMITONE = {
+  c: 0,
+  "c#": 1,
+  db: 1,
+  d: 2,
+  "d#": 3,
+  eb: 3,
+  e: 4,
+  f: 5,
+  "f#": 6,
+  gb: 6,
+  g: 7,
+  "g#": 8,
+  ab: 8,
+  a: 9,
+  "a#": 10,
+  bb: 10,
+  b: 11,
+};
+const CAMELOT_MAJOR = ["8B", "3B", "10B", "5B", "12B", "7B", "2B", "9B", "4B", "11B", "6B", "1B"];
+const CAMELOT_MINOR = ["5A", "12A", "7A", "2A", "9A", "4A", "11A", "6A", "1A", "8A", "3A", "10A"];
 const LOVED_STORAGE_KEY = "kevincredo-fm-loved-track-ids";
 const PROFILE_USERNAME_STORAGE_KEY = "kevincredo-fm-profile-username";
 const SYNC_PROXY_STORAGE_KEY = "kevincredo-fm-sync-proxy";
@@ -393,6 +421,7 @@ const NETEASE_EXPORT_DRAFT_STORAGE_KEY = "kevincredo-fm-netease-export-draft";
 const NETEASE_EXPORT_API_STORAGE_KEY = "kevincredo-fm-netease-export-api";
 const AUTO_PROGRAM_STORAGE_KEY = "echo-room-fm-auto-program";
 const ACTIVE_PROGRAM_STORAGE_KEY = "echo-room-fm-active-program";
+const PROGRAM_OVERRIDES_STORAGE_KEY = "echo-room-fm-program-overrides";
 const NETEASE_ORIGIN = "https://music.163.com";
 const NETEASE_DEFAULT_EXPORT_API_BASE = "http://127.0.0.1:3000";
 const CLOUD_LOVED_ENDPOINT = "/.netlify/functions/loved";
@@ -414,6 +443,8 @@ const state = {
   activeProgramId: "",
   autoProgram: true,
   programTimer: null,
+  programOverrides: {},
+  activeProgramEditorFacet: "genre",
   activeFacet: "genre",
   lovedIds: new Set(),
   lovedOnly: false,
@@ -433,6 +464,7 @@ const state = {
   history: [],
   current: null,
   previous: null,
+  currentMixPlan: null,
   decks: [],
   activeDeckIndex: 0,
   isPlaying: false,
@@ -460,6 +492,7 @@ async function init() {
     state.allTracks = (library.tracks || []).map(hydrateTrackTaxonomy);
     state.tracks = state.allTracks.filter(isFrontendPlayable);
     state.lovedIds = loadLovedIds();
+    state.programOverrides = loadProgramOverrides();
     state.profileUsername = window.localStorage.getItem(PROFILE_USERNAME_STORAGE_KEY) || "";
     if (state.profileUsername) {
       elements.profileUsernameInput.value = state.profileUsername;
@@ -516,6 +549,15 @@ function bindElements() {
     "autoProgramToggle",
     "programList",
     "programStatus",
+    "programEditorPanel",
+    "programEditorTitle",
+    "programMinBpmInput",
+    "programMaxBpmInput",
+    "programVocalToggle",
+    "programFacetTabs",
+    "programTagEditor",
+    "saveProgramBtn",
+    "resetProgramBtn",
     "generateMixBtn",
     "clearMixBtn",
     "profileStatus",
@@ -601,6 +643,14 @@ function wireEvents() {
   elements.generateMixBtn.addEventListener("click", generateStyleSequence);
   elements.clearMixBtn.addEventListener("click", clearStyleMix);
   elements.autoProgramToggle.addEventListener("change", toggleAutoProgram);
+  elements.programMinBpmInput.addEventListener("change", updateActiveProgramBpm);
+  elements.programMaxBpmInput.addEventListener("change", updateActiveProgramBpm);
+  elements.programVocalToggle.addEventListener("change", updateActiveProgramVocalPreference);
+  elements.saveProgramBtn.addEventListener("click", saveActiveProgramPreset);
+  elements.resetProgramBtn.addEventListener("click", resetActiveProgramPreset);
+  elements.programFacetTabs.querySelectorAll("[data-program-facet]").forEach((button) => {
+    button.addEventListener("click", () => switchProgramEditorFacet(button.dataset.programFacet));
+  });
   elements.facetTabs.querySelectorAll("[data-facet]").forEach((button) => {
     button.addEventListener("click", () => switchFacet(button.dataset.facet));
   });
@@ -933,8 +983,102 @@ function readLocalPreference(key) {
   }
 }
 
-function getProgramById(programId) {
+function loadProgramOverrides() {
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(PROGRAM_OVERRIDES_STORAGE_KEY) || "{}");
+    if (!parsed || typeof parsed !== "object") return {};
+    return Object.entries(parsed).reduce((overrides, [programId, value]) => {
+      const normalized = normalizeProgramOverride(value);
+      if (normalized) overrides[programId] = normalized;
+      return overrides;
+    }, {});
+  } catch (error) {
+    return {};
+  }
+}
+
+function persistProgramOverrides() {
+  try {
+    window.localStorage.setItem(PROGRAM_OVERRIDES_STORAGE_KEY, JSON.stringify(state.programOverrides));
+  } catch (error) {
+    console.warn("Program overrides are unavailable for this browser.", error);
+  }
+}
+
+function normalizeProgramOverride(value) {
+  if (!value || typeof value !== "object") return null;
+  const override = {};
+  if (Object.prototype.hasOwnProperty.call(value, "minBpm")) {
+    const minBpm = Number(value.minBpm);
+    if (Number.isFinite(minBpm)) override.minBpm = clamp(Math.round(minBpm), 40, 220);
+  }
+  if (Object.prototype.hasOwnProperty.call(value, "maxBpm")) {
+    const maxBpm = value.maxBpm === null || value.maxBpm === "" || value.maxBpm === "Infinity"
+      ? Infinity
+      : Number(value.maxBpm);
+    override.maxBpm = Number.isFinite(maxBpm) ? clamp(Math.round(maxBpm), 40, 220) : Infinity;
+  }
+  if (Object.prototype.hasOwnProperty.call(value, "vocalPreference")) {
+    override.vocalPreference = Boolean(value.vocalPreference);
+  }
+  if (value.facets && typeof value.facets === "object") {
+    override.facets = normalizeProgramFacets(value.facets);
+  }
+  if (Number.isFinite(override.minBpm) && Number.isFinite(override.maxBpm) && override.maxBpm < override.minBpm) {
+    override.maxBpm = override.minBpm;
+  }
+  return override;
+}
+
+function normalizeProgramFacets(facets) {
+  return ["genre", "mood", "context"].reduce((result, dimension) => {
+    if (!Array.isArray(facets[dimension])) return result;
+    const allowed = new Set(TAXONOMY[dimension]?.order || []);
+    result[dimension] = uniqueStrings(facets[dimension]).filter((key) => allowed.has(key));
+    return result;
+  }, {});
+}
+
+function getProgramList() {
+  return RADIO_PROGRAMS.map((program) => applyProgramOverride(program));
+}
+
+function getBaseProgramById(programId) {
   return RADIO_PROGRAMS.find((program) => program.id === programId) || null;
+}
+
+function getProgramById(programId) {
+  const base = getBaseProgramById(programId);
+  return base ? applyProgramOverride(base) : null;
+}
+
+function applyProgramOverride(program) {
+  const override = normalizeProgramOverride(state.programOverrides[program.id]) || {};
+  const merged = {
+    ...program,
+    ...override,
+    facets: {
+      genre: Object.prototype.hasOwnProperty.call(override.facets || {}, "genre")
+        ? uniqueStrings(override.facets.genre)
+        : uniqueStrings(program.facets.genre),
+      mood: Object.prototype.hasOwnProperty.call(override.facets || {}, "mood")
+        ? uniqueStrings(override.facets.mood)
+        : uniqueStrings(program.facets.mood),
+      context: Object.prototype.hasOwnProperty.call(override.facets || {}, "context")
+        ? uniqueStrings(override.facets.context)
+        : uniqueStrings(program.facets.context),
+    },
+  };
+  merged.minBpm = Number.isFinite(Number(merged.minBpm)) ? Number(merged.minBpm) : 70;
+  merged.maxBpm = Number.isFinite(Number(merged.maxBpm)) ? Number(merged.maxBpm) : Infinity;
+  if (merged.maxBpm < merged.minBpm) merged.maxBpm = merged.minBpm;
+  merged.bpmLabel = formatProgramBpm(merged);
+  return merged;
+}
+
+function formatProgramBpm(program) {
+  if (!Number.isFinite(program.maxBpm)) return `${Math.round(program.minBpm)}+ BPM`;
+  return `${Math.round(program.minBpm)}–${Math.round(program.maxBpm)} BPM`;
 }
 
 function getActiveProgram() {
@@ -956,27 +1100,49 @@ function programFacetMatches(track, program) {
   });
 }
 
+function vocalAffinityScore(track) {
+  const genres = new Set(getTrackFacetValues(track, "genre"));
+  const text = searchableTrackText(track);
+  let score = 0;
+
+  ["pop", "rnb_soul", "funk_soul", "indie_rock", "rock", "hiphop_rap", "latin_world"].forEach((key) => {
+    if (genres.has(key)) score += 2;
+  });
+  ["jazz", "nu_disco", "house", "deep_house", "indie_dance"].forEach((key) => {
+    if (genres.has(key)) score += 1;
+  });
+  ["ambient", "lofi", "classical", "downtempo"].forEach((key) => {
+    if (genres.has(key)) score -= 2;
+  });
+
+  if (/\b(vocal|feat\.?|ft\.?|featuring|with)\b/i.test(text)) score += 1;
+  if (/\b(instrumental|ambient|sleep|study|meditation|piano solo)\b/i.test(text)) score -= 2;
+  return score;
+}
+
 function programMatchesTrack(track, program) {
   const bpm = Number(track.estimatedBpm);
   if (!Number.isFinite(bpm) || bpm < program.minBpm || bpm > program.maxBpm) return false;
+  if (program.vocalPreference && vocalAffinityScore(track) < 1) return false;
   return programFacetMatches(track, program).length >= 2;
 }
 
 function renderPrograms() {
   const activeProgram = getActiveProgram();
   elements.autoProgramToggle.checked = state.autoProgram;
-  elements.programList.innerHTML = RADIO_PROGRAMS.map((program) => {
+  elements.programList.innerHTML = getProgramList().map((program) => {
     const active = program.id === state.activeProgramId;
     const count = state.tracks.filter((track) => programMatchesTrack(track, program)).length;
+    const customized = Boolean(state.programOverrides[program.id]);
     return `
       <button
         type="button"
-        class="program-button${active ? " active" : ""}"
+        class="program-button${active ? " active" : ""}${customized ? " customized" : ""}"
         data-program="${escapeHtml(program.id)}"
         aria-pressed="${String(active)}"
       >
         <strong>${escapeHtml(program.name)}</strong>
-        <small>${escapeHtml(program.schedule)} · ${escapeHtml(program.bpmLabel)}</small>
+        <small>${escapeHtml(program.schedule)} · ${escapeHtml(program.bpmLabel)}${program.vocalPreference ? " · vocal" : ""}</small>
         <em>${count}</em>
       </button>
     `;
@@ -987,10 +1153,139 @@ function renderPrograms() {
 
   if (!activeProgram) {
     elements.programStatus.textContent = "自由组合模式";
+    renderProgramEditor(null);
     return;
   }
   const prefix = state.autoProgram ? "AUTO" : "MANUAL";
-  elements.programStatus.textContent = `${prefix} · ${activeProgram.name} · ${activeProgram.bpmLabel}`;
+  const vocal = activeProgram.vocalPreference ? " · vocal-friendly" : "";
+  elements.programStatus.textContent = `${prefix} · ${activeProgram.name} · ${activeProgram.bpmLabel}${vocal}`;
+  renderProgramEditor(activeProgram);
+}
+
+function renderProgramEditor(program = getActiveProgram()) {
+  if (!elements.programEditorPanel) return;
+  const active = program || getActiveProgram();
+  elements.programEditorPanel.hidden = !active;
+  if (!active) return;
+
+  const customized = Boolean(state.programOverrides[active.id]);
+  elements.programEditorTitle.textContent = `${active.name}${customized ? " *" : ""}`;
+  elements.programMinBpmInput.value = Math.round(active.minBpm);
+  elements.programMaxBpmInput.value = Number.isFinite(active.maxBpm) ? Math.round(active.maxBpm) : "";
+  elements.programVocalToggle.checked = Boolean(active.vocalPreference);
+
+  elements.programFacetTabs.querySelectorAll("[data-program-facet]").forEach((button) => {
+    const isActive = button.dataset.programFacet === state.activeProgramEditorFacet;
+    button.classList.toggle("active", isActive);
+    button.setAttribute("aria-selected", String(isActive));
+  });
+
+  const dimension = state.activeProgramEditorFacet;
+  const selected = new Set(active.facets[dimension] || []);
+  const filters = state.filterGroups[dimension] || [];
+  elements.programTagEditor.innerHTML = filters.map((filter) => `
+    <button
+      type="button"
+      class="program-tag-chip${selected.has(filter.key) ? " active" : ""}"
+      data-program-tag="${escapeHtml(filter.key)}"
+      aria-pressed="${String(selected.has(filter.key))}"
+    >
+      <span>${escapeHtml(filter.label)}</span>
+      <em>${filter.count}</em>
+    </button>
+  `).join("");
+  elements.programTagEditor.querySelectorAll("[data-program-tag]").forEach((button) => {
+    button.addEventListener("click", () => toggleActiveProgramFacet(dimension, button.dataset.programTag));
+  });
+}
+
+function switchProgramEditorFacet(dimension) {
+  if (!TAXONOMY[dimension] || dimension === "era") return;
+  state.activeProgramEditorFacet = dimension;
+  renderProgramEditor();
+}
+
+function toggleActiveProgramFacet(dimension, key) {
+  const program = getActiveProgram();
+  if (!program || !program.facets[dimension]) return;
+  const next = cloneProgramConfig(program);
+  const values = new Set(next.facets[dimension]);
+  if (values.has(key)) {
+    values.delete(key);
+  } else {
+    values.add(key);
+  }
+  next.facets[dimension] = Array.from(values);
+  applyProgramConfig(next, `${program.name} · ${getFacetLabel(dimension, key)} 已更新`);
+}
+
+function updateActiveProgramBpm() {
+  const program = getActiveProgram();
+  if (!program) return;
+  const next = cloneProgramConfig(program);
+  const minBpm = clamp(Math.round(Number(elements.programMinBpmInput.value) || program.minBpm), 40, 220);
+  const rawMax = String(elements.programMaxBpmInput.value || "").trim();
+  const maxBpm = rawMax ? clamp(Math.round(Number(rawMax) || program.maxBpm), 40, 220) : Infinity;
+  next.minBpm = minBpm;
+  next.maxBpm = Number.isFinite(maxBpm) ? Math.max(minBpm, maxBpm) : Infinity;
+  applyProgramConfig(next, `${program.name} · BPM 已更新`);
+}
+
+function updateActiveProgramVocalPreference() {
+  const program = getActiveProgram();
+  if (!program) return;
+  const next = cloneProgramConfig(program);
+  next.vocalPreference = elements.programVocalToggle.checked;
+  applyProgramConfig(next, `${program.name} · ${next.vocalPreference ? "已开启人声优先" : "已关闭人声优先"}`);
+}
+
+function saveActiveProgramPreset() {
+  const program = getActiveProgram();
+  if (!program) return;
+  writeProgramOverride(program);
+  persistProgramOverrides();
+  renderAll();
+  setStatus(`${program.name} 预设已保存`);
+}
+
+function resetActiveProgramPreset() {
+  const program = getActiveProgram();
+  if (!program) return;
+  delete state.programOverrides[program.id];
+  persistProgramOverrides();
+  state.failedIds.clear();
+  fillQueue(true);
+  renderAll();
+  setStatus(`${program.name} 已恢复默认预设`);
+}
+
+function applyProgramConfig(program, statusText) {
+  writeProgramOverride(program);
+  persistProgramOverrides();
+  state.failedIds.clear();
+  fillQueue(true);
+  renderAll();
+  setStatus(statusText);
+}
+
+function writeProgramOverride(program) {
+  state.programOverrides[program.id] = {
+    minBpm: Math.round(program.minBpm),
+    maxBpm: Number.isFinite(program.maxBpm) ? Math.round(program.maxBpm) : null,
+    vocalPreference: Boolean(program.vocalPreference),
+    facets: normalizeProgramFacets(program.facets),
+  };
+}
+
+function cloneProgramConfig(program) {
+  return {
+    ...program,
+    facets: {
+      genre: uniqueStrings(program.facets.genre),
+      mood: uniqueStrings(program.facets.mood),
+      context: uniqueStrings(program.facets.context),
+    },
+  };
 }
 
 function buildFacetFilters() {
@@ -2075,12 +2370,12 @@ function pickTrack(reference = null) {
     return weighted[Math.floor(Math.random() * weighted.length)];
   }
 
-  const ranked = candidates
-    .map((track) => ({ track, score: mixScore(reference, track) + selectionScore(track) + Math.random() * 4 }))
+  const ranked = uniqueTracksById(candidates)
+    .map((track) => ({ track, score: mixScore(reference, track) + selectionScore(track) }))
     .sort((a, b) => b.score - a.score)
-    .slice(0, 24);
-  const pick = ranked[Math.floor(Math.random() * Math.min(8, ranked.length))] || ranked[0];
-  return pick?.track || candidates[0];
+    .slice(0, 12);
+  const pick = weightedRankedChoice(ranked);
+  return pick || ranked[0]?.track || candidates[0];
 }
 
 async function playNext(options = {}) {
@@ -2101,7 +2396,7 @@ async function playNext(options = {}) {
     return;
   }
 
-  await crossfadeToTrack(nextTrack, options.reason === "skip" ? 3 : getCrossfadeSeconds());
+  await crossfadeToTrack(nextTrack, getCrossfadeSeconds());
 }
 
 async function switchToTrack(track, options = {}) {
@@ -2109,7 +2404,10 @@ async function switchToTrack(track, options = {}) {
   const deck = getActiveDeck();
   getInactiveDeck().pause();
   getInactiveDeck().removeAttribute("src");
+  setDeckPlaybackRate(getInactiveDeck(), 1);
   getInactiveDeck().load();
+  setDeckPlaybackRate(deck, 1);
+  state.currentMixPlan = null;
 
   if (oldTrack) pushHistory(oldTrack);
   state.current = track;
@@ -2144,18 +2442,22 @@ async function crossfadeToTrack(nextTrack, seconds) {
   const newDeckIndex = 1 - state.activeDeckIndex;
   const newDeck = state.decks[newDeckIndex];
   const oldTrack = state.current;
+  const plan = getMixPlan(oldTrack, nextTrack, seconds);
 
   state.isMixing = true;
   state.current = nextTrack;
+  state.currentMixPlan = plan;
   rememberRecent(nextTrack.id);
   renderTrack(nextTrack, "MIXING IN");
-  updateMixText(oldTrack, nextTrack, "crossfade");
+  updateMixText(oldTrack, nextTrack, "crossfade", plan);
   renderQueue();
-  setStatus(`正在平滑接歌 · ${seconds}s crossfade`);
+  setStatus(`正在按 ${plan.phraseBeats} 拍过渡 · ${formatSeconds(plan.transitionSeconds)}`);
 
   newDeck.src = neteaseAudioUrl(nextTrack.id);
   newDeck.currentTime = 0;
   newDeck.volume = 0;
+  setDeckPlaybackRate(oldDeck, 1);
+  setDeckPlaybackRate(newDeck, plan.playbackRate);
   newDeck.load();
 
   try {
@@ -2163,6 +2465,7 @@ async function crossfadeToTrack(nextTrack, seconds) {
   } catch (error) {
     state.isMixing = false;
     state.current = oldTrack;
+    state.currentMixPlan = null;
     state.failedIds.add(nextTrack.id);
     setStatus("下一首无法直接播放，正在重新选歌");
     playNext({ automatic: true, reason: "error" });
@@ -2170,11 +2473,11 @@ async function crossfadeToTrack(nextTrack, seconds) {
   }
 
   const start = performance.now();
-  const durationMs = Math.max(1, seconds) * 1000;
+  const durationMs = Math.max(1, plan.transitionSeconds) * 1000;
   const fade = () => {
     const ratio = Math.min(1, (performance.now() - start) / durationMs);
-    oldDeck.volume = state.masterVolume * (1 - ratio);
-    newDeck.volume = state.masterVolume * ratio;
+    oldDeck.volume = state.masterVolume * Math.cos((ratio * Math.PI) / 2);
+    newDeck.volume = state.masterVolume * Math.sin((ratio * Math.PI) / 2);
 
     if (ratio < 1) {
       window.requestAnimationFrame(fade);
@@ -2183,6 +2486,8 @@ async function crossfadeToTrack(nextTrack, seconds) {
 
     oldDeck.pause();
     oldDeck.removeAttribute("src");
+    oldDeck.volume = 0;
+    setDeckPlaybackRate(oldDeck, 1);
     oldDeck.load();
     state.activeDeckIndex = newDeckIndex;
     state.isMixing = false;
@@ -2191,6 +2496,7 @@ async function crossfadeToTrack(nextTrack, seconds) {
     renderHistory();
     updateProgress();
     setPlaying(true);
+    easeDeckRateTo(newDeck, 1, 12000);
     setStatus("正在播放");
   };
   window.requestAnimationFrame(fade);
@@ -2214,8 +2520,11 @@ function maybeAutoMix() {
   if (!elements.mixToggle.checked || state.isMixing || !state.current) return;
   const deck = getActiveDeck();
   if (!Number.isFinite(deck.duration) || deck.duration <= 0) return;
-  const remaining = deck.duration - deck.currentTime;
-  if (remaining <= getCrossfadeSeconds() + 0.15 && deck.currentTime > 12) {
+  if (!state.queue.length) fillQueue();
+  const nextTrack = state.queue[0];
+  if (!nextTrack) return;
+  const plan = getMixPlan(state.current, nextTrack);
+  if (shouldStartAutoMix(deck, plan)) {
     playNext({ automatic: true, reason: "auto-mix" });
   }
 }
@@ -2356,8 +2665,11 @@ function renderTrack(track, mode) {
   elements.trackTitle.textContent = track.name || "Untitled";
   elements.trackArtist.textContent = artistLine(track);
   elements.trackAlbum.textContent = track.album ? `Album: ${track.album}` : "";
-  elements.genreTags.innerHTML = getDisplayTags(track)
-    .concat(`${track.estimatedBpm || "--"} BPM`)
+  const keyTag = getTrackKeyTag(track);
+  const tags = getDisplayTags(track)
+    .concat(keyTag ? [keyTag] : [])
+    .concat(`${formatBpm(getTrackBpm(track))} BPM`);
+  elements.genreTags.innerHTML = tags
     .map((label) => `<span>${escapeHtml(label)}</span>`)
     .join("");
   elements.albumStage.classList.toggle("no-cover", !track.picUrl);
@@ -2426,24 +2738,25 @@ function renderSmallTrack(track) {
   `;
 }
 
-function updateMixText(fromTrack, toTrack, mode = "planned") {
+function updateMixText(fromTrack, toTrack, mode = "planned", plan = null) {
   if (!toTrack) {
-    elements.mixText.textContent = "正在按多选曲风和估算 BPM 选择下一首。";
+    elements.mixText.textContent = "正在按 BPM、调式、曲风和能量选择下一首。";
     return;
   }
   if (!fromTrack) {
-    elements.mixText.textContent = `${toTrack.estimatedBpm || "--"} BPM · ${labelLine(toTrack)} · 首曲直接进歌。`;
+    const key = getTrackKeyTag(toTrack);
+    elements.mixText.textContent = `${formatBpm(getTrackBpm(toTrack))} BPM${key ? ` · ${key}` : ""} · ${labelLine(toTrack)} · 首曲直接进歌。`;
     return;
   }
 
-  const delta = bpmDistance(fromTrack.estimatedBpm, toTrack.estimatedBpm);
+  const mixPlan = plan || getMixPlan(fromTrack, toTrack);
   const shared = sharedStyleLabels(fromTrack, toTrack);
   const transition = mode === "crossfade"
-    ? `${getCrossfadeSeconds()}s crossfade`
+    ? `${mixPlan.phraseBeats} beats / ${formatSeconds(mixPlan.transitionSeconds)}`
     : mode === "manual cut"
       ? "manual cut"
-      : "planned mix";
-  elements.mixText.textContent = `${fromTrack.estimatedBpm || "--"} → ${toTrack.estimatedBpm || "--"} BPM · Δ${delta.toFixed(0)} · ${shared || getMixLabel()} · ${transition}。`;
+      : "planned";
+  elements.mixText.textContent = `${formatBpm(mixPlan.fromBpm)} → ${formatBpm(mixPlan.toBpm)} BPM · Δ${formatBpm(mixPlan.bpmDelta)} · ${mixPlan.tempoShiftLabel} · ${mixPlan.harmonicLabel} · ${shared || getMixLabel()} · ${transition} · ${mixPlan.gridLabel}。`;
 }
 
 function pushHistory(track) {
@@ -2468,12 +2781,270 @@ function setStatus(text) {
   elements.statusLine.textContent = text;
 }
 
+function getMixPlan(fromTrack, toTrack, targetSeconds = getCrossfadeSeconds()) {
+  const tempo = getTempoMatch(fromTrack, toTrack);
+  const phrase = choosePhraseTransition(tempo.fromBpm, targetSeconds);
+  const harmonic = getHarmonicScore(fromTrack, toTrack);
+  const playbackRate = tempo.hasTempo
+    ? clamp(tempo.rate, 1 - DJ_TEMPO_RATE_LIMIT, 1 + DJ_TEMPO_RATE_LIMIT)
+    : 1;
+  const shiftPercent = (playbackRate - 1) * 100;
+  const gridLabel = fromTrack?.beatGridAvailable && toTrack?.beatGridAvailable
+    ? "beat grid"
+    : "estimated phrase grid";
+
+  return {
+    fromBpm: tempo.fromBpm,
+    toBpm: tempo.toBpm,
+    bpmDelta: tempo.delta,
+    hasTempo: tempo.hasTempo,
+    playbackRate,
+    tempoShiftPercent: shiftPercent,
+    tempoShiftLabel: Math.abs(shiftPercent) < 0.1 ? "tempo locked" : `tempo ${formatSignedPercent(shiftPercent)}`,
+    transitionSeconds: phrase.seconds,
+    phraseBeats: phrase.beats,
+    beatSeconds: phrase.beatSeconds,
+    harmonic,
+    harmonicLabel: harmonic.label,
+    gridLabel,
+  };
+}
+
+function getTempoMatch(fromTrack, toTrack) {
+  return getTempoMatchFromValues(getTrackBpm(fromTrack), getTrackBpm(toTrack));
+}
+
+function getTempoMatchFromValues(fromValue, toValue) {
+  const fromCandidates = getBpmCandidates(fromValue);
+  const toCandidates = getBpmCandidates(toValue);
+  if (!fromCandidates.length || !toCandidates.length) {
+    return {
+      fromBpm: Number(fromValue),
+      toBpm: Number(toValue),
+      delta: 24,
+      rate: 1,
+      hasTempo: false,
+    };
+  }
+
+  const fromBpm = choosePrimaryDjBpm(fromCandidates);
+  const toBpm = toCandidates
+    .slice()
+    .sort((a, b) => Math.abs(a - fromBpm) - Math.abs(b - fromBpm))[0];
+  return {
+    fromBpm,
+    toBpm,
+    delta: Math.abs(fromBpm - toBpm),
+    rate: toBpm > 0 ? fromBpm / toBpm : 1,
+    hasTempo: true,
+  };
+}
+
+function getTrackBpm(trackOrValue) {
+  const value = typeof trackOrValue === "object"
+    ? Number(trackOrValue?.estimatedBpm)
+    : Number(trackOrValue);
+  return Number.isFinite(value) && value > 0 ? value : NaN;
+}
+
+function getBpmCandidates(value) {
+  const raw = Number(value);
+  if (!Number.isFinite(raw) || raw <= 0) return [];
+  const candidates = [raw, raw * 2, raw / 2]
+    .filter((bpm) => bpm >= 55 && bpm <= 190)
+    .map((bpm) => Math.round(bpm * 10) / 10);
+  return Array.from(new Set(candidates));
+}
+
+function choosePrimaryDjBpm(candidates) {
+  const playableRange = candidates.filter((bpm) => bpm >= 70 && bpm <= 155);
+  const source = playableRange.length ? playableRange : candidates;
+  return source
+    .slice()
+    .sort((a, b) => Math.abs(a - 118) - Math.abs(b - 118))[0];
+}
+
+function choosePhraseTransition(bpm, targetSeconds = DJ_DEFAULT_MIX_SECONDS) {
+  const safeTarget = Math.max(Number(targetSeconds) || DJ_DEFAULT_MIX_SECONDS, 14);
+  if (!Number.isFinite(bpm) || bpm <= 0) {
+    return {
+      beats: 32,
+      seconds: clamp(safeTarget, DJ_MIN_MIX_SECONDS, DJ_MAX_MIX_SECONDS),
+      beatSeconds: 0,
+    };
+  }
+
+  const beatSeconds = 60 / bpm;
+  const best = DJ_PHRASE_BEAT_OPTIONS
+    .map((beats) => ({
+      beats,
+      seconds: beats * beatSeconds,
+      score: Math.abs(beats * beatSeconds - safeTarget) - (beats === 32 ? 4 : 0),
+    }))
+    .sort((a, b) => a.score - b.score)[0];
+
+  return {
+    beats: best.beats,
+    seconds: roundTo(clamp(best.seconds, DJ_MIN_MIX_SECONDS, DJ_MAX_MIX_SECONDS), 0.1),
+    beatSeconds,
+  };
+}
+
+function shouldStartAutoMix(deck, plan) {
+  if (!Number.isFinite(deck.duration) || deck.duration <= 0 || deck.currentTime <= 12) return false;
+  const remaining = deck.duration - deck.currentTime;
+  if (remaining <= plan.transitionSeconds + 0.15) return true;
+  if (!Number.isFinite(plan.beatSeconds) || plan.beatSeconds <= 0) return false;
+
+  const phraseLookahead = plan.transitionSeconds + plan.beatSeconds * DJ_DEFAULT_BEATS_PER_BAR;
+  if (remaining > phraseLookahead) return false;
+  return isNearPhraseBoundary(deck.currentTime, plan);
+}
+
+function isNearPhraseBoundary(currentTime, plan) {
+  const phraseSeconds = plan.beatSeconds * plan.phraseBeats;
+  if (!Number.isFinite(phraseSeconds) || phraseSeconds <= 0) return false;
+  const phase = currentTime % phraseSeconds;
+  const tolerance = Math.min(0.35, plan.beatSeconds * 0.45);
+  return phase <= tolerance || phraseSeconds - phase <= tolerance;
+}
+
+function parseMusicalKey(track) {
+  const rawKey = String(track?.musicalKey || "").trim();
+  const rawMode = String(track?.mode || "").trim().toLowerCase();
+  if (!rawKey) return { label: "", root: "", semitone: null, mode: "", camelot: "" };
+
+  const camelot = rawKey.match(/^([1-9]|1[0-2])\s*([ab])$/i);
+  if (camelot) {
+    const normalized = `${Number(camelot[1])}${camelot[2].toUpperCase()}`;
+    return { label: normalized, root: "", semitone: null, mode: camelot[2].toUpperCase() === "A" ? "minor" : "major", camelot: normalized };
+  }
+
+  const normalized = rawKey
+    .replace(/♯/g, "#")
+    .replace(/♭/g, "b")
+    .replace(/\s+/g, " ")
+    .trim();
+  const match = normalized.match(/^([A-Ga-g])([#b]?)(?:\s*(major|minor|maj|min|m))?$/);
+  if (!match) return { label: rawKey, root: rawKey, semitone: null, mode: rawMode, camelot: "" };
+
+  const root = `${match[1].toUpperCase()}${match[2] || ""}`;
+  const modeToken = (match[3] || rawMode || "").toLowerCase();
+  const mode = modeToken.startsWith("min") || modeToken === "m" ? "minor" : "major";
+  const semitone = KEY_TO_SEMITONE[root.toLowerCase()];
+  if (!Number.isFinite(semitone)) return { label: `${root} ${mode}`, root, semitone: null, mode, camelot: "" };
+  const camelotCode = mode === "minor" ? CAMELOT_MINOR[semitone] : CAMELOT_MAJOR[semitone];
+  return {
+    label: `${root} ${mode}`,
+    root,
+    semitone,
+    mode,
+    camelot: camelotCode || "",
+  };
+}
+
+function getHarmonicScore(fromTrack, toTrack) {
+  const fromKey = parseMusicalKey(fromTrack);
+  const toKey = parseMusicalKey(toTrack);
+  if (!fromKey.camelot || !toKey.camelot) {
+    const label = toKey.camelot ? `${toKey.camelot} ${toKey.label}` : "key pending";
+    return { score: 8, label };
+  }
+
+  const fromCamelot = parseCamelot(fromKey.camelot);
+  const toCamelot = parseCamelot(toKey.camelot);
+  const numberDistance = camelotNumberDistance(fromCamelot.number, toCamelot.number);
+  const sameMode = fromCamelot.mode === toCamelot.mode;
+  const semitoneDistance = Number.isFinite(fromKey.semitone) && Number.isFinite(toKey.semitone)
+    ? circularDistance(fromKey.semitone, toKey.semitone, 12)
+    : null;
+  const label = `${fromKey.camelot} → ${toKey.camelot}`;
+
+  if (numberDistance === 0 && sameMode) return { score: 36, label: `${label} same key` };
+  if (numberDistance === 0) return { score: 33, label: `${label} relative` };
+  if (numberDistance === 1 && sameMode) return { score: 29, label: `${label} adjacent` };
+  if (numberDistance === 1) return { score: 22, label: `${label} soft shift` };
+  if (semitoneDistance === 5 || semitoneDistance === 7) return { score: 18, label: `${label} fifth` };
+  if (semitoneDistance === 0) return { score: 16, label: `${label} parallel` };
+  return { score: -16, label: `${label} clash` };
+}
+
+function parseCamelot(value) {
+  const match = String(value || "").match(/^([1-9]|1[0-2])([AB])$/i);
+  return {
+    number: match ? Number(match[1]) : 0,
+    mode: match ? match[2].toUpperCase() : "",
+  };
+}
+
+function camelotNumberDistance(a, b) {
+  if (!a || !b) return 12;
+  return circularDistance(a, b, 12);
+}
+
+function circularDistance(a, b, size) {
+  const diff = Math.abs(a - b);
+  return Math.min(diff, size - diff);
+}
+
+function getTrackKeyTag(track) {
+  const key = parseMusicalKey(track);
+  if (!key.camelot) return "";
+  return `${key.camelot} ${key.root || ""}`.trim();
+}
+
+function setDeckPlaybackRate(deck, rate = 1) {
+  if (!deck) return;
+  const safeRate = clamp(Number(rate) || 1, 0.75, 1.25);
+  try {
+    if ("preservesPitch" in deck) deck.preservesPitch = true;
+    if ("mozPreservesPitch" in deck) deck.mozPreservesPitch = true;
+    if ("webkitPreservesPitch" in deck) deck.webkitPreservesPitch = true;
+    deck.playbackRate = safeRate;
+    deck.defaultPlaybackRate = safeRate;
+  } catch (error) {
+    deck.playbackRate = 1;
+  }
+}
+
+function easeDeckRateTo(deck, targetRate = 1, durationMs = 12000) {
+  if (!deck) return;
+  const startRate = Number(deck.playbackRate) || 1;
+  const target = clamp(Number(targetRate) || 1, 0.75, 1.25);
+  if (Math.abs(startRate - target) < 0.003) {
+    setDeckPlaybackRate(deck, target);
+    return;
+  }
+
+  const startedAt = performance.now();
+  const step = () => {
+    if (deck !== getActiveDeck() || deck.paused) {
+      setDeckPlaybackRate(deck, target);
+      return;
+    }
+    const ratio = Math.min(1, (performance.now() - startedAt) / durationMs);
+    const eased = 1 - Math.pow(1 - ratio, 3);
+    setDeckPlaybackRate(deck, startRate + (target - startRate) * eased);
+    if (ratio < 1) window.requestAnimationFrame(step);
+  };
+  window.requestAnimationFrame(step);
+}
+
 function mixScore(fromTrack, toTrack) {
-  const delta = bpmDistance(fromTrack.estimatedBpm, toTrack.estimatedBpm);
+  if (trackId(fromTrack) && trackId(fromTrack) === trackId(toTrack)) return -999;
+  const plan = getMixPlan(fromTrack, toTrack);
   const shared = sharedStyles(fromTrack, toTrack).length;
-  const energyDelta = Math.abs((fromTrack.energy || 0.5) - (toTrack.energy || 0.5));
+  const fromEnergy = Number.isFinite(Number(fromTrack.energy)) ? Number(fromTrack.energy) : 0.5;
+  const toEnergy = Number.isFinite(Number(toTrack.energy)) ? Number(toTrack.energy) : 0.5;
+  const energyDelta = Math.abs(fromEnergy - toEnergy);
+  const energyFlow = toEnergy >= fromEnergy - 0.08 ? 4 : 0;
+  const tempoScore = plan.hasTempo ? Math.max(0, 50 - plan.bpmDelta * 9) : 7;
+  const harmonicScoreValue = plan.harmonic.score;
+  const sharedScore = Math.min(28, shared * 9);
+  const energyScore = Math.max(0, 20 - energyDelta * 52) + energyFlow;
+  const metadataBoost = getMetadataConfidenceBoost(toTrack);
   const playlistBoost = Math.min(4, toTrack.playlistCount || 1);
-  return 100 - delta * 4.5 + shared * 12 - energyDelta * 24 + playlistBoost;
+  return tempoScore + harmonicScoreValue + sharedScore + energyScore + metadataBoost + playlistBoost;
 }
 
 function selectionScore(track) {
@@ -2485,7 +3056,8 @@ function selectionScore(track) {
       ? (program.minBpm + program.maxBpm) / 2
       : program.minBpm + 4;
     const bpmFit = Number.isFinite(bpm) ? Math.max(0, 18 - Math.abs(bpm - midpoint) * 1.5) : 0;
-    return matches * 18 + bpmFit;
+    const vocalBoost = program.vocalPreference ? clamp(vocalAffinityScore(track) * 4, -8, 14) : 0;
+    return matches * 18 + bpmFit + vocalBoost;
   }
   const selected = getSelectedFacetPairs();
   if (!selected.length) return 0;
@@ -2494,9 +3066,44 @@ function selectionScore(track) {
   return matched * 14 + (matched / selected.length) * 18;
 }
 
+function uniqueTracksById(tracks) {
+  const seen = new Set();
+  return tracks.filter((track) => {
+    const id = trackId(track);
+    if (!id || seen.has(id)) return false;
+    seen.add(id);
+    return true;
+  });
+}
+
+function weightedRankedChoice(ranked) {
+  if (!ranked.length) return null;
+  const topScore = ranked[0].score;
+  const weighted = ranked.map((item, index) => ({
+    track: item.track,
+    weight: Math.max(1, 16 - index * 1.7 + Math.max(0, item.score - topScore + 8) / 2),
+  }));
+  const total = weighted.reduce((sum, item) => sum + item.weight, 0);
+  let cursor = Math.random() * total;
+  for (const item of weighted) {
+    cursor -= item.weight;
+    if (cursor <= 0) return item.track;
+  }
+  return weighted[0].track;
+}
+
+function getMetadataConfidenceBoost(track) {
+  let boost = 0;
+  if (track?.tempoConfidence && track.tempoConfidence !== "genre-estimated") boost += 5;
+  if (track?.beatGridAvailable) boost += 3;
+  if (parseMusicalKey(track).camelot) boost += 5;
+  if (track?.genreConfidence && !String(track.genreConfidence).includes("low")) boost += 2;
+  return boost;
+}
+
 function bpmDistance(a, b) {
-  if (!Number.isFinite(a) || !Number.isFinite(b)) return 24;
-  return Math.min(Math.abs(a - b), Math.abs(a * 2 - b), Math.abs(a - b * 2));
+  const match = getTempoMatchFromValues(a, b);
+  return match.delta;
 }
 
 function sharedStyles(a, b) {
@@ -2526,7 +3133,8 @@ function getDisplayTags(track) {
 
 function queueMeta(track) {
   const labels = labelLine(track);
-  return `${labels}${labels ? " · " : ""}${track.estimatedBpm || "--"} BPM`;
+  const key = getTrackKeyTag(track);
+  return `${labels}${labels ? " · " : ""}${formatBpm(getTrackBpm(track))} BPM${key ? ` · ${key}` : ""}`;
 }
 
 function getTrackFacetValues(track, dimension) {
@@ -2732,7 +3340,7 @@ function trackId(track) {
 }
 
 function getCrossfadeSeconds() {
-  return Number(elements.crossfadeSlider.value || 10);
+  return Number(elements.crossfadeSlider?.value || DJ_DEFAULT_MIX_SECONDS);
 }
 
 function getActiveDeck() {
@@ -2760,6 +3368,31 @@ function formatTime(seconds) {
   const mins = Math.floor(seconds / 60);
   const secs = Math.floor(seconds % 60);
   return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+}
+
+function formatSeconds(seconds) {
+  if (!Number.isFinite(seconds)) return "--s";
+  return `${Number.isInteger(seconds) ? seconds : seconds.toFixed(1)}s`;
+}
+
+function formatBpm(value) {
+  const bpm = Number(value);
+  if (!Number.isFinite(bpm)) return "--";
+  return Number.isInteger(bpm) ? String(bpm) : bpm.toFixed(1);
+}
+
+function formatSignedPercent(value) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return "+0.0%";
+  return `${number >= 0 ? "+" : ""}${number.toFixed(1)}%`;
+}
+
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function roundTo(value, step) {
+  return Number((Math.round(value / step) * step).toFixed(3));
 }
 
 function titleCase(value) {

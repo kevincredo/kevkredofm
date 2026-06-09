@@ -33,9 +33,9 @@ def build_standalone() -> Path:
   library = read_text(ROOT / "library-data.js")
   app = read_text(ROOT / "app.js")
 
-  index = index.replace('    <link rel="stylesheet" href="./styles.css">\n', f"    <style>\n{css}\n    </style>\n")
-  index = index.replace('    <script src="./library-data.js?v=20260610-full-refresh"></script>\n', f"    <script>\n{escape_script(library)}\n    </script>\n")
-  index = index.replace('    <script src="./app.js?v=20260610-full-refresh"></script>\n', f"    <script>\n{escape_script(app)}\n    </script>\n")
+  index = index.replace('    <link rel="stylesheet" href="./styles.css?v=20260610-qa-polish">\n', f"    <style>\n{css}\n    </style>\n")
+  index = index.replace('    <script src="./library-data.js?v=20260610-program-editor"></script>\n', f"    <script>\n{escape_script(library)}\n    </script>\n")
+  index = index.replace('    <script src="./app.js?v=20260610-program-editor"></script>\n', f"    <script>\n{escape_script(app)}\n    </script>\n")
   index = index.replace("<title>Echo Room FM</title>", "<title>Echo Room FM Portable</title>")
 
   out = DIST / STANDALONE_NAME
@@ -93,12 +93,12 @@ self.addEventListener("fetch", (event) => {
   index_path = SITE / "index.html"
   index = read_text(index_path)
   index = index.replace(
-    '    <link rel="stylesheet" href="./styles.css">\n',
-    '    <link rel="manifest" href="./manifest.webmanifest">\n    <link rel="stylesheet" href="./styles.css">\n',
+    '    <link rel="stylesheet" href="./styles.css?v=20260610-qa-polish">\n',
+    '    <link rel="manifest" href="./manifest.webmanifest">\n    <link rel="stylesheet" href="./styles.css?v=20260610-qa-polish">\n',
   )
   index = index.replace(
-    '    <script src="./app.js?v=20260610-full-refresh"></script>\n',
-    '    <script src="./app.js?v=20260610-full-refresh"></script>\n    <script>\n      if ("serviceWorker" in navigator && location.protocol !== "file:") {\n        navigator.serviceWorker.register("./service-worker.js").catch(() => {});\n      }\n    </script>\n',
+    '    <script src="./app.js?v=20260610-program-editor"></script>\n',
+    '    <script src="./app.js?v=20260610-program-editor"></script>\n    <script>\n      if ("serviceWorker" in navigator && location.protocol !== "file:") {\n        navigator.serviceWorker.register("./service-worker.js").catch(() => {});\n      }\n    </script>\n',
   )
   index_path.write_text(index, encoding="utf-8")
   return SITE

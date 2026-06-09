@@ -1,0 +1,643 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><title>Echo Room FM hide candidates</title>
+<style>body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;background:#080808;color:#eee;margin:24px}table{border-collapse:collapse;width:100%;font-size:13px}th,td{border:1px solid #333;padding:8px;vertical-align:top}th{position:sticky;top:0;background:#111;color:#16f4d0}tr:nth-child(even){background:#111}.tools{display:flex;gap:8px;margin:16px 0;position:sticky;top:0;background:#080808;padding:8px 0}button{background:#16f4d0;border:0;padding:10px 14px;font-weight:800}textarea{width:100%;height:160px;background:#111;color:#16f4d0;border:1px solid #333;margin-top:12px}.muted{color:#999}</style></head>
+<body><h1>Echo Room FM 屏蔽候选审核</h1><p class="muted">默认勾选只是候选建议；取消勾选后，复制下方 JSON 发回给 Codex，我会只屏蔽你保留勾选的歌曲。</p>
+<pre>{
+  "Chinese vocal": 54,
+  "Definite vocal rap": 9
+}</pre>
+<div class="tools"><button onclick="copySelected()">复制已勾选 ID JSON</button><button onclick="document.querySelectorAll('input[type=checkbox]').forEach(x=>x.checked=true)">全选</button><button onclick="document.querySelectorAll('input[type=checkbox]').forEach(x=>x.checked=false)">全不选</button></div>
+<table><thead><tr><th>选</th><th>Category</th><th>ID</th><th>Song</th><th>Artists</th><th>BPM</th><th>Genres</th><th>Reason</th></tr></thead><tbody>
+<tr>
+  <td><input type="checkbox" data-id="451169473" checked></td>
+  <td>Chinese vocal</td>
+  <td>451169473</td>
+  <td><strong>骗自己PT.2</strong></td>
+  <td>AY楊佬叁 / Noor-99</td>
+  <td>119</td>
+  <td>pop</td>
+  <td>Chinese vocal heuristic</td>
+</tr>
+<tr>
+  <td><input type="checkbox" data-id="1489330795" checked></td>
+  <td>Chinese vocal</td>
+  <td>1489330795</td>
+  <td><strong>Here Comes The Gangster</strong></td>
+  <td>Berlin Psycho Nurses（柏林护士）</td>
+  <td>86</td>
+  <td>pop</td>
+  <td>Chinese vocal heuristic</td>
+</tr>
+<tr>
+  <td><input type="checkbox" data-id="1350460585" checked></td>
+  <td>Chinese vocal</td>
+  <td>1350460585</td>
+  <td><strong>我一点都不想你</strong></td>
+  <td>BigYear大年</td>
+  <td>113</td>
+  <td>pop</td>
+  <td>Chinese vocal heuristic</td>
+</tr>
+<tr>
+  <td><input type="checkbox" data-id="547844389" checked></td>
+  <td>Chinese vocal</td>
+  <td>547844389</td>
+  <td><strong>where the party at.</strong></td>
+  <td>ELLIOTTSOUND 房鑫杨 / DOLLARZOO</td>
+  <td>113</td>
+  <td>pop</td>
+  <td>Chinese vocal heuristic</td>
+</tr>
+<tr>
+  <td><input type="checkbox" data-id="1426089632" checked></td>
+  <td>Chinese vocal</td>
+  <td>1426089632</td>
+  <td><strong>24HOURS</strong></td>
+  <td>ODE / 李恩泽</td>
+  <td>114</td>
+  <td>nu_disco, pop</td>
+  <td>Chinese vocal heuristic</td>
+</tr>
+<tr>
+  <td><input type="checkbox" data-id="1890541225" checked></td>
+  <td>Chinese vocal</td>
+  <td>1890541225</td>
+  <td><strong>ALDEBARAN</strong></td>
+  <td>STOLEN秘密行动</td>
+  <td>119</td>
+  <td>pop</td>
+  <td>Chinese vocal heuristic</td>
+</tr>
+<tr>
+  <td><input type="checkbox" data-id="443205153" checked></td>
+  <td>Chinese vocal</td>
+  <td>443205153</td>
+  <td><strong>MAKJ - 假人挑战Black Beatles&amp;How We Party - MAKJ, R3hab &amp; Vinai, Rae Sremmurd</strong></td>
+  <td>Yellow / MixZero音乐厂牌</td>
+  <td>116</td>
+  <td>pop</td>
+  <td>Chinese vocal heuristic</td>
+</tr>
+<tr>
+  <td><input type="checkbox" data-id="473404348" checked></td>
+  <td>Chinese vocal</td>
+  <td>473404348</td>
+  <td><strong>I Wanna(我想)(Live)</strong></td>
+  <td>余佳运</td>
+  <td>110</td>
+  <td>pop</td>
+  <td>Chinese vocal heuristic</td>
+</tr>
+<tr>
+  <td><input type="checkbox" data-id="420401511" checked></td>
+  <td>Chinese vocal</td>
+  <td>420401511</td>
+  <td><strong>和你</strong></td>
+  <td>余佳运</td>
+  <td>152</td>
+  <td>pop, rnb_soul</td>
+  <td>Chinese vocal heuristic</td>
+</tr>
+<tr>
+  <td><input type="checkbox" data-id="29723022" checked></td>
+  <td>Chinese vocal</td>
+  <td>29723022</td>
+  <td><strong>暗里着迷 (Live)</strong></td>
+  <td>刘德华</td>
+  <td>111</td>
+  <td>pop, latin_world</td>
+  <td>Chinese vocal heuristic</td>
+</tr>
+<tr>
+  <td><input type="checkbox" data-id="110359" checked></td>
+  <td>Chinese vocal</td>
+  <td>110359</td>
+  <td><strong>练习(Live)</strong></td>
+  <td>刘德华</td>
+  <td>113</td>
+  <td>pop</td>
+  <td>Chinese vocal heuristic</td>
+</tr>
+<tr>
+  <td><input type="checkbox" data-id="5239275" checked></td>
+  <td>Chinese vocal</td>
+  <td>5239275</td>
+  <td><strong>我的大同</strong></td>
+  <td>唐荭菲</td>
+  <td>117</td>
+  <td>pop</td>
+  <td>Chinese vocal heuristic</td>
+</tr>
+<tr>
+  <td><input type="checkbox" data-id="454954048" checked></td>
+  <td>Chinese vocal</td>
+  <td>454954048</td>
+  <td><strong>需要保密的情话</strong></td>
+  <td>安全着陆 / DaisyCream</td>
+  <td>119</td>
+  <td>pop</td>
+  <td>Chinese vocal heuristic</td>
+</tr>
+<tr>
+  <td><input type="checkbox" data-id="27646205" checked></td>
+  <td>Chinese vocal</td>
+  <td>27646205</td>
+  <td><strong>安和桥</strong></td>
+  <td>宋冬野</td>
+  <td>116</td>
+  <td>pop</td>
+  <td>Chinese vocal heuristic</td>
+</tr>
+<tr>
+  <td><input type="checkbox" data-id="35566793" checked></td>
+  <td>Chinese vocal</td>
+  <td>35566793</td>
+  <td><strong>还好你在</strong></td>
+  <td>左颜</td>
+  <td>113</td>
+  <td>pop</td>
+  <td>Chinese vocal heuristic</td>
+</tr>
+<tr>
+  <td><input type="checkbox" data-id="1352818739" checked></td>
+  <td>Chinese vocal</td>
+  <td>1352818739</td>
+  <td><strong>Don't You</strong></td>
+  <td>布朗尼</td>
+  <td>115</td>
+  <td>pop</td>
+  <td>Chinese vocal heuristic</td>
+</tr>
+<tr>
+  <td><input type="checkbox" data-id="4875626" checked></td>
+  <td>Chinese vocal</td>
+  <td>4875626</td>
+  <td><strong>情非得已</strong></td>
+  <td>庾澄庆</td>
+  <td>118</td>
+  <td>pop</td>
+  <td>Chinese vocal heuristic</td>
+</tr>
+<tr>
+  <td><input type="checkbox" data-id="28442688" checked></td>
+  <td>Chinese vocal</td>
+  <td>28442688</td>
+  <td><strong>暴风一族(Remix Version)</strong></td>
+  <td>张国荣</td>
+  <td>122</td>
+  <td>nu_disco, electronica, edm, pop</td>
+  <td>Chinese vocal heuristic</td>
+</tr>
+<tr>
+  <td><input type="checkbox" data-id="188326" checked></td>
+  <td>Chinese vocal</td>
+  <td>188326</td>
+  <td><strong>继续跳舞(Body Mix)</strong></td>
+  <td>张国荣</td>
+  <td>119</td>
+  <td>nu_disco, pop</td>
+  <td>Chinese vocal heuristic</td>
+</tr>
+<tr>
+  <td><input type="checkbox" data-id="192316" checked></td>
+  <td>Chinese vocal</td>
+  <td>192316</td>
+  <td><strong>天梯(Live)</strong></td>
+  <td>张智霖</td>
+  <td>117</td>
+  <td>pop</td>
+  <td>Chinese vocal heuristic</td>
+</tr>
+<tr>
+  <td><input type="checkbox" data-id="4877815" checked></td>
+  <td>Chinese vocal</td>
+  <td>4877815</td>
+  <td><strong>美丽时光</strong></td>
+  <td>张艺</td>
+  <td>118</td>
+  <td>pop</td>
+  <td>Chinese vocal heuristic</td>
+</tr>
+<tr>
+  <td><input type="checkbox" data-id="316678" checked></td>
+  <td>Chinese vocal</td>
+  <td>316678</td>
+  <td><strong>寒舍</strong></td>
+  <td>杨千嬅</td>
+  <td>112</td>
+  <td>pop</td>
+  <td>Chinese vocal heuristic</td>
+</tr>
+<tr>
+  <td><input type="checkbox" data-id="317251" checked></td>
+  <td>Chinese vocal</td>
+  <td>317251</td>
+  <td><strong>少女的祈祷(Live)</strong></td>
+  <td>杨千嬅</td>
+  <td>113</td>
+  <td>pop</td>
+  <td>Chinese vocal heuristic</td>
+</tr>
+<tr>
+  <td><input type="checkbox" data-id="480580003" checked></td>
+  <td>Chinese vocal</td>
+  <td>480580003</td>
+  <td><strong>再也没有</strong></td>
+  <td>永彬Ryan.B / AY楊佬叁</td>
+  <td>113</td>
+  <td>pop</td>
+  <td>Chinese vocal heuristic</td>
+</tr>
+<tr>
+  <td><input type="checkbox" data-id="864100958" checked></td>
+  <td>Chinese vocal</td>
+  <td>864100958</td>
+  <td><strong>小鹿乱撞</strong></td>
+  <td>永彬Ryan.B / 狄迪（D-DAY）</td>
+  <td>115</td>
+  <td>pop</td>
+  <td>Chinese vocal heuristic</td>
+</tr>
+<tr>
+  <td><input type="checkbox" data-id="33715371" checked></td>
+  <td>Chinese vocal</td>
+  <td>33715371</td>
+  <td><strong>习惯失恋</strong></td>
+  <td>洪卓立</td>
+  <td>117</td>
+  <td>pop</td>
+  <td>Chinese vocal heuristic</td>
+</tr>
+<tr>
+  <td><input type="checkbox" data-id="5251677" checked></td>
+  <td>Chinese vocal</td>
+  <td>5251677</td>
+  <td><strong>Traveler\\\'s Diary</strong></td>
+  <td>深绿海</td>
+  <td>90</td>
+  <td>downtempo</td>
+  <td>Chinese vocal heuristic</td>
+</tr>
+<tr>
+  <td><input type="checkbox" data-id="2614655132" checked></td>
+  <td>Chinese vocal</td>
+  <td>2614655132</td>
+  <td><strong>呼唤爱人feat.Bokai</strong></td>
+  <td>王忆灵</td>
+  <td>117</td>
+  <td>pop</td>
+  <td>Chinese vocal heuristic</td>
+</tr>
+<tr>
+  <td><input type="checkbox" data-id="1445800253" checked></td>
+  <td>Chinese vocal</td>
+  <td>1445800253</td>
+  <td><strong>如何</strong></td>
+  <td>福禄寿FloruitShow</td>
+  <td>118</td>
+  <td>pop</td>
+  <td>Chinese vocal heuristic</td>
+</tr>
+<tr>
+  <td><input type="checkbox" data-id="1306923998" checked></td>
+  <td>Chinese vocal</td>
+  <td>1306923998</td>
+  <td><strong>我用什么把你留住</strong></td>
+  <td>福禄寿FloruitShow</td>
+  <td>113</td>
+  <td>pop</td>
+  <td>Chinese vocal heuristic</td>
+</tr>
+<tr>
+  <td><input type="checkbox" data-id="25858515" checked></td>
+  <td>Chinese vocal</td>
+  <td>25858515</td>
+  <td><strong>红旗</strong></td>
+  <td>窦唯 / 不一定</td>
+  <td>115</td>
+  <td>pop</td>
+  <td>Chinese vocal heuristic</td>
+</tr>
+<tr>
+  <td><input type="checkbox" data-id="564680003" checked></td>
+  <td>Chinese vocal</td>
+  <td>564680003</td>
+  <td><strong>The Chainsmokers - Something just like This（网虫i remix）</strong></td>
+  <td>网虫</td>
+  <td>114</td>
+  <td>house, deep_house, downtempo, electronica</td>
+  <td>Chinese vocal heuristic</td>
+</tr>
+<tr>
+  <td><input type="checkbox" data-id="31912064" checked></td>
+  <td>Chinese vocal</td>
+  <td>31912064</td>
+  <td><strong>遇见 钢琴曲</strong></td>
+  <td>群星</td>
+  <td>113</td>
+  <td>pop</td>
+  <td>Chinese vocal heuristic</td>
+</tr>
+<tr>
+  <td><input type="checkbox" data-id="27867428" checked></td>
+  <td>Chinese vocal</td>
+  <td>27867428</td>
+  <td><strong>那谁 (Live)</strong></td>
+  <td>苏永康</td>
+  <td>113</td>
+  <td>pop</td>
+  <td>Chinese vocal heuristic</td>
+</tr>
+<tr>
+  <td><input type="checkbox" data-id="344157" checked></td>
+  <td>Chinese vocal</td>
+  <td>344157</td>
+  <td><strong>I Know You Know I Love You</strong></td>
+  <td>落日飞车</td>
+  <td>108</td>
+  <td>jazz, latin_world</td>
+  <td>Chinese vocal heuristic</td>
+</tr>
+<tr>
+  <td><input type="checkbox" data-id="344156" checked></td>
+  <td>Chinese vocal</td>
+  <td>344156</td>
+  <td><strong>Little Monkey Rides on the Little Donkey</strong></td>
+  <td>落日飞车</td>
+  <td>107</td>
+  <td>jazz, latin_world</td>
+  <td>Chinese vocal heuristic</td>
+</tr>
+<tr>
+  <td><input type="checkbox" data-id="512623093" checked></td>
+  <td>Chinese vocal</td>
+  <td>512623093</td>
+  <td><strong>雨夜</strong></td>
+  <td>蓝云木</td>
+  <td>113</td>
+  <td>pop</td>
+  <td>Chinese vocal heuristic</td>
+</tr>
+<tr>
+  <td><input type="checkbox" data-id="209633" checked></td>
+  <td>Chinese vocal</td>
+  <td>209633</td>
+  <td><strong>特务J</strong></td>
+  <td>蔡依林</td>
+  <td>114</td>
+  <td>synthwave</td>
+  <td>Chinese vocal heuristic</td>
+</tr>
+<tr>
+  <td><input type="checkbox" data-id="432506367" checked></td>
+  <td>Chinese vocal</td>
+  <td>432506367</td>
+  <td><strong>电台情歌</strong></td>
+  <td>邓超</td>
+  <td>114</td>
+  <td>pop</td>
+  <td>Chinese vocal heuristic</td>
+</tr>
+<tr>
+  <td><input type="checkbox" data-id="496107851" checked></td>
+  <td>Chinese vocal</td>
+  <td>496107851</td>
+  <td><strong>说句实话</strong></td>
+  <td>陆政廷Lil Jet</td>
+  <td>114</td>
+  <td>pop</td>
+  <td>Chinese vocal heuristic</td>
+</tr>
+<tr>
+  <td><input type="checkbox" data-id="32174064" checked></td>
+  <td>Chinese vocal</td>
+  <td>32174064</td>
+  <td><strong>Hold on,Watch on</strong></td>
+  <td>陈伟恩</td>
+  <td>118</td>
+  <td>pop</td>
+  <td>Chinese vocal heuristic</td>
+</tr>
+<tr>
+  <td><input type="checkbox" data-id="27867449" checked></td>
+  <td>Chinese vocal</td>
+  <td>27867449</td>
+  <td><strong>倾城 (Live)</strong></td>
+  <td>陈奕迅</td>
+  <td>113</td>
+  <td>pop</td>
+  <td>Chinese vocal heuristic</td>
+</tr>
+<tr>
+  <td><input type="checkbox" data-id="66272" checked></td>
+  <td>Chinese vocal</td>
+  <td>66272</td>
+  <td><strong>夕阳无限好</strong></td>
+  <td>陈奕迅</td>
+  <td>109</td>
+  <td>pop</td>
+  <td>Chinese vocal heuristic</td>
+</tr>
+<tr>
+  <td><input type="checkbox" data-id="27483203" checked></td>
+  <td>Chinese vocal</td>
+  <td>27483203</td>
+  <td><strong>失忆蝴蝶</strong></td>
+  <td>陈奕迅</td>
+  <td>110</td>
+  <td>pop</td>
+  <td>Chinese vocal heuristic</td>
+</tr>
+<tr>
+  <td><input type="checkbox" data-id="64111" checked></td>
+  <td>Chinese vocal</td>
+  <td>64111</td>
+  <td><strong>张氏情歌</strong></td>
+  <td>陈奕迅</td>
+  <td>115</td>
+  <td>pop</td>
+  <td>Chinese vocal heuristic</td>
+</tr>
+<tr>
+  <td><input type="checkbox" data-id="551816010" checked></td>
+  <td>Chinese vocal</td>
+  <td>551816010</td>
+  <td><strong>我们</strong></td>
+  <td>陈奕迅</td>
+  <td>111</td>
+  <td>pop</td>
+  <td>Chinese vocal heuristic</td>
+</tr>
+<tr>
+  <td><input type="checkbox" data-id="66265" checked></td>
+  <td>Chinese vocal</td>
+  <td>66265</td>
+  <td><strong>阿牛</strong></td>
+  <td>陈奕迅</td>
+  <td>114</td>
+  <td>pop</td>
+  <td>Chinese vocal heuristic</td>
+</tr>
+<tr>
+  <td><input type="checkbox" data-id="35403523" checked></td>
+  <td>Chinese vocal</td>
+  <td>35403523</td>
+  <td><strong>陪你度过漫长岁月</strong></td>
+  <td>陈奕迅</td>
+  <td>112</td>
+  <td>pop</td>
+  <td>Chinese vocal heuristic</td>
+</tr>
+<tr>
+  <td><input type="checkbox" data-id="471403427" checked></td>
+  <td>Chinese vocal</td>
+  <td>471403427</td>
+  <td><strong>我喜欢上你时的内心活动</strong></td>
+  <td>陈绮贞</td>
+  <td>113</td>
+  <td>pop</td>
+  <td>Chinese vocal heuristic</td>
+</tr>
+<tr>
+  <td><input type="checkbox" data-id="27965451" checked></td>
+  <td>Chinese vocal</td>
+  <td>27965451</td>
+  <td><strong>雨水一盒</strong></td>
+  <td>陈绮贞</td>
+  <td>117</td>
+  <td>pop</td>
+  <td>Chinese vocal heuristic</td>
+</tr>
+<tr>
+  <td><input type="checkbox" data-id="517246583" checked></td>
+  <td>Chinese vocal</td>
+  <td>517246583</td>
+  <td><strong>nothing on you</strong></td>
+  <td>陳梦嘉</td>
+  <td>117</td>
+  <td>pop</td>
+  <td>Chinese vocal heuristic</td>
+</tr>
+<tr>
+  <td><input type="checkbox" data-id="1430560457" checked></td>
+  <td>Chinese vocal</td>
+  <td>1430560457</td>
+  <td><strong>When The Music Stops</strong></td>
+  <td>顾忠山 / 赵可</td>
+  <td>118</td>
+  <td>pop</td>
+  <td>Chinese vocal heuristic</td>
+</tr>
+<tr>
+  <td><input type="checkbox" data-id="461515533" checked></td>
+  <td>Chinese vocal</td>
+  <td>461515533</td>
+  <td><strong>风</strong></td>
+  <td>鲸鱼马戏团</td>
+  <td>118</td>
+  <td>pop</td>
+  <td>Chinese vocal heuristic</td>
+</tr>
+<tr>
+  <td><input type="checkbox" data-id="2757602239" checked></td>
+  <td>Chinese vocal</td>
+  <td>2757602239</td>
+  <td><strong>Do it</strong></td>
+  <td>黃浩庭 / YELLOW黄宣</td>
+  <td>105</td>
+  <td>jazz</td>
+  <td>Chinese vocal heuristic</td>
+</tr>
+<tr>
+  <td><input type="checkbox" data-id="464674134" checked></td>
+  <td>Definite vocal rap</td>
+  <td>464674134</td>
+  <td><strong>Litmas (Prod. lzr)</strong></td>
+  <td>bbno$ / lzr</td>
+  <td>114</td>
+  <td>hiphop_rap</td>
+  <td>rap score 3</td>
+</tr>
+<tr>
+  <td><input type="checkbox" data-id="1956743785" checked></td>
+  <td>Definite vocal rap</td>
+  <td>1956743785</td>
+  <td><strong>Massive</strong></td>
+  <td>Drake</td>
+  <td>111</td>
+  <td>hiphop_rap</td>
+  <td>rap score 3</td>
+</tr>
+<tr>
+  <td><input type="checkbox" data-id="36190949" checked></td>
+  <td>Definite vocal rap</td>
+  <td>36190949</td>
+  <td><strong>Grimey Thirsty (Instant Party! Remix)</strong></td>
+  <td>Instant Party! / Far East Movement / YG</td>
+  <td>124</td>
+  <td>electronica, hiphop_rap</td>
+  <td>rap score 3</td>
+</tr>
+<tr>
+  <td><input type="checkbox" data-id="36190947" checked></td>
+  <td>Definite vocal rap</td>
+  <td>36190947</td>
+  <td><strong>No Flex Zone (Instant Party! Remix)</strong></td>
+  <td>Instant Party! / Rae Sremmurd</td>
+  <td>122</td>
+  <td>electronica, hiphop_rap</td>
+  <td>rap score 3</td>
+</tr>
+<tr>
+  <td><input type="checkbox" data-id="26642869" checked></td>
+  <td>Definite vocal rap</td>
+  <td>26642869</td>
+  <td><strong>Memories Back Then</strong></td>
+  <td>Kendrick Lamar / T.I. / B.o.B</td>
+  <td>112</td>
+  <td>hiphop_rap</td>
+  <td>rap score 3</td>
+</tr>
+<tr>
+  <td><input type="checkbox" data-id="1888554239" checked></td>
+  <td>Definite vocal rap</td>
+  <td>1888554239</td>
+  <td><strong>Stars Align (with Drake)</strong></td>
+  <td>Majid Jordan / Drake</td>
+  <td>89</td>
+  <td>downtempo, hiphop_rap</td>
+  <td>rap score 4</td>
+</tr>
+<tr>
+  <td><input type="checkbox" data-id="440411849" checked></td>
+  <td>Definite vocal rap</td>
+  <td>440411849</td>
+  <td><strong>Black Beatles (MAKJ Remix)</strong></td>
+  <td>MAKJ / Rae Sremmurd</td>
+  <td>122</td>
+  <td>electronica, hiphop_rap</td>
+  <td>rap score 3</td>
+</tr>
+<tr>
+  <td><input type="checkbox" data-id="35023286" checked></td>
+  <td>Definite vocal rap</td>
+  <td>35023286</td>
+  <td><strong>Jumpman (Riot Ten &amp; CYBRPNK Remix)</strong></td>
+  <td>Riot Ten / Drake / Future / CYBRPNK</td>
+  <td>121</td>
+  <td>electronica, hiphop_rap</td>
+  <td>rap score 3</td>
+</tr>
+<tr>
+  <td><input type="checkbox" data-id="407450359" checked></td>
+  <td>Definite vocal rap</td>
+  <td>407450359</td>
+  <td><strong>Hotline Bling/ How Deep Is Your Love (Sickick Version!!)</strong></td>
+  <td>Sickick / Drake / Ina Wroldsen / Calvin Harris</td>
+  <td>115</td>
+  <td>synthwave, hiphop_rap</td>
+  <td>rap score 3</td>
+</tr></tbody></table>
+<textarea id="output" placeholder="点击复制已勾选 ID JSON 后，这里会出现结果"></textarea>
+<script>function copySelected(){const ids=[...document.querySelectorAll('input[type=checkbox]:checked')].map(x=>x.dataset.id); const text=JSON.stringify({hideIds:ids},null,2); output.value=text; navigator.clipboard&&navigator.clipboard.writeText(text).catch(()=>{});}</script>
+</body></html>

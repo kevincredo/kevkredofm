@@ -1,0 +1,113 @@
+{
+  "candidateIds": 63,
+  "newlyHidden": 63,
+  "alreadyHidden": 0,
+  "missing": [],
+  "frontendPlayableTrackCount": 2355,
+  "playableTrackCount": 2418,
+  "blockedTrackCount": 1423,
+  "radioHiddenTrackCount": 1486,
+  "editorialHiddenTrackCount": 63,
+  "sample": [
+    {
+      "id": "451169473",
+      "name": "骗自己PT.2",
+      "artists": "AY楊佬叁 / Noor-99"
+    },
+    {
+      "id": "1489330795",
+      "name": "Here Comes The Gangster",
+      "artists": "Berlin Psycho Nurses（柏林护士）"
+    },
+    {
+      "id": "1350460585",
+      "name": "我一点都不想你",
+      "artists": "BigYear大年"
+    },
+    {
+      "id": "547844389",
+      "name": "where the party at.",
+      "artists": "ELLIOTTSOUND 房鑫杨 / DOLLARZOO"
+    },
+    {
+      "id": "1426089632",
+      "name": "24HOURS",
+      "artists": "ODE / 李恩泽"
+    },
+    {
+      "id": "1890541225",
+      "name": "ALDEBARAN",
+      "artists": "STOLEN秘密行动"
+    },
+    {
+      "id": "443205153",
+      "name": "MAKJ - 假人挑战Black Beatles&How We Party - MAKJ, R3hab & Vinai, Rae Sremmurd",
+      "artists": "Yellow / MixZero音乐厂牌"
+    },
+    {
+      "id": "473404348",
+      "name": "I Wanna(我想)(Live)",
+      "artists": "余佳运"
+    },
+    {
+      "id": "420401511",
+      "name": "和你",
+      "artists": "余佳运"
+    },
+    {
+      "id": "29723022",
+      "name": "暗里着迷 (Live)",
+      "artists": "刘德华"
+    },
+    {
+      "id": "110359",
+      "name": "练习(Live)",
+      "artists": "刘德华"
+    },
+    {
+      "id": "5239275",
+      "name": "我的大同",
+      "artists": "唐荭菲"
+    },
+    {
+      "id": "454954048",
+      "name": "需要保密的情话",
+      "artists": "安全着陆 / DaisyCream"
+    },
+    {
+      "id": "27646205",
+      "name": "安和桥",
+      "artists": "宋冬野"
+    },
+    {
+      "id": "35566793",
+      "name": "还好你在",
+      "artists": "左颜"
+    },
+    {
+      "id": "1352818739",
+      "name": "Don't You",
+      "artists": "布朗尼"
+    },
+    {
+      "id": "4875626",
+      "name": "情非得已",
+      "artists": "庾澄庆"
+    },
+    {
+      "id": "28442688",
+      "name": "暴风一族(Remix Version)",
+      "artists": "张国荣"
+    },
+    {
+      "id": "188326",
+      "name": "继续跳舞(Body Mix)",
+      "artists": "张国荣"
+    },
+    {
+      "id": "192316",
+      "name": "天梯(Live)",
+      "artists": "张智霖"
+    }
+  ]
+}

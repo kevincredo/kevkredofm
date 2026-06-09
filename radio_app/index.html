@@ -8,7 +8,7 @@
     <meta name="apple-mobile-web-app-title" content="Echo Room FM">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Echo Room FM</title>
-    <link rel="stylesheet" href="./styles.css">
+    <link rel="stylesheet" href="./styles.css?v=20260610-qa-polish">
   </head>
   <body>
     <div class="backdrop" id="backdrop"></div>
@@ -161,6 +161,39 @@
             </div>
             <div id="programList" class="program-list" aria-label="预设时段歌单"></div>
             <div id="programStatus" class="program-status"></div>
+            <details id="programEditorPanel" class="program-editor-panel">
+              <summary>
+                <span>PROGRAM SETTINGS</span>
+                <strong id="programEditorTitle">DAY CAFÉ</strong>
+                <span class="sync-chevron" aria-hidden="true"></span>
+              </summary>
+              <div class="program-editor-body">
+                <div class="program-editor-grid">
+                  <label>
+                    <span>MIN BPM</span>
+                    <input id="programMinBpmInput" type="number" min="40" max="220" step="1">
+                  </label>
+                  <label>
+                    <span>MAX BPM</span>
+                    <input id="programMaxBpmInput" type="number" min="40" max="220" step="1" placeholder="∞">
+                  </label>
+                </div>
+                <label class="program-vocal-toggle">
+                  <input id="programVocalToggle" type="checkbox">
+                  <span>Vocal-friendly</span>
+                </label>
+                <div id="programFacetTabs" class="program-facet-tabs" role="tablist" aria-label="节目标签维度">
+                  <button class="facet-tab active" type="button" data-program-facet="genre" role="tab" aria-selected="true">GENRE</button>
+                  <button class="facet-tab" type="button" data-program-facet="mood" role="tab" aria-selected="false">MOOD</button>
+                  <button class="facet-tab" type="button" data-program-facet="context" role="tab" aria-selected="false">CONTEXT</button>
+                </div>
+                <div id="programTagEditor" class="program-tag-editor" aria-label="节目标签"></div>
+                <div class="program-editor-actions">
+                  <button id="saveProgramBtn" class="text-button strong" type="button">保存预设</button>
+                  <button id="resetProgramBtn" class="text-button" type="button">恢复默认</button>
+                </div>
+              </div>
+            </details>
             <div id="facetTabs" class="facet-tabs" role="tablist" aria-label="标签维度">
               <button class="facet-tab active" type="button" data-facet="genre" role="tab" aria-selected="true">GENRE</button>
               <button class="facet-tab" type="button" data-facet="mood" role="tab" aria-selected="false">MOOD</button>
@@ -187,7 +220,7 @@
               <span>DJ 平滑接歌</span>
             </label>
             <label class="range-row">
-              <span>交叉淡入淡出 <strong id="crossfadeValue">10s</strong></span>
+              <span>DJ 过渡目标 <strong id="crossfadeValue">10s</strong></span>
               <input id="crossfadeSlider" type="range" min="4" max="20" step="1" value="10">
             </label>
             <label class="range-row">
@@ -281,7 +314,7 @@
 
     <audio id="audioDeckA" preload="auto" autoplay></audio>
     <audio id="audioDeckB" preload="auto"></audio>
-    <script src="./library-data.js?v=20260610-full-refresh"></script>
-    <script src="./app.js?v=20260610-full-refresh"></script>
+    <script src="./library-data.js?v=20260610-program-editor"></script>
+    <script src="./app.js?v=20260610-program-editor"></script>
   </body>
 </html>
