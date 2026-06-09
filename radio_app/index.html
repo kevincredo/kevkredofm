@@ -152,6 +152,15 @@
               <strong id="channelName">All Styles</strong>
             </div>
             <div id="selectedStylesSummary" class="mix-summary">0 selected</div>
+            <div class="program-heading">
+              <span>PROGRAMS</span>
+              <label class="program-auto">
+                <input id="autoProgramToggle" type="checkbox" checked>
+                <span>按时段自动</span>
+              </label>
+            </div>
+            <div id="programList" class="program-list" aria-label="预设时段歌单"></div>
+            <div id="programStatus" class="program-status"></div>
             <div id="facetTabs" class="facet-tabs" role="tablist" aria-label="标签维度">
               <button class="facet-tab active" type="button" data-facet="genre" role="tab" aria-selected="true">GENRE</button>
               <button class="facet-tab" type="button" data-facet="mood" role="tab" aria-selected="false">MOOD</button>
@@ -166,7 +175,7 @@
             <div class="mini-stats">
               <div>
                 <span>Unique Pool</span>
-                <strong id="statTracks">3826</strong>
+                <strong id="statTracks">3841</strong>
               </div>
               <div>
                 <span>Queue</span>
@@ -201,7 +210,7 @@
           <div class="track-copy">
             <span class="eyebrow" id="trackMode">COMING UP</span>
             <h1 id="trackTitle">调台中</h1>
-            <p id="trackArtist">从你的 3826 首基准曲库里抽取下一首</p>
+            <p id="trackArtist">从你的 3841 首基准曲库里抽取下一首</p>
             <p id="trackAlbum"></p>
             <div id="genreTags" class="genre-tags"></div>
           </div>
@@ -272,7 +281,7 @@
 
     <audio id="audioDeckA" preload="auto" autoplay></audio>
     <audio id="audioDeckB" preload="auto"></audio>
-    <script src="./library-data.js"></script>
-    <script src="./app.js"></script>
+    <script src="./library-data.js?v=20260610-full-refresh"></script>
+    <script src="./app.js?v=20260610-full-refresh"></script>
   </body>
 </html>

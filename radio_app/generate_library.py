@@ -497,6 +497,76 @@ ARTIST_TAXONOMY_RULES = [
     (("la femme", "tristesse contemporaine", "vox low"), {"genre": ["indie_dance", "synthwave"], "mood": ["dark", "playful"], "context": ["night_drive"]}),
 ]
 
+TRACK_METADATA_OVERRIDES = {
+    "440411213": {
+        "styleTags": ["house", "edm", "electronic"],
+        "taxonomy": {
+            "genre": ["house", "edm"],
+            "mood": ["energetic", "euphoric"],
+            "context": ["club", "workout"],
+        },
+        "bpm": 123,
+        "musicalKey": "D#/Eb",
+        "tempoSource": "SongBPM",
+    },
+    "1426787685": {
+        "styleTags": ["chill_downtempo", "electronic"],
+        "taxonomy": {
+            "genre": ["downtempo", "electronica"],
+            "mood": ["chill", "warm", "playful"],
+            "context": ["lounge", "summer"],
+        },
+        "bpm": 110,
+        "musicalKey": "A#/Bb",
+        "tempoSource": "SongBPM",
+    },
+    "2605197281": {
+        "styleTags": ["chill_downtempo", "funk", "indie_rock"],
+        "taxonomy": {
+            "genre": ["downtempo", "funk_soul", "indie_rock"],
+            "mood": ["chill", "groovy", "warm", "dreamy"],
+            "context": ["lounge", "sunset"],
+        },
+        "bpm": 91,
+        "tempoSource": "MusicBrainz",
+    },
+    "462895721": {
+        "styleTags": ["chill_downtempo", "funk", "disco_nu_disco"],
+        "taxonomy": {
+            "genre": ["downtempo", "nu_disco", "funk_soul"],
+            "mood": ["chill", "groovy", "warm"],
+            "context": ["lounge", "sunset"],
+        },
+        "bpm": 88,
+        "musicalKey": "C",
+        "mode": "minor",
+        "tempoSource": "SongBPM",
+    },
+    "2166941166": {
+        "styleTags": ["jazz", "funk", "rnb_soul", "world_latin"],
+        "taxonomy": {
+            "genre": ["jazz", "rnb_soul", "funk_soul", "latin_world"],
+            "mood": ["groovy", "warm", "romantic"],
+            "context": ["dinner", "lounge"],
+        },
+        "bpm": 103,
+        "musicalKey": "F#",
+        "mode": "minor",
+        "tempoSource": "SongBPM",
+    },
+    "1369099212": {
+        "styleTags": ["rock", "indie_rock"],
+        "taxonomy": {
+            "genre": ["indie_rock", "rock"],
+            "mood": ["energetic", "dreamy"],
+            "context": ["focus"],
+        },
+        "bpm": 155,
+        "musicalKey": "C#/Db",
+        "tempoSource": "SongBPM",
+    },
+}
+
 
 def main():
     archive = json.loads(ARCHIVE.read_text(encoding="utf-8"))
@@ -548,13 +618,22 @@ def main():
         taxonomy = infer_taxonomy(track_id, style_tags, text_for_styles, track.get("artists") or [])
         had_taxonomy_genre = bool(taxonomy["genre"])
         apply_metadata_fallback(track, taxonomy, style_tags, text_for_styles, playlist_names)
+        track_override = TRACK_METADATA_OVERRIDES.get(str(track_id), {})
+        if track_override:
+            style_tags = set(track_override.get("styleTags") or style_tags)
+            for dimension in ("genre", "mood", "context", "era"):
+                if dimension in (track_override.get("taxonomy") or {}):
+                    taxonomy[dimension] = list(track_override["taxonomy"][dimension])
+            sort_taxonomy(taxonomy)
         genre_confidence = cache_entry.get("confidence", "playlist+heuristic")
         if not had_taxonomy_genre and taxonomy["genre"] and genre_confidence == "playlist+heuristic":
             genre_confidence = "metadata+heuristic"
         tempo = cache_entry.get("tempo") or {}
-        estimated_bpm = tempo.get("bpm") or estimate_bpm(track_id, style_tags)
+        estimated_bpm = track_override.get("bpm") or tempo.get("bpm") or estimate_bpm(track_id, style_tags)
         energy = estimate_energy(track_id, style_tags)
         musical_key = cache_entry.get("musicalKey") or {}
+        override_source = track_override.get("tempoSource")
+        override_key = track_override.get("musicalKey")
         playable = str(track_id) not in blocked_track_ids
         playability_status = "playable_by_browser_probe" if playable else "blocked_by_browser_probe"
 
@@ -567,6 +646,16 @@ def main():
                 "durationMs": track.get("duration_ms"),
                 "popularity": track.get("popularity"),
                 "fee": track.get("fee"),
+                "neteaseAccess": track.get("netease_access") or "unknown",
+                "neteasePrivilegeStatus": track.get("netease_privilege_status"),
+                "neteasePaidEntitlement": track.get("netease_paid_entitlement"),
+                "neteaseMaxPlayBitrate": track.get("netease_max_play_bitrate"),
+                "neteaseMaxFreeBitrate": track.get("netease_max_free_bitrate"),
+                "neteaseMaxDownloadBitrate": track.get("netease_max_download_bitrate"),
+                "neteaseCloudSong": track.get("netease_cloud_song"),
+                "neteaseAccessCheckedAt": track.get("netease_access_checked_at") or "",
+                "noCopyrightReason": track.get("no_copyright_reason") or "",
+                "replacementTrackId": track.get("replacement_track_id") or "",
                 "playable": playable,
                 "playabilityStatus": playability_status,
                 "hiddenFromRadio": not playable,
@@ -575,18 +664,24 @@ def main():
                 "styleLabels": [STYLE_LABELS.get(tag, tag.replace("_", " ").title()) for tag in sorted(style_tags)],
                 "taxonomy": taxonomy,
                 "estimatedBpm": int(round(estimated_bpm)),
-                "tempoConfidence": tempo.get("confidence") or "genre-estimated",
-                "tempoSources": tempo.get("sources") or [],
-                "musicalKey": musical_key.get("key") or "",
-                "mode": musical_key.get("mode") or "",
-                "keyConfidence": musical_key.get("confidence") or "",
-                "keySources": musical_key.get("sources") or [],
+                "tempoConfidence": "track-reference" if track_override.get("bpm") else tempo.get("confidence") or "genre-estimated",
+                "tempoSources": [override_source] if override_source else tempo.get("sources") or [],
+                "musicalKey": override_key or musical_key.get("key") or "",
+                "mode": track_override.get("mode") or musical_key.get("mode") or "",
+                "keyConfidence": "track-reference" if override_key else musical_key.get("confidence") or "",
+                "keySources": [override_source] if override_key and override_source else musical_key.get("sources") or [],
                 "energy": energy,
                 "beatGridAvailable": bool(cache_entry.get("beatGridAvailable")),
                 "onlineGenres": sorted(set(online_genres)),
                 "onlineTags": sorted(set(online_tags))[:18],
                 "genreSources": cache_entry.get("sources") or [],
-                "genreConfidence": genre_confidence,
+                "genreConfidence": "track-reference" if track_override else genre_confidence,
+                "catalogMatchConfidence": cache_entry.get("catalogMatchConfidence"),
+                "catalogMatches": cache_entry.get("matches") or [],
+                "releaseDate": cache_entry.get("releaseDate") or "",
+                "isrc": cache_entry.get("isrc") or "",
+                "explicit": cache_entry.get("explicit"),
+                "metadataUpdatedAt": cache_entry.get("catalogEnrichedAt") or cache_entry.get("fetchedAt") or "",
                 "playlistNames": sorted(set(name for name in playlist_names if name)),
                 "playlistCount": len(playlist_ids),
                 "createdPlaylistCount": created_playlist_count,

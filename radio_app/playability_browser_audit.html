@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>KevinCredo FM Playability Audit</title>
+    <title>Echo Room FM Playability Audit</title>
     <style>
       :root {
         color-scheme: dark;
@@ -105,7 +105,7 @@
     <main>
       <header>
         <p class="ok">BROWSER AUDIO AUDIT</p>
-        <h1>KevinCredo FM</h1>
+        <h1>Echo Room FM</h1>
         <p id="status">准备检测网易云外链播放可用性。</p>
       </header>
       <section class="panel controls">
@@ -179,7 +179,11 @@
         statusEl.textContent = `开始检测 ${tracks.length} 首，浏览器并发 ${concurrency}。`;
         const workers = Array.from({ length: concurrency }, (_, workerId) => runWorker(workerId));
         await Promise.all(workers);
-        await fetch("/finish", { method: "POST" });
+        await fetch("/finish", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ total: tracks.length, stopped }),
+        });
         running = false;
         statusEl.textContent = stopped ? "检测已暂停。" : "检测完成，报告已保存。";
       }

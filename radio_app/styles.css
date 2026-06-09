@@ -293,6 +293,105 @@ button {
   padding-top: 12px;
 }
 
+.program-heading {
+  min-height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.program-heading > span {
+  color: var(--soft);
+  font-size: 0.7rem;
+  font-weight: 900;
+}
+
+.program-auto {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.program-auto input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--mint);
+}
+
+.program-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.program-button {
+  position: relative;
+  min-width: 0;
+  min-height: 76px;
+  display: grid;
+  align-content: center;
+  gap: 2px;
+  padding: 10px 38px 10px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.025);
+  color: var(--text);
+  text-align: left;
+}
+
+.program-button:hover {
+  border-color: rgba(255, 255, 255, 0.22);
+  transform: none;
+}
+
+.program-button.active {
+  border-color: rgba(22, 244, 208, 0.72);
+  background: linear-gradient(135deg, rgba(22, 244, 208, 0.17), rgba(255, 255, 255, 0.025));
+  box-shadow: inset 3px 0 0 var(--mint);
+}
+
+.program-button strong {
+  overflow: hidden;
+  font-size: 0.9rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.program-button small {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.62rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.program-button em {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  color: var(--soft);
+  font-size: 0.68rem;
+  font-style: normal;
+  font-weight: 900;
+}
+
+.program-button.active em {
+  color: var(--mint);
+}
+
+.program-status {
+  min-height: 22px;
+  padding: 5px 8px;
+  border-left: 2px solid rgba(77, 163, 255, 0.62);
+  background: rgba(77, 163, 255, 0.06);
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
 .facet-tabs {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1417,6 +1516,14 @@ button:active {
   .facet-tab {
     min-height: 36px;
     font-size: 0.68rem;
+  }
+
+  .program-list {
+    grid-template-columns: 1fr;
+  }
+
+  .program-button {
+    min-height: 66px;
   }
 
   .selected-facet-list {

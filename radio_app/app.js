@@ -308,9 +308,82 @@ const ARTIST_TAXONOMY_RULES = [
   [["kokia", "大橋トリオ", "余佳运", "mokita", "gnash", "chelsea lankes"], { genre: ["pop"], mood: ["romantic"], context: [] }],
   [["jacoo", "aso", "jobii"], { genre: ["lofi"], mood: ["chill", "dreamy"], context: ["focus"] }],
   [["la femme", "tristesse contemporaine", "vox low"], { genre: ["indie_dance", "synthwave"], mood: ["dark", "playful"], context: ["night_drive"] }],
+  [["tep no"], { genre: ["electronica", "downtempo"], mood: ["chill", "warm"], context: ["lounge", "summer"] }],
+  [["skinshape"], { genre: ["funk_soul", "downtempo", "indie_rock"], mood: ["groovy", "warm", "dreamy"], context: ["lounge", "sunset"] }],
+  [["ezra collective"], { genre: ["jazz", "funk_soul", "latin_world"], mood: ["groovy", "warm"], context: ["dinner", "lounge"] }],
+  [["chon"], { genre: ["indie_rock", "rock"], mood: ["energetic", "dreamy"], context: ["focus"] }],
+  [["bobby puma"], { genre: ["house", "edm"], mood: ["energetic", "euphoric"], context: ["club", "workout"] }],
 ];
 
 const DEFAULT_FACET = { dimension: "mood", key: "chill" };
+
+const RADIO_PROGRAMS = [
+  {
+    id: "day_cafe",
+    name: "DAY CAFÉ",
+    schedule: "10:00–18:00",
+    bpmLabel: "75–114 BPM",
+    minBpm: 70,
+    maxBpm: 114,
+    facets: {
+      genre: ["downtempo", "lofi", "jazz", "funk_soul", "rnb_soul", "deep_house", "nu_disco", "ambient"],
+      mood: ["chill", "warm", "groovy", "dreamy"],
+      context: ["lounge", "dinner", "focus"],
+    },
+  },
+  {
+    id: "blue_hour",
+    name: "BLUE HOUR",
+    schedule: "18:00–21:00",
+    bpmLabel: "90–116 BPM",
+    minBpm: 90,
+    maxBpm: 116,
+    facets: {
+      genre: ["deep_house", "melodic_house", "afro_house", "nu_disco", "indie_dance", "electronica", "downtempo"],
+      mood: ["warm", "groovy", "dreamy", "romantic", "melancholic"],
+      context: ["sunset", "lounge", "dinner", "night_drive"],
+    },
+  },
+  {
+    id: "cocktail",
+    name: "COCKTAIL",
+    schedule: "21:00–23:00",
+    bpmLabel: "115–120 BPM",
+    minBpm: 115,
+    maxBpm: 120,
+    facets: {
+      genre: ["house", "deep_house", "nu_disco", "indie_dance", "afro_house", "melodic_house", "tech_house"],
+      mood: ["groovy", "warm", "playful", "euphoric"],
+      context: ["lounge", "club", "night_drive"],
+    },
+  },
+  {
+    id: "after_hours",
+    name: "AFTER HOURS",
+    schedule: "23:00–10:00",
+    bpmLabel: "75–118 BPM",
+    minBpm: 70,
+    maxBpm: 118,
+    facets: {
+      genre: ["ambient", "downtempo", "electronica", "minimal", "indie_dance", "synthwave", "lofi"],
+      mood: ["dark", "hypnotic", "atmospheric", "dreamy", "chill"],
+      context: ["afterhours", "night_drive", "focus"],
+    },
+  },
+  {
+    id: "peak_crowd",
+    name: "PEAK CROWD",
+    schedule: "MANUAL",
+    bpmLabel: "125+ BPM",
+    minBpm: 125,
+    maxBpm: Infinity,
+    facets: {
+      genre: ["house", "tech_house", "techno", "acid_techno", "edm", "progressive_house", "melodic_house", "afro_house", "indie_dance", "drum_bass"],
+      mood: ["energetic", "euphoric", "hypnotic"],
+      context: ["club", "workout"],
+    },
+  },
+];
 
 const QUEUE_TARGET = 18;
 const LOVED_STORAGE_KEY = "kevincredo-fm-loved-track-ids";
@@ -318,6 +391,8 @@ const PROFILE_USERNAME_STORAGE_KEY = "kevincredo-fm-profile-username";
 const SYNC_PROXY_STORAGE_KEY = "kevincredo-fm-sync-proxy";
 const NETEASE_EXPORT_DRAFT_STORAGE_KEY = "kevincredo-fm-netease-export-draft";
 const NETEASE_EXPORT_API_STORAGE_KEY = "kevincredo-fm-netease-export-api";
+const AUTO_PROGRAM_STORAGE_KEY = "echo-room-fm-auto-program";
+const ACTIVE_PROGRAM_STORAGE_KEY = "echo-room-fm-active-program";
 const NETEASE_ORIGIN = "https://music.163.com";
 const NETEASE_DEFAULT_EXPORT_API_BASE = "http://127.0.0.1:3000";
 const CLOUD_LOVED_ENDPOINT = "/.netlify/functions/loved";
@@ -336,6 +411,9 @@ const state = {
     mood: new Set(),
     context: new Set(),
   },
+  activeProgramId: "",
+  autoProgram: true,
+  programTimer: null,
   activeFacet: "genre",
   lovedIds: new Set(),
   lovedOnly: false,
@@ -371,10 +449,12 @@ document.addEventListener("DOMContentLoaded", init);
 async function init() {
   bindElements();
   wireEvents();
-  setStatus("正在读取 3826 首基准曲库");
+  setStatus("正在读取 3841 首基准曲库");
+  let libraryLoaded = false;
 
   try {
     const library = await loadLibrary();
+    libraryLoaded = true;
     state.libraryMeta = library;
     state.styleLabels = { ...STYLE_LABELS, ...(library.styleLabels || {}) };
     state.allTracks = (library.tracks || []).map(hydrateTrackTaxonomy);
@@ -394,6 +474,7 @@ async function init() {
     updateLibraryCount();
     elements.statTracks.textContent = String(state.tracks.length);
     buildFilters(library);
+    restoreProgramState();
     fillQueue(true);
     renderAll();
     if (state.profileUsername) {
@@ -402,9 +483,10 @@ async function init() {
     setStatus("电台已就绪");
     window.setTimeout(() => playNext({ automatic: true, reason: "startup" }), 350);
   } catch (error) {
-    setStatus("曲库加载失败");
-    elements.trackTitle.textContent = "曲库没有加载成功";
-    elements.trackArtist.textContent = error.message;
+    console.error("Echo Room FM initialization failed", error);
+    setStatus(libraryLoaded ? "界面初始化失败" : "曲库加载失败");
+    elements.trackTitle.textContent = libraryLoaded ? "曲库已读取，界面启动失败" : "曲库没有加载成功";
+    elements.trackArtist.textContent = error?.message || String(error);
   }
 }
 
@@ -431,6 +513,9 @@ function bindElements() {
     "selectedFacetList",
     "channelName",
     "selectedStylesSummary",
+    "autoProgramToggle",
+    "programList",
+    "programStatus",
     "generateMixBtn",
     "clearMixBtn",
     "profileStatus",
@@ -515,6 +600,7 @@ function wireEvents() {
   elements.gatePlayBtn.addEventListener("click", startFromGate);
   elements.generateMixBtn.addEventListener("click", generateStyleSequence);
   elements.clearMixBtn.addEventListener("click", clearStyleMix);
+  elements.autoProgramToggle.addEventListener("change", toggleAutoProgram);
   elements.facetTabs.querySelectorAll("[data-facet]").forEach((button) => {
     button.addEventListener("click", () => switchFacet(button.dataset.facet));
   });
@@ -758,6 +844,155 @@ function buildFilters(library) {
   syncFilterButtons();
 }
 
+function restoreProgramState() {
+  const savedAuto = readLocalPreference(AUTO_PROGRAM_STORAGE_KEY);
+  state.autoProgram = savedAuto === null ? true : savedAuto === "true";
+  const savedProgramId = readLocalPreference(ACTIVE_PROGRAM_STORAGE_KEY) || "";
+  const initialProgram = state.autoProgram
+    ? getScheduledProgram()
+    : getProgramById(savedProgramId);
+
+  if (initialProgram) {
+    state.activeProgramId = initialProgram.id;
+    Object.values(state.selectedFacets).forEach((set) => set.clear());
+  }
+  elements.autoProgramToggle.checked = state.autoProgram;
+  persistProgramState();
+  startProgramClock();
+}
+
+function startProgramClock() {
+  if (state.programTimer) window.clearInterval(state.programTimer);
+  state.programTimer = window.setInterval(() => {
+    if (!state.autoProgram) return;
+    const scheduled = getScheduledProgram();
+    if (!scheduled || scheduled.id === state.activeProgramId) {
+      renderPrograms();
+      return;
+    }
+    activateProgram(scheduled.id, { automatic: true, play: false });
+  }, 60_000);
+}
+
+function toggleAutoProgram() {
+  state.autoProgram = elements.autoProgramToggle.checked;
+  if (state.autoProgram) {
+    const scheduled = getScheduledProgram();
+    if (scheduled) {
+      activateProgram(scheduled.id, { automatic: true, play: false });
+      setStatus(`自动时段已开启 · 当前为 ${scheduled.name}`);
+      return;
+    }
+  }
+  persistProgramState();
+  renderAll();
+  setStatus(state.autoProgram ? "自动时段已开启" : "自动时段已暂停，保留当前节目");
+}
+
+function activateProgram(programId, options = {}) {
+  const program = getProgramById(programId);
+  if (!program) return;
+  if (!options.automatic) state.autoProgram = false;
+  state.activeProgramId = program.id;
+  state.lovedOnly = false;
+  Object.values(state.selectedFacets).forEach((set) => set.clear());
+  state.failedIds.clear();
+  elements.autoProgramToggle.checked = state.autoProgram;
+  persistProgramState();
+  fillQueue(true);
+  renderAll();
+  setStatus(`${program.name} · ${program.bpmLabel} · 序列已生成`);
+  if (options.play) playNext({ user: true, reason: "program", force: true });
+}
+
+function setCustomProgramMode() {
+  state.activeProgramId = "";
+  state.autoProgram = false;
+  elements.autoProgramToggle.checked = false;
+  persistProgramState();
+}
+
+function persistProgramState() {
+  try {
+    window.localStorage.setItem(AUTO_PROGRAM_STORAGE_KEY, String(state.autoProgram));
+    if (state.activeProgramId) {
+      window.localStorage.setItem(ACTIVE_PROGRAM_STORAGE_KEY, state.activeProgramId);
+    } else {
+      window.localStorage.removeItem(ACTIVE_PROGRAM_STORAGE_KEY);
+    }
+  } catch (error) {
+    console.warn("Program preferences are unavailable for this local file.", error);
+  }
+}
+
+function readLocalPreference(key) {
+  try {
+    return window.localStorage.getItem(key);
+  } catch (error) {
+    return null;
+  }
+}
+
+function getProgramById(programId) {
+  return RADIO_PROGRAMS.find((program) => program.id === programId) || null;
+}
+
+function getActiveProgram() {
+  return getProgramById(state.activeProgramId);
+}
+
+function getScheduledProgram(now = new Date()) {
+  const hour = now.getHours();
+  if (hour >= 10 && hour < 18) return getProgramById("day_cafe");
+  if (hour >= 18 && hour < 21) return getProgramById("blue_hour");
+  if (hour >= 21 && hour < 23) return getProgramById("cocktail");
+  return getProgramById("after_hours");
+}
+
+function programFacetMatches(track, program) {
+  return ["genre", "mood", "context"].filter((dimension) => {
+    const accepted = program.facets[dimension] || [];
+    return getTrackFacetValues(track, dimension).some((key) => accepted.includes(key));
+  });
+}
+
+function programMatchesTrack(track, program) {
+  const bpm = Number(track.estimatedBpm);
+  if (!Number.isFinite(bpm) || bpm < program.minBpm || bpm > program.maxBpm) return false;
+  return programFacetMatches(track, program).length >= 2;
+}
+
+function renderPrograms() {
+  const activeProgram = getActiveProgram();
+  elements.autoProgramToggle.checked = state.autoProgram;
+  elements.programList.innerHTML = RADIO_PROGRAMS.map((program) => {
+    const active = program.id === state.activeProgramId;
+    const count = state.tracks.filter((track) => programMatchesTrack(track, program)).length;
+    return `
+      <button
+        type="button"
+        class="program-button${active ? " active" : ""}"
+        data-program="${escapeHtml(program.id)}"
+        aria-pressed="${String(active)}"
+      >
+        <strong>${escapeHtml(program.name)}</strong>
+        <small>${escapeHtml(program.schedule)} · ${escapeHtml(program.bpmLabel)}</small>
+        <em>${count}</em>
+      </button>
+    `;
+  }).join("");
+  elements.programList.querySelectorAll("[data-program]").forEach((button) => {
+    button.addEventListener("click", () => activateProgram(button.dataset.program, { play: true }));
+  });
+
+  if (!activeProgram) {
+    elements.programStatus.textContent = "自由组合模式";
+    return;
+  }
+  const prefix = state.autoProgram ? "AUTO" : "MANUAL";
+  elements.programStatus.textContent = `${prefix} · ${activeProgram.name} · ${activeProgram.bpmLabel}`;
+}
+
 function buildFacetFilters() {
   return Object.keys(TAXONOMY).reduce((groups, dimension) => {
     if (dimension === "era") return groups;
@@ -816,7 +1051,9 @@ function renderFacetFilters() {
 function renderSelectedFacetList() {
   const selected = getSelectedFacetPairs();
   if (!selected.length) {
-    elements.selectedFacetList.innerHTML = `<span class="empty-selected">Full library</span>`;
+    elements.selectedFacetList.innerHTML = getActiveProgram()
+      ? `<span class="empty-selected">由节目预设控制</span>`
+      : `<span class="empty-selected">Full library</span>`;
     return;
   }
   elements.selectedFacetList.innerHTML = selected.map(({ dimension, key }) => `
@@ -840,6 +1077,7 @@ function switchFacet(dimension) {
 
 function toggleFacetFilter(dimension, key) {
   if (!state.selectedFacets[dimension]) return;
+  setCustomProgramMode();
   if (state.selectedFacets[dimension].has(key)) {
     state.selectedFacets[dimension].delete(key);
   } else {
@@ -852,6 +1090,7 @@ function toggleFacetFilter(dimension, key) {
 }
 
 function clearStyleMix() {
+  setCustomProgramMode();
   Object.values(state.selectedFacets).forEach((set) => set.clear());
   state.failedIds.clear();
   fillQueue(true);
@@ -860,6 +1099,7 @@ function clearStyleMix() {
 }
 
 function generateStyleSequence() {
+  if (!state.activeProgramId) persistProgramState();
   state.failedIds.clear();
   fillQueue(true);
   renderAll();
@@ -1382,7 +1622,7 @@ function generateNeteaseExportDraft(options = {}) {
   const draft = {
     version: 1,
     generatedAt: new Date().toISOString(),
-    source: "KevinCredo FM local loved export",
+    source: "Echo Room FM local loved export",
     profileUsername: state.profileUsername || "",
     playlistName,
     lovedSignature: getLovedSignature(),
@@ -1646,7 +1886,7 @@ function updateImportFlowState() {
 
 function defaultExportPlaylistName() {
   const date = new Date().toISOString().slice(0, 10);
-  return `KevinCredo FM 红心 ${date}`;
+  return `Echo Room FM 红心 ${date}`;
 }
 
 function currentExportPlaylistName() {
@@ -1658,7 +1898,7 @@ function cleanPlaylistName(value) {
 }
 
 function safeFileName(value) {
-  return cleanPlaylistName(value).replace(/[^\w.-]+/g, "_").replace(/^_+|_+$/g, "") || "kevincredo_fm_loved";
+  return cleanPlaylistName(value).replace(/[^\w.-]+/g, "_").replace(/^_+|_+$/g, "") || "echo_room_fm_loved";
 }
 
 async function copyText(text) {
@@ -1775,6 +2015,8 @@ function chunkArray(items, size) {
 
 function getFilteredTracks() {
   if (state.lovedOnly) return getLovedTracks();
+  const program = getActiveProgram();
+  if (program) return state.tracks.filter((track) => programMatchesTrack(track, program));
   const selected = getSelectedFacetPairs();
   if (!selected.length) return state.tracks;
   return state.tracks.filter((track) => selectedFacetMatches(track).length > 0);
@@ -1782,6 +2024,14 @@ function getFilteredTracks() {
 
 function getWeightedFilteredTracks() {
   if (state.lovedOnly) return getLovedTracks();
+  const program = getActiveProgram();
+  if (program) {
+    return state.tracks.flatMap((track) => {
+      if (!programMatchesTrack(track, program)) return [];
+      const weight = Math.max(1, programFacetMatches(track, program).length);
+      return Array.from({ length: weight }, () => track);
+    });
+  }
   const selected = getSelectedFacetPairs();
   if (!selected.length) return state.tracks;
   return state.tracks.flatMap((track) => {
@@ -2078,6 +2328,7 @@ function updateProgress() {
 }
 
 function renderAll() {
+  renderPrograms();
   renderFacetTabs();
   renderSelectedFacetList();
   syncFilterButtons();
@@ -2226,6 +2477,16 @@ function mixScore(fromTrack, toTrack) {
 }
 
 function selectionScore(track) {
+  const program = getActiveProgram();
+  if (program) {
+    const matches = programFacetMatches(track, program).length;
+    const bpm = Number(track.estimatedBpm);
+    const midpoint = Number.isFinite(program.maxBpm)
+      ? (program.minBpm + program.maxBpm) / 2
+      : program.minBpm + 4;
+    const bpmFit = Number.isFinite(bpm) ? Math.max(0, 18 - Math.abs(bpm - midpoint) * 1.5) : 0;
+    return matches * 18 + bpmFit;
+  }
   const selected = getSelectedFacetPairs();
   if (!selected.length) return 0;
   const matched = selectedFacetMatches(track).length;
@@ -2298,6 +2559,8 @@ function getFacetLabel(dimension, key) {
 
 function getMixLabel() {
   if (state.lovedOnly) return "Loved Tracks";
+  const program = getActiveProgram();
+  if (program) return program.name;
   const selected = getSelectedFacetPairs();
   if (!selected.length) return "All Styles";
   const labels = selected.map(({ dimension, key }) => getFacetLabel(dimension, key));
@@ -2307,6 +2570,11 @@ function getMixLabel() {
 
 function getMixSummary() {
   if (state.lovedOnly) return `${getLovedTracks().length} 首红心 · 只播红心`;
+  const program = getActiveProgram();
+  if (program) {
+    const mode = state.autoProgram ? "AUTO SCHEDULE" : "MANUAL PROGRAM";
+    return `${program.schedule} · ${program.bpmLabel} · ${getFilteredTracks().length} 首唯一歌曲 · ${mode}`;
+  }
   const selected = getSelectedFacetPairs();
   const poolCount = getFilteredTracks().length;
   if (!selected.length) return `${poolCount} 首唯一歌曲 · 全曲库`;

@@ -5,7 +5,12 @@
   "type": "module",
   "scripts": {
     "build": "python3 radio_app/build_portable.py",
+    "metadata:enrich": "python3 radio_app/enrich_catalog.py",
+    "metadata:sample": "python3 radio_app/enrich_catalog.py --limit 3 --workers 2 --no-audio-analysis --musicbrainz-all",
+    "metadata:full": ".venv-enrichment/bin/python radio_app/enrich_catalog.py --workers 5 --refresh",
     "playability:audit": "node radio_app/audit_playability.mjs",
+    "playability:browser": "node radio_app/playability_browser_server.mjs",
+    "playability:apply": "python3 radio_app/apply_playability_report.py",
     "netease:api": "node radio_app/netease-local-helper.mjs",
     "netease:api:raw": "npx NeteaseCloudMusicApi@latest"
   },
