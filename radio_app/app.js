@@ -1345,6 +1345,8 @@ function renderFacetFilters() {
 
 function renderSelectedFacetList() {
   const selected = getSelectedFacetPairs();
+  elements.selectedFacetList.classList.toggle("has-selections", selected.length > 0);
+  elements.selectedFacetList.classList.toggle("many-selections", selected.length > 4);
   if (!selected.length) {
     elements.selectedFacetList.innerHTML = getActiveProgram()
       ? `<span class="empty-selected">由节目预设控制</span>`
@@ -2647,7 +2649,9 @@ function renderAll() {
   renderLoved();
   renderHistory();
   elements.channelName.textContent = getMixLabel();
-  elements.selectedStylesSummary.textContent = getMixSummary();
+  const mixSummary = getMixSummary();
+  elements.selectedStylesSummary.textContent = mixSummary;
+  elements.selectedStylesSummary.title = getMixSummaryDetails() || mixSummary;
   elements.statTracks.textContent = String(getFilteredTracks().length);
   elements.crossfadeValue.textContent = `${getCrossfadeSeconds()}s`;
 }
@@ -3186,8 +3190,30 @@ function getMixSummary() {
   const selected = getSelectedFacetPairs();
   const poolCount = getFilteredTracks().length;
   if (!selected.length) return `${poolCount} 首唯一歌曲 · 全曲库`;
-  const labels = selected.map(({ dimension, key }) => `${TAXONOMY[dimension].title}: ${getFacetLabel(dimension, key)}`).join(" · ");
-  return `${selected.length} 个标签 · ${poolCount} 首唯一歌曲 · 队列已去重 · ${labels}`;
+  return `${selected.length} 个标签 · ${poolCount} 首唯一歌曲 · 队列已去重 · ${getCompactFacetSummary(selected)}`;
+}
+
+function getMixSummaryDetails() {
+  if (state.lovedOnly) return "";
+  const selected = getSelectedFacetPairs();
+  if (!selected.length) return "";
+  return selected
+    .map(({ dimension, key }) => `${TAXONOMY[dimension].title}: ${getFacetLabel(dimension, key)}`)
+    .join(" · ");
+}
+
+function getCompactFacetSummary(selected) {
+  const groups = ["genre", "mood", "context"].map((dimension) => {
+    const labels = selected
+      .filter((item) => item.dimension === dimension)
+      .map(({ key }) => getFacetLabel(dimension, key));
+    if (!labels.length) return "";
+    const title = TAXONOMY[dimension].title;
+    if (labels.length === 1) return `${title}: ${labels[0]}`;
+    if (labels.length === 2) return `${title}: ${labels.join(" + ")}`;
+    return `${title}: ${labels[0]} +${labels.length - 1}`;
+  }).filter(Boolean);
+  return groups.join(" · ");
 }
 
 function getLovedTracks() {
