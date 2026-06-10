@@ -387,11 +387,12 @@ const RADIO_PROGRAMS = [
 const QUEUE_TARGET = 18;
 const DJ_MIN_MIX_SECONDS = 3;
 const DJ_MAX_MIX_SECONDS = 28;
-const DJ_PHRASE_BEAT_OPTIONS = [8, 16, 32];
+const DJ_PHRASE_BEAT_OPTIONS = [8, 16, 24, 32];
 const DJ_EIGHT_COUNT_BEATS = 8;
+const DJ_DEFAULT_EIGHT_COUNTS = 1;
+const DJ_FALLBACK_BPM = 100;
 const DJ_DEFAULT_BEATS_PER_BAR = 4;
 const DJ_TEMPO_RATE_LIMIT = 0.04;
-const DJ_DEFAULT_MIX_SECONDS = 10;
 const KEY_TO_SEMITONE = {
   c: 0,
   "c#": 1,
@@ -2424,7 +2425,7 @@ async function playNext(options = {}) {
     return;
   }
 
-  await crossfadeToTrack(nextTrack, getCrossfadeSeconds());
+  await crossfadeToTrack(nextTrack, getTransitionEightCounts());
 }
 
 async function switchToTrack(track, options = {}) {
@@ -2465,12 +2466,12 @@ async function switchToTrack(track, options = {}) {
   }
 }
 
-async function crossfadeToTrack(nextTrack, seconds) {
+async function crossfadeToTrack(nextTrack, eightCounts) {
   const oldDeck = getActiveDeck();
   const newDeckIndex = 1 - state.activeDeckIndex;
   const newDeck = state.decks[newDeckIndex];
   const oldTrack = state.current;
-  const plan = getMixPlan(oldTrack, nextTrack, seconds);
+  const plan = getMixPlan(oldTrack, nextTrack, eightCounts);
 
   state.isMixing = true;
   state.current = nextTrack;
@@ -2847,9 +2848,9 @@ function setStatus(text) {
   elements.statusLine.textContent = text;
 }
 
-function getMixPlan(fromTrack, toTrack, targetSeconds = getCrossfadeSeconds()) {
+function getMixPlan(fromTrack, toTrack, targetEightCounts = getTransitionEightCounts()) {
   const tempo = getTempoMatch(fromTrack, toTrack);
-  const phrase = choosePhraseTransition(tempo.fromBpm, targetSeconds);
+  const phrase = choosePhraseTransition(tempo.fromBpm, targetEightCounts);
   const harmonic = getHarmonicScore(fromTrack, toTrack);
   const playbackRate = tempo.hasTempo
     ? clamp(tempo.rate, 1 - DJ_TEMPO_RATE_LIMIT, 1 + DJ_TEMPO_RATE_LIMIT)
@@ -2932,16 +2933,16 @@ function choosePrimaryDjBpm(candidates) {
     .sort((a, b) => Math.abs(a - 118) - Math.abs(b - 118))[0];
 }
 
-function choosePhraseTransition(bpm, targetSeconds = DJ_DEFAULT_MIX_SECONDS) {
-  const safeTarget = Number(targetSeconds) || DJ_DEFAULT_MIX_SECONDS;
-  const eightCounts = chooseEightCountsForTarget(safeTarget);
+function choosePhraseTransition(bpm, targetEightCounts = DJ_DEFAULT_EIGHT_COUNTS) {
+  const eightCounts = chooseEightCountsForTarget(targetEightCounts);
   const beats = eightCounts * DJ_EIGHT_COUNT_BEATS;
   if (!Number.isFinite(bpm) || bpm <= 0) {
+    const fallbackBeatSeconds = 60 / DJ_FALLBACK_BPM;
     return {
       beats,
       eightCounts,
-      seconds: roundTo(clamp(safeTarget, DJ_MIN_MIX_SECONDS, DJ_MAX_MIX_SECONDS), 0.1),
-      beatSeconds: 0,
+      seconds: roundTo(clamp(beats * fallbackBeatSeconds, DJ_MIN_MIX_SECONDS, DJ_MAX_MIX_SECONDS), 0.1),
+      beatSeconds: fallbackBeatSeconds,
       label: formatEightCountLabel(eightCounts),
     };
   }
@@ -2961,11 +2962,8 @@ function choosePhraseTransition(bpm, targetSeconds = DJ_DEFAULT_MIX_SECONDS) {
   };
 }
 
-function chooseEightCountsForTarget(targetSeconds = DJ_DEFAULT_MIX_SECONDS) {
-  const target = Number(targetSeconds) || DJ_DEFAULT_MIX_SECONDS;
-  if (target <= 12) return 1;
-  if (target <= 18) return 2;
-  return 4;
+function chooseEightCountsForTarget(value = DJ_DEFAULT_EIGHT_COUNTS) {
+  return clamp(Math.round(Number(value) || DJ_DEFAULT_EIGHT_COUNTS), 1, 4);
 }
 
 function formatEightCountLabel(eightCounts = 1) {
@@ -3447,19 +3445,21 @@ function trackId(track) {
   return String(track?.id || "");
 }
 
-function getCrossfadeSeconds() {
-  return Number(elements.crossfadeSlider?.value || DJ_DEFAULT_MIX_SECONDS);
+function getTransitionEightCounts() {
+  return chooseEightCountsForTarget(elements.crossfadeSlider?.value || DJ_DEFAULT_EIGHT_COUNTS);
 }
 
 function getTransitionControlLabel() {
-  const currentTarget = getCrossfadeSeconds();
+  const currentTarget = getTransitionEightCounts();
   const plan = state.current && state.queue[0]
     ? getMixPlan(state.current, state.queue[0], currentTarget)
     : choosePhraseTransition(getTrackBpm(state.current), currentTarget);
-  const seconds = Number.isFinite(plan.seconds) && plan.beatSeconds
-    ? ` / ${formatSeconds(plan.seconds)}`
+  const label = plan.phraseLabel || plan.label || formatEightCountLabel(currentTarget);
+  const transitionSeconds = Number(plan.transitionSeconds ?? plan.seconds);
+  const seconds = Number.isFinite(transitionSeconds) && transitionSeconds > 0
+    ? ` / ${formatSeconds(transitionSeconds)}`
     : "";
-  return `${plan.label}${seconds}`;
+  return `${label}${seconds}`;
 }
 
 function getActiveDeck() {
