@@ -8,7 +8,7 @@
     <meta name="apple-mobile-web-app-title" content="Echo Room FM">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Echo Room FM</title>
-    <link rel="stylesheet" href="./styles.css?v=20260610-tag-overlap-fix">
+    <link rel="stylesheet" href="./styles.css?v=20260610-style-first-entry">
   </head>
   <body>
     <div class="backdrop" id="backdrop"></div>
@@ -152,10 +152,21 @@
               <strong id="channelName">All Styles</strong>
             </div>
             <div id="selectedStylesSummary" class="mix-summary">0 selected</div>
+            <div id="facetTabs" class="facet-tabs" role="tablist" aria-label="标签维度">
+              <button class="facet-tab active" type="button" data-facet="genre" role="tab" aria-selected="true">GENRE</button>
+              <button class="facet-tab" type="button" data-facet="mood" role="tab" aria-selected="false">MOOD</button>
+              <button class="facet-tab" type="button" data-facet="context" role="tab" aria-selected="false">CONTEXT</button>
+            </div>
+            <div id="selectedFacetList" class="selected-facet-list" aria-label="已选择标签"></div>
+            <div id="styleFilters" class="filter-list taxonomy-filter-list"></div>
+            <div class="selector-actions">
+              <button id="generateMixBtn" class="text-button strong selector-button" type="button">生成序列</button>
+              <button id="clearMixBtn" class="text-button selector-button" type="button">清空</button>
+            </div>
             <div class="program-heading">
               <span>PROGRAMS</span>
               <label class="program-auto">
-                <input id="autoProgramToggle" type="checkbox" checked>
+                <input id="autoProgramToggle" type="checkbox">
                 <span>按时段自动</span>
               </label>
             </div>
@@ -194,17 +205,6 @@
                 </div>
               </div>
             </details>
-            <div id="facetTabs" class="facet-tabs" role="tablist" aria-label="标签维度">
-              <button class="facet-tab active" type="button" data-facet="genre" role="tab" aria-selected="true">GENRE</button>
-              <button class="facet-tab" type="button" data-facet="mood" role="tab" aria-selected="false">MOOD</button>
-              <button class="facet-tab" type="button" data-facet="context" role="tab" aria-selected="false">CONTEXT</button>
-            </div>
-            <div id="selectedFacetList" class="selected-facet-list" aria-label="已选择标签"></div>
-            <div id="styleFilters" class="filter-list taxonomy-filter-list"></div>
-            <div class="selector-actions">
-              <button id="generateMixBtn" class="text-button strong selector-button" type="button">生成序列</button>
-              <button id="clearMixBtn" class="text-button selector-button" type="button">清空</button>
-            </div>
             <div class="mini-stats">
               <div>
                 <span>Unique Pool</span>
@@ -314,7 +314,7 @@
 
     <audio id="audioDeckA" preload="auto" autoplay></audio>
     <audio id="audioDeckB" preload="auto"></audio>
-    <script src="./library-data.js?v=20260610-tag-overlap-fix"></script>
-    <script src="./app.js?v=20260610-tag-overlap-fix"></script>
+    <script src="./library-data.js?v=20260610-style-first-entry"></script>
+    <script src="./app.js?v=20260610-style-first-entry"></script>
   </body>
 </html>

@@ -1,0 +1,426 @@
+{
+  "updatedAt": "2026-06-10T05:36:35.825Z",
+  "description": "Tracks hidden from Echo Room FM frontend playback without deleting archive records.",
+  "tracks": {
+    "64111": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "hide_candidates_review_2026-06-10",
+      "note": "张氏情歌 - 陈奕迅"
+    },
+    "66265": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "hide_candidates_review_2026-06-10",
+      "note": "阿牛 - 陈奕迅"
+    },
+    "66272": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "hide_candidates_review_2026-06-10",
+      "note": "夕阳无限好 - 陈奕迅"
+    },
+    "110359": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "hide_candidates_review_2026-06-10",
+      "note": "练习(Live) - 刘德华"
+    },
+    "188326": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "hide_candidates_review_2026-06-10",
+      "note": "继续跳舞(Body Mix) - 张国荣"
+    },
+    "192316": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "hide_candidates_review_2026-06-10",
+      "note": "天梯(Live) - 张智霖"
+    },
+    "209633": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "hide_candidates_review_2026-06-10",
+      "note": "特务J - 蔡依林"
+    },
+    "316678": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "hide_candidates_review_2026-06-10",
+      "note": "寒舍 - 杨千嬅"
+    },
+    "317251": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "hide_candidates_review_2026-06-10",
+      "note": "少女的祈祷(Live) - 杨千嬅"
+    },
+    "344156": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "hide_candidates_review_2026-06-10",
+      "note": "Little Monkey Rides on the Little Donkey - 落日飞车"
+    },
+    "344157": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "hide_candidates_review_2026-06-10",
+      "note": "I Know You Know I Love You - 落日飞车"
+    },
+    "353653": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "manual_chinese_vocal_cleanup_2026-06-10",
+      "note": "E-kids - 开始恋爱"
+    },
+    "4875626": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "hide_candidates_review_2026-06-10",
+      "note": "情非得已 - 庾澄庆"
+    },
+    "4877815": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "hide_candidates_review_2026-06-10",
+      "note": "美丽时光 - 张艺"
+    },
+    "5239275": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "hide_candidates_review_2026-06-10",
+      "note": "我的大同 - 唐荭菲"
+    },
+    "5251677": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "hide_candidates_review_2026-06-10",
+      "note": "Traveler\\\\\\'s Diary - 深绿海"
+    },
+    "25858515": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "hide_candidates_review_2026-06-10",
+      "note": "红旗 - 窦唯 / 不一定"
+    },
+    "26642869": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "hide_candidates_review_2026-06-10",
+      "note": "Memories Back Then - Kendrick Lamar / T.I. / B.o.B"
+    },
+    "27483203": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "hide_candidates_review_2026-06-10",
+      "note": "失忆蝴蝶 - 陈奕迅"
+    },
+    "27646196": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "manual_chinese_vocal_cleanup_2026-06-10",
+      "note": "宋冬野 - 莉莉安"
+    },
+    "27646205": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "hide_candidates_review_2026-06-10",
+      "note": "安和桥 - 宋冬野"
+    },
+    "27867428": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "hide_candidates_review_2026-06-10",
+      "note": "那谁 (Live) - 苏永康"
+    },
+    "27867449": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "hide_candidates_review_2026-06-10",
+      "note": "倾城 (Live) - 陈奕迅"
+    },
+    "27867503": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "manual_chinese_vocal_cleanup_2026-06-10",
+      "note": "容祖儿 / 彭羚 - 心淡"
+    },
+    "27965451": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "hide_candidates_review_2026-06-10",
+      "note": "雨水一盒 - 陈绮贞"
+    },
+    "28442688": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "hide_candidates_review_2026-06-10",
+      "note": "暴风一族(Remix Version) - 张国荣"
+    },
+    "29723022": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "hide_candidates_review_2026-06-10",
+      "note": "暗里着迷 (Live) - 刘德华"
+    },
+    "31445772": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "manual_chinese_vocal_cleanup_2026-06-10",
+      "note": "陈鸿宇 - 理想三旬"
+    },
+    "31912064": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "hide_candidates_review_2026-06-10",
+      "note": "遇见 钢琴曲 - 群星"
+    },
+    "32174064": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "hide_candidates_review_2026-06-10",
+      "note": "Hold on,Watch on - 陈伟恩"
+    },
+    "33715371": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "hide_candidates_review_2026-06-10",
+      "note": "习惯失恋 - 洪卓立"
+    },
+    "35023286": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "hide_candidates_review_2026-06-10",
+      "note": "Jumpman (Riot Ten & CYBRPNK Remix) - Riot Ten / Drake / Future / CYBRPNK"
+    },
+    "35403523": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "hide_candidates_review_2026-06-10",
+      "note": "陪你度过漫长岁月 - 陈奕迅"
+    },
+    "35566793": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "hide_candidates_review_2026-06-10",
+      "note": "还好你在 - 左颜"
+    },
+    "36190947": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "hide_candidates_review_2026-06-10",
+      "note": "No Flex Zone (Instant Party! Remix) - Instant Party! / Rae Sremmurd"
+    },
+    "36190949": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "hide_candidates_review_2026-06-10",
+      "note": "Grimey Thirsty (Instant Party! Remix) - Instant Party! / Far East Movement / YG"
+    },
+    "407450359": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "hide_candidates_review_2026-06-10",
+      "note": "Hotline Bling/ How Deep Is Your Love (Sickick Version!!) - Sickick / Drake / Ina Wroldsen / Calvin Harris"
+    },
+    "417859220": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "manual_chinese_vocal_cleanup_2026-06-10",
+      "note": "马頔 - 皆非"
+    },
+    "420401511": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "hide_candidates_review_2026-06-10",
+      "note": "和你 - 余佳运"
+    },
+    "432506367": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "hide_candidates_review_2026-06-10",
+      "note": "电台情歌 - 邓超"
+    },
+    "432509483": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "manual_chinese_vocal_cleanup_2026-06-10",
+      "note": "林宥嘉 - 全世界谁倾听你"
+    },
+    "440411849": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "hide_candidates_review_2026-06-10",
+      "note": "Black Beatles (MAKJ Remix) - MAKJ / Rae Sremmurd"
+    },
+    "443205153": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "hide_candidates_review_2026-06-10",
+      "note": "MAKJ - 假人挑战Black Beatles&How We Party - MAKJ, R3hab & Vinai, Rae Sremmurd - Yellow / MixZero音乐厂牌"
+    },
+    "451169473": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "hide_candidates_review_2026-06-10",
+      "note": "骗自己PT.2 - AY楊佬叁 / Noor-99"
+    },
+    "454952593": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "manual_chinese_vocal_cleanup_2026-06-10",
+      "note": "安全着陆 - 安全着陆"
+    },
+    "454954048": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "hide_candidates_review_2026-06-10",
+      "note": "需要保密的情话 - 安全着陆 / DaisyCream"
+    },
+    "461515533": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "hide_candidates_review_2026-06-10",
+      "note": "风 - 鲸鱼马戏团"
+    },
+    "464674134": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "hide_candidates_review_2026-06-10",
+      "note": "Litmas (Prod. lzr) - bbno$ / lzr"
+    },
+    "470759757": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "manual_chinese_vocal_cleanup_2026-06-10",
+      "note": "Jam - 不露声色"
+    },
+    "471403427": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "hide_candidates_review_2026-06-10",
+      "note": "我喜欢上你时的内心活动 - 陈绮贞"
+    },
+    "473404348": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "hide_candidates_review_2026-06-10",
+      "note": "I Wanna(我想)(Live) - 余佳运"
+    },
+    "480580003": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "hide_candidates_review_2026-06-10",
+      "note": "再也没有 - 永彬Ryan.B / AY楊佬叁"
+    },
+    "496107851": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "hide_candidates_review_2026-06-10",
+      "note": "说句实话 - 陆政廷Lil Jet"
+    },
+    "512623093": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "hide_candidates_review_2026-06-10",
+      "note": "雨夜 - 蓝云木"
+    },
+    "517246583": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "hide_candidates_review_2026-06-10",
+      "note": "nothing on you - 陳梦嘉"
+    },
+    "547844389": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "hide_candidates_review_2026-06-10",
+      "note": "where the party at. - ELLIOTTSOUND 房鑫杨 / DOLLARZOO"
+    },
+    "551816010": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "hide_candidates_review_2026-06-10",
+      "note": "我们 - 陈奕迅"
+    },
+    "553817982": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "manual_chinese_vocal_cleanup_2026-06-10",
+      "note": "Lil Chaos - 失眠"
+    },
+    "564680003": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "hide_candidates_review_2026-06-10",
+      "note": "The Chainsmokers - Something just like This（网虫i remix） - 网虫"
+    },
+    "864100958": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "hide_candidates_review_2026-06-10",
+      "note": "小鹿乱撞 - 永彬Ryan.B / 狄迪（D-DAY）"
+    },
+    "865914238": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "manual_chinese_vocal_cleanup_2026-06-10",
+      "note": "SheldonLeeee - love expired."
+    },
+    "1306923998": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "hide_candidates_review_2026-06-10",
+      "note": "我用什么把你留住 - 福禄寿FloruitShow"
+    },
+    "1330040615": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "manual_chinese_vocal_cleanup_2026-06-10",
+      "note": "Lil Chaos - 你"
+    },
+    "1350460585": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "hide_candidates_review_2026-06-10",
+      "note": "我一点都不想你 - BigYear大年"
+    },
+    "1352818739": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "hide_candidates_review_2026-06-10",
+      "note": "Don't You - 布朗尼"
+    },
+    "1421005268": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "manual_chinese_vocal_cleanup_2026-06-10",
+      "note": "Little WondeR - WesTing-西行"
+    },
+    "1426089632": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "hide_candidates_review_2026-06-10",
+      "note": "24HOURS - ODE / 李恩泽"
+    },
+    "1430560457": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "hide_candidates_review_2026-06-10",
+      "note": "When The Music Stops - 顾忠山 / 赵可"
+    },
+    "1445800253": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "hide_candidates_review_2026-06-10",
+      "note": "如何 - 福禄寿FloruitShow"
+    },
+    "1451699636": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "manual_chinese_vocal_cleanup_2026-06-10",
+      "note": "Mandarin - 摇篮曲 Cradle Song"
+    },
+    "1451700517": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "manual_chinese_vocal_cleanup_2026-06-10",
+      "note": "Mandarin - 朝 Asa"
+    },
+    "1489330795": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "hide_candidates_review_2026-06-10",
+      "note": "Here Comes The Gangster - Berlin Psycho Nurses（柏林护士）"
+    },
+    "1869248652": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "manual_chinese_vocal_cleanup_2026-06-10",
+      "note": "XMASwu(吴骜) - Princess"
+    },
+    "1888554239": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "hide_candidates_review_2026-06-10",
+      "note": "Stars Align (with Drake) - Majid Jordan / Drake"
+    },
+    "1890541225": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "hide_candidates_review_2026-06-10",
+      "note": "ALDEBARAN - STOLEN秘密行动"
+    },
+    "1927187350": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "manual_chinese_vocal_cleanup_2026-06-10",
+      "note": "Lur: - Lur Run"
+    },
+    "1928430207": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "manual_chinese_vocal_cleanup_2026-06-10",
+      "note": "吴卓玲 - Another Shore"
+    },
+    "1956743785": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "hide_candidates_review_2026-06-10",
+      "note": "Massive - Drake"
+    },
+    "2014859809": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "manual_chinese_vocal_cleanup_2026-06-10",
+      "note": "Newton- - 爱的主打歌 Remix"
+    },
+    "2080538115": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "manual_chinese_vocal_cleanup_2026-06-10",
+      "note": "Taiga乐队 - Aksobhya"
+    },
+    "2614655132": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "hide_candidates_review_2026-06-10",
+      "note": "呼唤爱人feat.Bokai - 王忆灵"
+    },
+    "2643105932": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "manual_chinese_vocal_cleanup_2026-06-10",
+      "note": "YEHAIYAHAN / Taiga乐队 / 梦马WildRide - 月光下你不再爱我"
+    },
+    "2757602239": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "hide_candidates_review_2026-06-10",
+      "note": "Do it - 黃浩庭 / YELLOW黄宣"
+    },
+    "3333024141": {
+      "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
+      "source": "manual_chinese_vocal_cleanup_2026-06-10",
+      "note": "达桑嘉措 - 来自尕队与直岗拉卡村"
+    }
+  }
+}

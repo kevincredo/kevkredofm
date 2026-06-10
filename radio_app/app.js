@@ -315,8 +315,6 @@ const ARTIST_TAXONOMY_RULES = [
   [["bobby puma"], { genre: ["house", "edm"], mood: ["energetic", "euphoric"], context: ["club", "workout"] }],
 ];
 
-const DEFAULT_FACET = { dimension: "mood", key: "chill" };
-
 const RADIO_PROGRAMS = [
   {
     id: "day_cafe",
@@ -422,6 +420,8 @@ const NETEASE_EXPORT_API_STORAGE_KEY = "kevincredo-fm-netease-export-api";
 const AUTO_PROGRAM_STORAGE_KEY = "echo-room-fm-auto-program";
 const ACTIVE_PROGRAM_STORAGE_KEY = "echo-room-fm-active-program";
 const PROGRAM_OVERRIDES_STORAGE_KEY = "echo-room-fm-program-overrides";
+const ENTRY_MODE_STORAGE_KEY = "echo-room-fm-entry-mode-version";
+const ENTRY_MODE_VERSION = "style-first-20260610";
 const NETEASE_ORIGIN = "https://music.163.com";
 const NETEASE_DEFAULT_EXPORT_API_BASE = "http://127.0.0.1:3000";
 const CLOUD_LOVED_ENDPOINT = "/.netlify/functions/loved";
@@ -441,7 +441,7 @@ const state = {
     context: new Set(),
   },
   activeProgramId: "",
-  autoProgram: true,
+  autoProgram: false,
   programTimer: null,
   programOverrides: {},
   activeProgramEditorFacet: "genre",
@@ -506,15 +506,20 @@ async function init() {
     renderExportRuntimeNote();
     updateLibraryCount();
     elements.statTracks.textContent = String(state.tracks.length);
+    applyEntryModeMigration();
     buildFilters(library);
     restoreProgramState();
-    fillQueue(true);
+    if (hasPlaybackScope()) fillQueue(true);
     renderAll();
     if (state.profileUsername) {
       activateProfile(state.profileUsername, { restore: true });
     }
-    setStatus("电台已就绪");
-    window.setTimeout(() => playNext({ automatic: true, reason: "startup" }), 350);
+    if (hasPlaybackScope()) {
+      setStatus("电台已就绪");
+      window.setTimeout(() => playNext({ automatic: true, reason: "startup" }), 350);
+    } else {
+      setStatus("选择喜欢的风格后生成第一条 playlist");
+    }
   } catch (error) {
     console.error("Echo Room FM initialization failed", error);
     setStatus(libraryLoaded ? "界面初始化失败" : "曲库加载失败");
@@ -679,6 +684,10 @@ function wireEvents() {
   elements.loveCurrentBtn.addEventListener("click", toggleLoveCurrent);
   elements.lovedOnlyBtn.addEventListener("click", toggleLovedOnly);
   elements.reloadBtn.addEventListener("click", () => {
+    if (!state.current && !hasPlaybackScope()) {
+      setStatus("先选择 Genre / Mood / Context，再生成序列");
+      return;
+    }
     fillQueue(true);
     renderAll();
     setStatus("播放序列已按当前曲风组合重新生成");
@@ -877,17 +886,7 @@ function sortTaxonomy(taxonomy) {
 function buildFilters(library) {
   state.filterGroups = buildFacetFilters(library);
   state.filters = Object.values(state.filterGroups).flat();
-  if (!getSelectedFacetPairs().length) {
-    const defaultGroup = state.filterGroups[DEFAULT_FACET.dimension] || [];
-    const fallbackGroup = state.filterGroups.genre || [];
-    const defaultFilter = defaultGroup.find((filter) => filter.key === DEFAULT_FACET.key)
-      || defaultGroup[0]
-      || fallbackGroup[0];
-    if (defaultFilter) {
-      state.activeFacet = defaultFilter.dimension;
-      state.selectedFacets[defaultFilter.dimension].add(defaultFilter.key);
-    }
-  }
+  state.activeFacet = "genre";
   renderFacetTabs();
   renderFacetFilters();
   renderSelectedFacetList();
@@ -896,7 +895,7 @@ function buildFilters(library) {
 
 function restoreProgramState() {
   const savedAuto = readLocalPreference(AUTO_PROGRAM_STORAGE_KEY);
-  state.autoProgram = savedAuto === null ? true : savedAuto === "true";
+  state.autoProgram = savedAuto === null ? false : savedAuto === "true";
   const savedProgramId = readLocalPreference(ACTIVE_PROGRAM_STORAGE_KEY) || "";
   const initialProgram = state.autoProgram
     ? getScheduledProgram()
@@ -909,6 +908,17 @@ function restoreProgramState() {
   elements.autoProgramToggle.checked = state.autoProgram;
   persistProgramState();
   startProgramClock();
+}
+
+function applyEntryModeMigration() {
+  try {
+    if (window.localStorage.getItem(ENTRY_MODE_STORAGE_KEY) === ENTRY_MODE_VERSION) return;
+    window.localStorage.removeItem(AUTO_PROGRAM_STORAGE_KEY);
+    window.localStorage.removeItem(ACTIVE_PROGRAM_STORAGE_KEY);
+    window.localStorage.setItem(ENTRY_MODE_STORAGE_KEY, ENTRY_MODE_VERSION);
+  } catch (error) {
+    console.warn("Entry mode migration is unavailable for this browser.", error);
+  }
 }
 
 function startProgramClock() {
@@ -1152,7 +1162,7 @@ function renderPrograms() {
   });
 
   if (!activeProgram) {
-    elements.programStatus.textContent = "自由组合模式";
+    elements.programStatus.textContent = "STYLE MIX · 自由选择风格";
     renderProgramEditor(null);
     return;
   }
@@ -1350,7 +1360,7 @@ function renderSelectedFacetList() {
   if (!selected.length) {
     elements.selectedFacetList.innerHTML = getActiveProgram()
       ? `<span class="empty-selected">由节目预设控制</span>`
-      : `<span class="empty-selected">Full library</span>`;
+      : `<span class="empty-selected">选择标签生成 playlist</span>`;
     return;
   }
   elements.selectedFacetList.innerHTML = selected.map(({ dimension, key }) => `
@@ -1381,21 +1391,29 @@ function toggleFacetFilter(dimension, key) {
     state.selectedFacets[dimension].add(key);
   }
   state.failedIds.clear();
-  fillQueue(true);
+  if (hasPlaybackScope()) {
+    fillQueue(true);
+  } else {
+    state.queue = [];
+  }
   renderAll();
-  setStatus(`已选择 ${getMixLabel()}`);
+  setStatus(hasPlaybackScope() ? `已选择 ${getMixLabel()}` : "已取消全部标签");
 }
 
 function clearStyleMix() {
   setCustomProgramMode();
   Object.values(state.selectedFacets).forEach((set) => set.clear());
   state.failedIds.clear();
-  fillQueue(true);
+  state.queue = [];
   renderAll();
-  setStatus("已清空曲风选择，使用完整曲库");
+  setStatus("已清空曲风选择");
 }
 
 function generateStyleSequence() {
+  if (!hasPlaybackScope()) {
+    setStatus("先选择一个或多个风格标签");
+    return;
+  }
   if (!state.activeProgramId) persistProgramState();
   state.failedIds.clear();
   fillQueue(true);
@@ -2382,6 +2400,11 @@ function pickTrack(reference = null) {
 
 async function playNext(options = {}) {
   if (state.isMixing) return;
+  if (!state.current && !state.queue.length && !hasPlaybackScope()) {
+    elements.autoplayGate.hidden = true;
+    setStatus("先选择 Genre / Mood / Context，再生成序列");
+    return;
+  }
   if (options.user) state.userStarted = true;
   elements.autoplayGate.hidden = true;
 
@@ -2507,6 +2530,10 @@ async function crossfadeToTrack(nextTrack, seconds) {
 function startFromGate() {
   state.userStarted = true;
   elements.autoplayGate.hidden = true;
+  if (!state.current && !state.queue.length && !hasPlaybackScope()) {
+    setStatus("先选择 Genre / Mood / Context，再生成序列");
+    return;
+  }
   const active = getActiveDeck();
   if (state.current && active.src && active.paused) {
     active.play().then(() => {
@@ -3157,6 +3184,10 @@ function getSelectedFacetPairs() {
   ));
 }
 
+function hasPlaybackScope() {
+  return state.lovedOnly || Boolean(state.activeProgramId) || getSelectedFacetPairs().length > 0;
+}
+
 function selectedFacetMatches(track) {
   const selected = getSelectedFacetPairs();
   if (!selected.length) return [];
@@ -3174,7 +3205,7 @@ function getMixLabel() {
   const program = getActiveProgram();
   if (program) return program.name;
   const selected = getSelectedFacetPairs();
-  if (!selected.length) return "All Styles";
+  if (!selected.length) return "Choose Styles";
   const labels = selected.map(({ dimension, key }) => getFacetLabel(dimension, key));
   if (labels.length <= 2) return labels.join(" + ");
   return `${labels.slice(0, 2).join(" + ")} +${labels.length - 2}`;
@@ -3189,7 +3220,7 @@ function getMixSummary() {
   }
   const selected = getSelectedFacetPairs();
   const poolCount = getFilteredTracks().length;
-  if (!selected.length) return `${poolCount} 首唯一歌曲 · 全曲库`;
+  if (!selected.length) return `${poolCount} 首唯一歌曲 · 选择 Genre / Mood / Context 生成第一条 playlist`;
   return `${selected.length} 个标签 · ${poolCount} 首唯一歌曲 · 队列已去重 · ${getCompactFacetSummary(selected)}`;
 }
 

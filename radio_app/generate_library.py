@@ -12,6 +12,7 @@ OUT = Path(__file__).resolve().parent / "library.json"
 DATA_JS = Path(__file__).resolve().parent / "library-data.js"
 GENRE_CACHE = Path(__file__).resolve().parent / "genre_cache.json"
 PLAYABILITY_BLOCKED_IDS = ROOT / "output" / "netease_music_archive" / "playability_blocked_ids.json"
+EDITORIAL_HIDDEN_TRACKS = Path(__file__).resolve().parent / "editorial_hidden_tracks.json"
 
 
 STYLE_LABELS = {
@@ -572,6 +573,7 @@ def main():
     archive = json.loads(ARCHIVE.read_text(encoding="utf-8"))
     genre_cache = load_genre_cache()
     blocked_track_ids = load_playability_blocked_ids()
+    editorial_hidden_tracks = load_editorial_hidden_tracks()
     playlist_by_id = {p["playlist_id"]: p for p in archive["playlists"]}
     memberships = defaultdict(list)
     for row in archive["playlist_tracks"]:
@@ -636,61 +638,83 @@ def main():
         override_key = track_override.get("musicalKey")
         playable = str(track_id) not in blocked_track_ids
         playability_status = "playable_by_browser_probe" if playable else "blocked_by_browser_probe"
+        editorial_hidden = editorial_hidden_tracks.get(str(track_id))
+        hidden_from_radio = (not playable) or bool(editorial_hidden)
 
-        tracks.append(
-            {
-                "id": track_id,
-                "name": track.get("name", ""),
-                "artists": track.get("artists", []),
-                "album": track.get("album", ""),
-                "durationMs": track.get("duration_ms"),
-                "popularity": track.get("popularity"),
-                "fee": track.get("fee"),
-                "neteaseAccess": track.get("netease_access") or "unknown",
-                "neteasePrivilegeStatus": track.get("netease_privilege_status"),
-                "neteasePaidEntitlement": track.get("netease_paid_entitlement"),
-                "neteaseMaxPlayBitrate": track.get("netease_max_play_bitrate"),
-                "neteaseMaxFreeBitrate": track.get("netease_max_free_bitrate"),
-                "neteaseMaxDownloadBitrate": track.get("netease_max_download_bitrate"),
-                "neteaseCloudSong": track.get("netease_cloud_song"),
-                "neteaseAccessCheckedAt": track.get("netease_access_checked_at") or "",
-                "noCopyrightReason": track.get("no_copyright_reason") or "",
-                "replacementTrackId": track.get("replacement_track_id") or "",
-                "playable": playable,
-                "playabilityStatus": playability_status,
-                "hiddenFromRadio": not playable,
-                "picUrl": track.get("pic_url", ""),
-                "styleTags": sorted(style_tags),
-                "styleLabels": [STYLE_LABELS.get(tag, tag.replace("_", " ").title()) for tag in sorted(style_tags)],
-                "taxonomy": taxonomy,
-                "estimatedBpm": int(round(estimated_bpm)),
-                "tempoConfidence": "track-reference" if track_override.get("bpm") else tempo.get("confidence") or "genre-estimated",
-                "tempoSources": [override_source] if override_source else tempo.get("sources") or [],
-                "musicalKey": override_key or musical_key.get("key") or "",
-                "mode": track_override.get("mode") or musical_key.get("mode") or "",
-                "keyConfidence": "track-reference" if override_key else musical_key.get("confidence") or "",
-                "keySources": [override_source] if override_key and override_source else musical_key.get("sources") or [],
-                "energy": energy,
-                "beatGridAvailable": bool(cache_entry.get("beatGridAvailable")),
-                "onlineGenres": sorted(set(online_genres)),
-                "onlineTags": sorted(set(online_tags))[:18],
-                "genreSources": cache_entry.get("sources") or [],
-                "genreConfidence": "track-reference" if track_override else genre_confidence,
-                "catalogMatchConfidence": cache_entry.get("catalogMatchConfidence"),
-                "catalogMatches": cache_entry.get("matches") or [],
-                "releaseDate": cache_entry.get("releaseDate") or "",
-                "isrc": cache_entry.get("isrc") or "",
-                "explicit": cache_entry.get("explicit"),
-                "metadataUpdatedAt": cache_entry.get("catalogEnrichedAt") or cache_entry.get("fetchedAt") or "",
-                "playlistNames": sorted(set(name for name in playlist_names if name)),
-                "playlistCount": len(playlist_ids),
-                "createdPlaylistCount": created_playlist_count,
-                "inLikedMusic": in_liked_music,
-            }
-        )
+        item = {
+            "id": track_id,
+            "name": track.get("name", ""),
+            "artists": track.get("artists", []),
+            "album": track.get("album", ""),
+            "durationMs": track.get("duration_ms"),
+            "popularity": track.get("popularity"),
+            "fee": track.get("fee"),
+            "neteaseAccess": track.get("netease_access") or "unknown",
+            "neteasePrivilegeStatus": track.get("netease_privilege_status"),
+            "neteasePaidEntitlement": track.get("netease_paid_entitlement"),
+            "neteaseMaxPlayBitrate": track.get("netease_max_play_bitrate"),
+            "neteaseMaxFreeBitrate": track.get("netease_max_free_bitrate"),
+            "neteaseMaxDownloadBitrate": track.get("netease_max_download_bitrate"),
+            "neteaseCloudSong": track.get("netease_cloud_song"),
+            "neteaseAccessCheckedAt": track.get("netease_access_checked_at") or "",
+            "noCopyrightReason": track.get("no_copyright_reason") or "",
+            "replacementTrackId": track.get("replacement_track_id") or "",
+            "playable": playable,
+            "playabilityStatus": playability_status,
+            "hiddenFromRadio": hidden_from_radio,
+            "picUrl": track.get("pic_url", ""),
+            "styleTags": sorted(style_tags),
+            "styleLabels": [STYLE_LABELS.get(tag, tag.replace("_", " ").title()) for tag in sorted(style_tags)],
+            "taxonomy": taxonomy,
+            "estimatedBpm": int(round(estimated_bpm)),
+            "tempoConfidence": "track-reference" if track_override.get("bpm") else tempo.get("confidence") or "genre-estimated",
+            "tempoSources": [override_source] if override_source else tempo.get("sources") or [],
+            "musicalKey": override_key or musical_key.get("key") or "",
+            "mode": track_override.get("mode") or musical_key.get("mode") or "",
+            "keyConfidence": "track-reference" if override_key else musical_key.get("confidence") or "",
+            "keySources": [override_source] if override_key and override_source else musical_key.get("sources") or [],
+            "energy": energy,
+            "beatGridAvailable": bool(cache_entry.get("beatGridAvailable")),
+            "onlineGenres": sorted(set(online_genres)),
+            "onlineTags": sorted(set(online_tags))[:18],
+            "genreSources": cache_entry.get("sources") or [],
+            "genreConfidence": "track-reference" if track_override else genre_confidence,
+            "catalogMatchConfidence": cache_entry.get("catalogMatchConfidence"),
+            "catalogMatches": cache_entry.get("matches") or [],
+            "releaseDate": cache_entry.get("releaseDate") or "",
+            "isrc": cache_entry.get("isrc") or "",
+            "explicit": cache_entry.get("explicit"),
+            "metadataUpdatedAt": cache_entry.get("catalogEnrichedAt") or cache_entry.get("fetchedAt") or "",
+            "playlistNames": sorted(set(name for name in playlist_names if name)),
+            "playlistCount": len(playlist_ids),
+            "createdPlaylistCount": created_playlist_count,
+            "inLikedMusic": in_liked_music,
+        }
+        if editorial_hidden:
+            item["radioHiddenReason"] = editorial_hidden.get("reason") or "editorial_hidden"
+            item["radioHiddenSource"] = editorial_hidden.get("source") or "editorial_hidden_tracks"
+            if editorial_hidden.get("hiddenAt"):
+                item["radioHiddenAt"] = editorial_hidden["hiddenAt"]
+            if editorial_hidden.get("note"):
+                item["radioHiddenNote"] = editorial_hidden["note"]
+        tracks.append(item)
 
     refine_catalog_taxonomy(tracks)
     tracks.sort(key=lambda item: (item["name"].lower(), ",".join(item["artists"]), item["id"]))
+    frontend_playable_count = sum(
+        1
+        for track in tracks
+        if track.get("playable") is not False and track.get("hiddenFromRadio") is not True
+    )
+    radio_hidden_count = sum(1 for track in tracks if track.get("hiddenFromRadio") is True)
+    editorial_hidden_sources = sorted(
+        set(
+            track.get("radioHiddenSource")
+            for track in tracks
+            if track.get("radioHiddenReason") == "editorial_filter_chinese_vocal_or_vocal_rap"
+            and track.get("radioHiddenSource")
+        )
+    )
     payload = {
         "generatedAt": datetime.now().astimezone().isoformat(timespec="seconds"),
         "sourceArchiveGeneratedAt": archive.get("generated_at"),
@@ -698,6 +722,12 @@ def main():
         "trackCount": len(tracks),
         "playableTrackCount": sum(1 for track in tracks if track.get("playable") is not False),
         "blockedTrackCount": sum(1 for track in tracks if track.get("playable") is False),
+        "frontendPlayableTrackCount": frontend_playable_count,
+        "radioHiddenTrackCount": radio_hidden_count,
+        "editorialHiddenTrackCount": sum(
+            1 for track in tracks if track.get("radioHiddenReason") == "editorial_filter_chinese_vocal_or_vocal_rap"
+        ),
+        "editorialHiddenSources": editorial_hidden_sources,
         "playabilitySource": str(PLAYABILITY_BLOCKED_IDS.relative_to(ROOT)) if blocked_track_ids else "",
         "tracks": tracks,
         "styleStats": make_style_stats(tracks),
@@ -726,6 +756,27 @@ def load_playability_blocked_ids():
     if isinstance(data, list):
         return {str(item) for item in data if str(item)}
     return set()
+
+
+def load_editorial_hidden_tracks():
+    if not EDITORIAL_HIDDEN_TRACKS.exists():
+        return {}
+    try:
+        data = json.loads(EDITORIAL_HIDDEN_TRACKS.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return {}
+    tracks = data.get("tracks", {})
+    if not isinstance(tracks, dict):
+        return {}
+    normalized = {}
+    for track_id, entry in tracks.items():
+        if not str(track_id):
+            continue
+        if isinstance(entry, dict):
+            normalized[str(track_id)] = entry
+        else:
+            normalized[str(track_id)] = {"reason": str(entry)}
+    return normalized
 
 
 def load_genre_cache():
