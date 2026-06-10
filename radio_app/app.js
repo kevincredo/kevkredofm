@@ -385,9 +385,10 @@ const RADIO_PROGRAMS = [
 ];
 
 const QUEUE_TARGET = 18;
-const DJ_MIN_MIX_SECONDS = 8;
+const DJ_MIN_MIX_SECONDS = 3;
 const DJ_MAX_MIX_SECONDS = 28;
-const DJ_PHRASE_BEAT_OPTIONS = [16, 32, 64];
+const DJ_PHRASE_BEAT_OPTIONS = [8, 16, 32];
+const DJ_EIGHT_COUNT_BEATS = 8;
 const DJ_DEFAULT_BEATS_PER_BAR = 4;
 const DJ_TEMPO_RATE_LIMIT = 0.04;
 const DJ_DEFAULT_MIX_SECONDS = 10;
@@ -465,6 +466,7 @@ const state = {
   current: null,
   previous: null,
   currentMixPlan: null,
+  activeMixTransition: null,
   decks: [],
   activeDeckIndex: 0,
   isPlaying: false,
@@ -698,7 +700,7 @@ function wireEvents() {
     updateMixText(state.current, state.queue[0]);
   });
   elements.crossfadeSlider.addEventListener("input", () => {
-    elements.crossfadeValue.textContent = `${getCrossfadeSeconds()}s`;
+    elements.crossfadeValue.textContent = getTransitionControlLabel();
     updateMixText(state.current, state.queue[0]);
   });
   elements.volumeSlider.addEventListener("input", () => {
@@ -709,6 +711,7 @@ function wireEvents() {
     }
   });
   elements.progressTrack.addEventListener("click", seekAudio);
+  document.addEventListener("visibilitychange", handleVisibilityChange);
   elements.coverArt.addEventListener("error", () => {
     elements.albumStage.classList.add("no-cover");
     elements.coverArt.removeAttribute("src");
@@ -2472,11 +2475,12 @@ async function crossfadeToTrack(nextTrack, seconds) {
   state.isMixing = true;
   state.current = nextTrack;
   state.currentMixPlan = plan;
+  state.activeMixTransition = { oldDeck, newDeck, newDeckIndex, oldTrack, nextTrack, playStarted: false };
   rememberRecent(nextTrack.id);
   renderTrack(nextTrack, "MIXING IN");
   updateMixText(oldTrack, nextTrack, "crossfade", plan);
   renderQueue();
-  setStatus(`正在按 ${plan.phraseBeats} 拍过渡 · ${formatSeconds(plan.transitionSeconds)}`);
+  setStatus(`正在按 ${plan.phraseLabel} 对齐过渡 · ${formatSeconds(plan.transitionSeconds)}`);
 
   newDeck.src = neteaseAudioUrl(nextTrack.id);
   newDeck.currentTime = 0;
@@ -2487,19 +2491,30 @@ async function crossfadeToTrack(nextTrack, seconds) {
 
   try {
     await newDeck.play();
+    if (state.activeMixTransition) state.activeMixTransition.playStarted = true;
   } catch (error) {
     state.isMixing = false;
     state.current = oldTrack;
     state.currentMixPlan = null;
+    state.activeMixTransition = null;
     state.failedIds.add(nextTrack.id);
     setStatus("下一首无法直接播放，正在重新选歌");
     playNext({ automatic: true, reason: "error" });
     return;
   }
 
+  if (document.hidden) {
+    completeMixTransition({ background: true });
+    return;
+  }
+
   const start = performance.now();
   const durationMs = Math.max(1, plan.transitionSeconds) * 1000;
   const fade = () => {
+    if (document.hidden) {
+      completeMixTransition({ background: true });
+      return;
+    }
     const ratio = Math.min(1, (performance.now() - start) / durationMs);
     oldDeck.volume = state.masterVolume * Math.cos((ratio * Math.PI) / 2);
     newDeck.volume = state.masterVolume * Math.sin((ratio * Math.PI) / 2);
@@ -2509,22 +2524,42 @@ async function crossfadeToTrack(nextTrack, seconds) {
       return;
     }
 
-    oldDeck.pause();
-    oldDeck.removeAttribute("src");
-    oldDeck.volume = 0;
-    setDeckPlaybackRate(oldDeck, 1);
-    oldDeck.load();
-    state.activeDeckIndex = newDeckIndex;
-    state.isMixing = false;
-    if (oldTrack) pushHistory(oldTrack);
-    renderTrack(nextTrack, "NOW PLAYING");
-    renderHistory();
-    updateProgress();
-    setPlaying(true);
-    easeDeckRateTo(newDeck, 1, 12000);
-    setStatus("正在播放");
+    completeMixTransition({ background: false });
   };
   window.requestAnimationFrame(fade);
+}
+
+function completeMixTransition(options = {}) {
+  const transition = state.activeMixTransition;
+  if (!transition) return;
+  const { oldDeck, newDeck, newDeckIndex, oldTrack, nextTrack } = transition;
+  oldDeck.pause();
+  oldDeck.removeAttribute("src");
+  oldDeck.volume = 0;
+  setDeckPlaybackRate(oldDeck, 1);
+  oldDeck.load();
+  newDeck.volume = state.masterVolume;
+  state.activeDeckIndex = newDeckIndex;
+  state.isMixing = false;
+  state.activeMixTransition = null;
+  if (oldTrack) pushHistory(oldTrack);
+  renderTrack(nextTrack, "NOW PLAYING");
+  renderHistory();
+  updateProgress();
+  setPlaying(true);
+  if (options.background) {
+    setDeckPlaybackRate(newDeck, 1);
+    setStatus("后台播放中");
+  } else {
+    easeDeckRateTo(newDeck, 1, 12000);
+    setStatus("正在播放");
+  }
+}
+
+function handleVisibilityChange() {
+  if (document.hidden && state.isMixing && state.activeMixTransition?.playStarted) {
+    completeMixTransition({ background: true });
+  }
 }
 
 function startFromGate() {
@@ -2680,7 +2715,7 @@ function renderAll() {
   elements.selectedStylesSummary.textContent = mixSummary;
   elements.selectedStylesSummary.title = getMixSummaryDetails() || mixSummary;
   elements.statTracks.textContent = String(getFilteredTracks().length);
-  elements.crossfadeValue.textContent = `${getCrossfadeSeconds()}s`;
+  elements.crossfadeValue.textContent = getTransitionControlLabel();
 }
 
 function syncFilterButtons() {
@@ -2783,10 +2818,10 @@ function updateMixText(fromTrack, toTrack, mode = "planned", plan = null) {
   const mixPlan = plan || getMixPlan(fromTrack, toTrack);
   const shared = sharedStyleLabels(fromTrack, toTrack);
   const transition = mode === "crossfade"
-    ? `${mixPlan.phraseBeats} beats / ${formatSeconds(mixPlan.transitionSeconds)}`
+    ? `${mixPlan.phraseLabel} / ${formatSeconds(mixPlan.transitionSeconds)}`
     : mode === "manual cut"
       ? "manual cut"
-      : "planned";
+      : `${mixPlan.phraseLabel} planned`;
   elements.mixText.textContent = `${formatBpm(mixPlan.fromBpm)} → ${formatBpm(mixPlan.toBpm)} BPM · Δ${formatBpm(mixPlan.bpmDelta)} · ${mixPlan.tempoShiftLabel} · ${mixPlan.harmonicLabel} · ${shared || getMixLabel()} · ${transition} · ${mixPlan.gridLabel}。`;
 }
 
@@ -2834,7 +2869,9 @@ function getMixPlan(fromTrack, toTrack, targetSeconds = getCrossfadeSeconds()) {
     tempoShiftLabel: Math.abs(shiftPercent) < 0.1 ? "tempo locked" : `tempo ${formatSignedPercent(shiftPercent)}`,
     transitionSeconds: phrase.seconds,
     phraseBeats: phrase.beats,
+    eightCounts: phrase.eightCounts,
     beatSeconds: phrase.beatSeconds,
+    phraseLabel: phrase.label,
     harmonic,
     harmonicLabel: harmonic.label,
     gridLabel,
@@ -2896,29 +2933,43 @@ function choosePrimaryDjBpm(candidates) {
 }
 
 function choosePhraseTransition(bpm, targetSeconds = DJ_DEFAULT_MIX_SECONDS) {
-  const safeTarget = Math.max(Number(targetSeconds) || DJ_DEFAULT_MIX_SECONDS, 14);
+  const safeTarget = Number(targetSeconds) || DJ_DEFAULT_MIX_SECONDS;
+  const eightCounts = chooseEightCountsForTarget(safeTarget);
+  const beats = eightCounts * DJ_EIGHT_COUNT_BEATS;
   if (!Number.isFinite(bpm) || bpm <= 0) {
     return {
-      beats: 32,
-      seconds: clamp(safeTarget, DJ_MIN_MIX_SECONDS, DJ_MAX_MIX_SECONDS),
+      beats,
+      eightCounts,
+      seconds: roundTo(clamp(safeTarget, DJ_MIN_MIX_SECONDS, DJ_MAX_MIX_SECONDS), 0.1),
       beatSeconds: 0,
+      label: formatEightCountLabel(eightCounts),
     };
   }
 
   const beatSeconds = 60 / bpm;
-  const best = DJ_PHRASE_BEAT_OPTIONS
-    .map((beats) => ({
-      beats,
-      seconds: beats * beatSeconds,
-      score: Math.abs(beats * beatSeconds - safeTarget) - (beats === 32 ? 4 : 0),
-    }))
-    .sort((a, b) => a.score - b.score)[0];
+  const phraseOption = DJ_PHRASE_BEAT_OPTIONS.includes(beats)
+    ? beats
+    : DJ_PHRASE_BEAT_OPTIONS[0];
+  const rawSeconds = phraseOption * beatSeconds;
 
   return {
-    beats: best.beats,
-    seconds: roundTo(clamp(best.seconds, DJ_MIN_MIX_SECONDS, DJ_MAX_MIX_SECONDS), 0.1),
+    beats: phraseOption,
+    eightCounts: phraseOption / DJ_EIGHT_COUNT_BEATS,
+    seconds: roundTo(clamp(rawSeconds, DJ_MIN_MIX_SECONDS, DJ_MAX_MIX_SECONDS), 0.1),
     beatSeconds,
+    label: formatEightCountLabel(phraseOption / DJ_EIGHT_COUNT_BEATS),
   };
+}
+
+function chooseEightCountsForTarget(targetSeconds = DJ_DEFAULT_MIX_SECONDS) {
+  const target = Number(targetSeconds) || DJ_DEFAULT_MIX_SECONDS;
+  if (target <= 12) return 1;
+  if (target <= 18) return 2;
+  return 4;
+}
+
+function formatEightCountLabel(eightCounts = 1) {
+  return `${Math.max(1, Math.round(eightCounts))} x 8拍`;
 }
 
 function shouldStartAutoMix(deck, plan) {
@@ -3398,6 +3449,17 @@ function trackId(track) {
 
 function getCrossfadeSeconds() {
   return Number(elements.crossfadeSlider?.value || DJ_DEFAULT_MIX_SECONDS);
+}
+
+function getTransitionControlLabel() {
+  const currentTarget = getCrossfadeSeconds();
+  const plan = state.current && state.queue[0]
+    ? getMixPlan(state.current, state.queue[0], currentTarget)
+    : choosePhraseTransition(getTrackBpm(state.current), currentTarget);
+  const seconds = Number.isFinite(plan.seconds) && plan.beatSeconds
+    ? ` / ${formatSeconds(plan.seconds)}`
+    : "";
+  return `${plan.label}${seconds}`;
 }
 
 function getActiveDeck() {
