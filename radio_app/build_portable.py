@@ -10,6 +10,7 @@ import re
 import shutil
 import zipfile
 from pathlib import Path
+from urllib.parse import quote
 
 
 ROOT = Path(__file__).resolve().parent
@@ -18,6 +19,7 @@ DIST = WORKSPACE / "dist" / "echo_room_fm"
 SITE = DIST / "Echo_Room_FM_Website"
 NETLIFY_PROJECT = DIST / "Echo_Room_FM_Netlify_Project"
 STANDALONE_NAME = "Echo_Room_FM.html"
+LOGO_ASSET = "assets/echo-room-logo-white.svg"
 
 
 def read_text(path: Path) -> str:
@@ -33,10 +35,12 @@ def build_standalone() -> Path:
   css = read_text(ROOT / "styles.css")
   library = read_text(ROOT / "library-data.js")
   app = read_text(ROOT / "app.js")
+  logo_data_url = f"data:image/svg+xml,{quote(read_text(ROOT / LOGO_ASSET))}"
 
   index = re.sub(r'    <link rel="stylesheet" href="\./styles\.css\?v=[^"]+">\n', lambda _: f"    <style>\n{css}\n    </style>\n", index)
   index = re.sub(r'    <script src="\./library-data\.js\?v=[^"]+"></script>\n', lambda _: f"    <script>\n{escape_script(library)}\n    </script>\n", index)
   index = re.sub(r'    <script src="\./app\.js\?v=[^"]+"></script>\n', lambda _: f"    <script>\n{escape_script(app)}\n    </script>\n", index)
+  index = index.replace(f'src="./{LOGO_ASSET}"', f'src="{logo_data_url}"')
   index = index.replace("<title>Echo Room FM</title>", "<title>Echo Room FM Portable</title>")
 
   out = DIST / STANDALONE_NAME
@@ -51,6 +55,7 @@ def build_site() -> Path:
 
   for name in ["index.html", "styles.css", "app.js", "library-data.js", "library.json"]:
     shutil.copy2(ROOT / name, SITE / name)
+  copy_assets(SITE)
 
   manifest = {
     "name": "Echo Room FM",
@@ -70,6 +75,7 @@ const APP_SHELL = [
   "./styles.css",
   "./app.js",
   "./library-data.js",
+  "./assets/echo-room-logo-white.svg",
   "./manifest.webmanifest"
 ];
 
@@ -144,6 +150,7 @@ def build_netlify_project() -> Path:
 
   for name in ["index.html", "styles.css", "app.js", "library-data.js", "library.json"]:
     shutil.copy2(ROOT / name, NETLIFY_PROJECT / "radio_app" / name)
+  copy_assets(NETLIFY_PROJECT / "radio_app")
   shutil.copy2(WORKSPACE / "netlify" / "functions" / "loved.mjs", NETLIFY_PROJECT / "netlify" / "functions" / "loved.mjs")
   shutil.copy2(WORKSPACE / "package.json", NETLIFY_PROJECT / "package.json")
   shutil.copy2(WORKSPACE / "netlify.toml", NETLIFY_PROJECT / "netlify.toml")
@@ -169,6 +176,12 @@ def build_netlify_project() -> Path:
 """
   (NETLIFY_PROJECT / "README_NETLIFY_DEPLOY.txt").write_text(deploy_readme, encoding="utf-8")
   return NETLIFY_PROJECT
+
+
+def copy_assets(target_dir: Path) -> None:
+  assets = ROOT / "assets"
+  if assets.exists():
+    shutil.copytree(assets, target_dir / "assets", dirs_exist_ok=True)
 
 
 def zip_directory(source_dir: Path, zip_path: Path) -> Path:

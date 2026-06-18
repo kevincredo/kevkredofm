@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-10T13:38:28+08:00",
+  "generatedAt": "2026-06-19T03:54:14+08:00",
   "sourceArchiveGeneratedAt": "2026-06-10T01:40:24+08:00",
   "scope": {
     "user_id": "34683345",
@@ -12,8 +12,8 @@
   "trackCount": 3841,
   "playableTrackCount": 2418,
   "blockedTrackCount": 1423,
-  "frontendPlayableTrackCount": 2334,
-  "radioHiddenTrackCount": 1507,
+  "frontendPlayableTrackCount": 2303,
+  "radioHiddenTrackCount": 1538,
   "editorialHiddenTrackCount": 84,
   "editorialHiddenSources": [
     "hide_candidates_review_2026-06-10",
@@ -1436,37 +1436,35 @@
       "playabilityStatus": "playable_by_browser_probe",
       "hiddenFromRadio": false,
       "picUrl": "http://p3.music.126.net/LIm1EN7VkQKkC_fAL_Wk9w==/18427814881631312.jpg",
-      "styleTags": [
-        "pop"
-      ],
-      "styleLabels": [
-        "Pop"
-      ],
+      "styleTags": [],
+      "styleLabels": [],
       "taxonomy": {
         "genre": [
-          "pop"
+          "techno",
+          "electronica"
         ],
         "mood": [
-          "playful"
+          "dark",
+          "hypnotic"
         ],
         "context": [
-          "travel"
+          "afterhours"
         ],
         "era": []
       },
-      "estimatedBpm": 118,
+      "estimatedBpm": 114,
       "tempoConfidence": "genre-estimated",
       "tempoSources": [],
       "musicalKey": "",
       "mode": "",
       "keyConfidence": "",
       "keySources": [],
-      "energy": 0.52,
+      "energy": 0.47,
       "beatGridAvailable": false,
       "onlineGenres": [],
       "onlineTags": [],
       "genreSources": [],
-      "genreConfidence": "metadata+heuristic",
+      "genreConfidence": "playlist+heuristic",
       "catalogMatchConfidence": 0.0,
       "catalogMatches": [],
       "releaseDate": "",
@@ -3196,7 +3194,16 @@
       ],
       "playlistCount": 1,
       "createdPlaylistCount": 1,
-      "inLikedMusic": false
+      "inLikedMusic": false,
+      "barNoiseRisk": {
+        "level": "review",
+        "score": 52,
+        "reasons": [
+          "fast high-energy edm",
+          "energy 0.82",
+          "145 bpm"
+        ]
+      }
     },
     {
       "id": "567942651",
@@ -6929,13 +6936,18 @@
       ],
       "taxonomy": {
         "genre": [
-          "downtempo"
+          "nu_disco",
+          "downtempo",
+          "electronica"
         ],
         "mood": [
-          "chill"
+          "chill",
+          "groovy",
+          "warm"
         ],
         "context": [
-          "lounge"
+          "lounge",
+          "sunset"
         ],
         "era": []
       },
@@ -7841,7 +7853,7 @@
       "replacementTrackId": "",
       "playable": true,
       "playabilityStatus": "playable_by_browser_probe",
-      "hiddenFromRadio": false,
+      "hiddenFromRadio": true,
       "picUrl": "http://p3.music.126.net/zXUxLsCHXVYPBiUI6C7m0Q==/109951164782259235.jpg",
       "styleTags": [
         "acid_techno",
@@ -7939,7 +7951,19 @@
       ],
       "playlistCount": 1,
       "createdPlaylistCount": 1,
-      "inLikedMusic": false
+      "inLikedMusic": false,
+      "radioHiddenReason": "editorial_filter_high_noise_bar_unfriendly",
+      "radioHiddenSource": "noisy_candidates_review_2026-06-19",
+      "radioHiddenNote": "Acid Flash Drive (Original Mix) - Dance System; score 46; title:acid; acid techno genre; energy 0.77",
+      "barNoiseRisk": {
+        "level": "review",
+        "score": 46,
+        "reasons": [
+          "title:acid",
+          "acid techno genre",
+          "energy 0.77"
+        ]
+      }
     },
     {
       "id": "1299550256",
@@ -7963,7 +7987,7 @@
       "replacementTrackId": "",
       "playable": true,
       "playabilityStatus": "playable_by_browser_probe",
-      "hiddenFromRadio": false,
+      "hiddenFromRadio": true,
       "picUrl": "http://p4.music.126.net/tg-5TgiwpH3LgVwdZL0KXg==/109951164387112236.jpg",
       "styleTags": [
         "acid_techno",
@@ -8046,7 +8070,20 @@
       ],
       "playlistCount": 1,
       "createdPlaylistCount": 1,
-      "inLikedMusic": false
+      "inLikedMusic": false,
+      "radioHiddenReason": "editorial_filter_high_noise_bar_unfriendly",
+      "radioHiddenSource": "noisy_candidates_review_2026-06-19",
+      "radioHiddenNote": "Acid Kiss - Balthazar & JackRock; score 52; title:acid; acid techno genre; energy 0.77; 129 bpm",
+      "barNoiseRisk": {
+        "level": "review",
+        "score": 52,
+        "reasons": [
+          "title:acid",
+          "acid techno genre",
+          "energy 0.77",
+          "129 bpm"
+        ]
+      }
     },
     {
       "id": "29362541",
@@ -8070,7 +8107,7 @@
       "replacementTrackId": "",
       "playable": true,
       "playabilityStatus": "playable_by_browser_probe",
-      "hiddenFromRadio": false,
+      "hiddenFromRadio": true,
       "picUrl": "http://p3.music.126.net/92oRg_y-BMYsSKcfSjUslg==/6674035581249045.jpg",
       "styleTags": [
         "acid_techno",
@@ -8145,7 +8182,18 @@
       ],
       "playlistCount": 1,
       "createdPlaylistCount": 1,
-      "inLikedMusic": false
+      "inLikedMusic": false,
+      "radioHiddenReason": "editorial_filter_high_noise_bar_unfriendly",
+      "radioHiddenSource": "noisy_candidates_review_2026-06-19",
+      "radioHiddenNote": "Acid On - Phreak; score 40; title:acid; acid techno genre",
+      "barNoiseRisk": {
+        "level": "review",
+        "score": 40,
+        "reasons": [
+          "title:acid",
+          "acid techno genre"
+        ]
+      }
     },
     {
       "id": "574648542",
@@ -8651,7 +8699,8 @@
       ],
       "taxonomy": {
         "genre": [
-          "house"
+          "house",
+          "tech_house"
         ],
         "mood": [
           "groovy",
@@ -8674,7 +8723,7 @@
       "onlineGenres": [],
       "onlineTags": [],
       "genreSources": [],
-      "genreConfidence": "metadata+heuristic",
+      "genreConfidence": "playlist+heuristic",
       "catalogMatchConfidence": 0.0,
       "catalogMatches": [],
       "releaseDate": "",
@@ -8809,13 +8858,18 @@
       "taxonomy": {
         "genre": [
           "downtempo",
-          "electronica"
+          "electronica",
+          "rnb_soul",
+          "hiphop_rap"
         ],
         "mood": [
-          "chill"
+          "chill",
+          "groovy",
+          "warm"
         ],
         "context": [
           "lounge",
+          "night_drive",
           "afterhours"
         ],
         "era": []
@@ -9249,16 +9303,20 @@
       ],
       "taxonomy": {
         "genre": [
+          "nu_disco",
           "downtempo",
           "electronica"
         ],
         "mood": [
           "chill",
+          "groovy",
+          "warm",
           "energetic"
         ],
         "context": [
           "club",
-          "lounge"
+          "lounge",
+          "sunset"
         ],
         "era": []
       },
@@ -15400,6 +15458,7 @@
       "taxonomy": {
         "genre": [
           "house",
+          "tech_house",
           "electronica",
           "edm"
         ],
@@ -17135,14 +17194,18 @@
       ],
       "taxonomy": {
         "genre": [
+          "nu_disco",
           "downtempo",
           "electronica"
         ],
         "mood": [
-          "chill"
+          "chill",
+          "groovy",
+          "warm"
         ],
         "context": [
-          "lounge"
+          "lounge",
+          "sunset"
         ],
         "era": []
       },
@@ -19533,7 +19596,7 @@
       "replacementTrackId": "",
       "playable": true,
       "playabilityStatus": "playable_by_browser_probe",
-      "hiddenFromRadio": false,
+      "hiddenFromRadio": true,
       "picUrl": "http://p3.music.126.net/7waLuBLuppJ841bJKyYU3g==/109951172722741580.jpg",
       "styleTags": [
         "edm"
@@ -19609,7 +19672,18 @@
       "playlistNames": [],
       "playlistCount": 1,
       "createdPlaylistCount": 0,
-      "inLikedMusic": true
+      "inLikedMusic": true,
+      "radioHiddenReason": "editorial_filter_high_noise_bar_unfriendly",
+      "radioHiddenSource": "noisy_candidates_review_2026-06-19",
+      "radioHiddenNote": "Another Chance - Sam Paganini; score 36; high-energy techno; energy 0.87",
+      "barNoiseRisk": {
+        "level": "review",
+        "score": 36,
+        "reasons": [
+          "high-energy techno",
+          "energy 0.87"
+        ]
+      }
     },
     {
       "id": "472045211",
@@ -20299,13 +20373,18 @@
       ],
       "taxonomy": {
         "genre": [
+          "nu_disco",
           "downtempo",
-          "electronica"
+          "electronica",
+          "funk_soul"
         ],
         "mood": [
-          "chill"
+          "chill",
+          "groovy",
+          "playful"
         ],
         "context": [
+          "club",
           "lounge",
           "sunset"
         ],
@@ -20812,7 +20891,7 @@
       "keySources": [
         "Deezer/Apple official 30-second preview analysis"
       ],
-      "energy": 0.73,
+      "energy": 0.72,
       "beatGridAvailable": true,
       "onlineGenres": [
         "Techno",
@@ -20955,11 +21034,13 @@
       ],
       "taxonomy": {
         "genre": [
-          "synthwave"
+          "synthwave",
+          "pop"
         ],
         "mood": [
           "dreamy",
-          "romantic"
+          "romantic",
+          "playful"
         ],
         "context": [
           "night_drive"
@@ -21130,7 +21211,8 @@
         ],
         "context": [
           "club",
-          "lounge"
+          "lounge",
+          "sunset"
         ],
         "era": []
       },
@@ -23791,37 +23873,35 @@
       "playabilityStatus": "playable_by_browser_probe",
       "hiddenFromRadio": false,
       "picUrl": "http://p4.music.126.net/HxjWR-yWYtbFpxdt-3pgkw==/109951163926281847.jpg",
-      "styleTags": [
-        "pop"
-      ],
-      "styleLabels": [
-        "Pop"
-      ],
+      "styleTags": [],
+      "styleLabels": [],
       "taxonomy": {
         "genre": [
-          "pop"
+          "progressive_house",
+          "melodic_house"
         ],
         "mood": [
-          "playful"
+          "euphoric",
+          "hypnotic"
         ],
         "context": [
-          "travel"
+          "club"
         ],
         "era": []
       },
-      "estimatedBpm": 115,
+      "estimatedBpm": 111,
       "tempoConfidence": "genre-estimated",
       "tempoSources": [],
       "musicalKey": "",
       "mode": "",
       "keyConfidence": "",
       "keySources": [],
-      "energy": 0.54,
+      "energy": 0.49,
       "beatGridAvailable": false,
       "onlineGenres": [],
       "onlineTags": [],
       "genreSources": [],
-      "genreConfidence": "metadata+heuristic",
+      "genreConfidence": "playlist+heuristic",
       "catalogMatchConfidence": 0.0,
       "catalogMatches": [],
       "releaseDate": "",
@@ -25466,10 +25546,12 @@
       "taxonomy": {
         "genre": [
           "house",
+          "deep_house",
           "nu_disco"
         ],
         "mood": [
           "groovy",
+          "warm",
           "energetic",
           "playful"
         ],
@@ -26076,10 +26158,12 @@
       "taxonomy": {
         "genre": [
           "house",
+          "deep_house",
           "nu_disco"
         ],
         "mood": [
           "groovy",
+          "warm",
           "energetic",
           "playful"
         ],
@@ -26148,11 +26232,14 @@
       ],
       "taxonomy": {
         "genre": [
+          "nu_disco",
           "downtempo",
           "electronica"
         ],
         "mood": [
-          "chill"
+          "chill",
+          "groovy",
+          "warm"
         ],
         "context": [
           "lounge",
@@ -26677,7 +26764,7 @@
       "replacementTrackId": "",
       "playable": true,
       "playabilityStatus": "playable_by_browser_probe",
-      "hiddenFromRadio": false,
+      "hiddenFromRadio": true,
       "picUrl": "http://p4.music.126.net/2O5I6Pzjzk21_tuo_7pkfA==/5918671092780128.jpg",
       "styleTags": [
         "edm"
@@ -26733,7 +26820,19 @@
       ],
       "playlistCount": 1,
       "createdPlaylistCount": 1,
-      "inLikedMusic": false
+      "inLikedMusic": false,
+      "radioHiddenReason": "editorial_filter_high_noise_bar_unfriendly",
+      "radioHiddenSource": "noisy_candidates_review_2026-06-19",
+      "radioHiddenNote": "Bad - David Guetta / Vassy / Showtek; score 46; fast high-energy edm; energy 0.82; 128 bpm",
+      "barNoiseRisk": {
+        "level": "review",
+        "score": 46,
+        "reasons": [
+          "fast high-energy edm",
+          "energy 0.82",
+          "128 bpm"
+        ]
+      }
     },
     {
       "id": "453176892",
@@ -26761,7 +26860,7 @@
       "replacementTrackId": "",
       "playable": true,
       "playabilityStatus": "playable_by_browser_probe",
-      "hiddenFromRadio": false,
+      "hiddenFromRadio": true,
       "picUrl": "https://p3.music.126.net/5FXqe1HIdQ5fMM2Ur39Xlg==/18741175697162573.jpg",
       "styleTags": [
         "electronic"
@@ -26803,7 +26902,17 @@
       "playlistNames": [],
       "playlistCount": 1,
       "createdPlaylistCount": 0,
-      "inLikedMusic": true
+      "inLikedMusic": true,
+      "radioHiddenReason": "editorial_filter_high_noise_bar_unfriendly",
+      "radioHiddenSource": "noisy_candidates_review_2026-06-19",
+      "radioHiddenNote": "Bad and Boujee (R3HAB vs No Riddim & it's different Remix) - R3HAB / No Riddim / it's different / Migos / Lil Uzi Vert; score 60; riddim",
+      "barNoiseRisk": {
+        "level": "high",
+        "score": 60,
+        "reasons": [
+          "riddim"
+        ]
+      }
     },
     {
       "id": "556050695",
@@ -28004,6 +28113,8 @@
       "taxonomy": {
         "genre": [
           "house",
+          "progressive_house",
+          "melodic_house",
           "nu_disco",
           "indie_dance",
           "edm"
@@ -28012,6 +28123,7 @@
           "groovy",
           "euphoric",
           "dark",
+          "hypnotic",
           "energetic",
           "playful"
         ],
@@ -28642,13 +28754,18 @@
       ],
       "taxonomy": {
         "genre": [
-          "downtempo"
+          "downtempo",
+          "rnb_soul",
+          "hiphop_rap"
         ],
         "mood": [
-          "chill"
+          "chill",
+          "groovy",
+          "warm"
         ],
         "context": [
-          "lounge"
+          "lounge",
+          "night_drive"
         ],
         "era": []
       },
@@ -28983,12 +29100,17 @@
       ],
       "taxonomy": {
         "genre": [
-          "downtempo"
+          "nu_disco",
+          "downtempo",
+          "funk_soul"
         ],
         "mood": [
-          "chill"
+          "chill",
+          "groovy",
+          "playful"
         ],
         "context": [
+          "club",
           "lounge",
           "sunset"
         ],
@@ -29954,7 +30076,16 @@
       ],
       "playlistCount": 1,
       "createdPlaylistCount": 1,
-      "inLikedMusic": false
+      "inLikedMusic": false,
+      "barNoiseRisk": {
+        "level": "review",
+        "score": 52,
+        "reasons": [
+          "fast high-energy edm",
+          "energy 0.87",
+          "135 bpm"
+        ]
+      }
     },
     {
       "id": "2681027656",
@@ -30173,10 +30304,12 @@
         "mood": [
           "groovy",
           "euphoric",
+          "atmospheric",
           "energetic"
         ],
         "context": [
           "club",
+          "afterhours",
           "workout"
         ],
         "era": []
@@ -32777,7 +32910,7 @@
       "replacementTrackId": "",
       "playable": true,
       "playabilityStatus": "playable_by_browser_probe",
-      "hiddenFromRadio": false,
+      "hiddenFromRadio": true,
       "picUrl": "http://p3.music.126.net/SwUO5urovfp1mcdWIsT15w==/109951163188361082.jpg",
       "styleTags": [
         "acid_techno",
@@ -32863,7 +32996,19 @@
       ],
       "playlistCount": 1,
       "createdPlaylistCount": 1,
-      "inLikedMusic": false
+      "inLikedMusic": false,
+      "radioHiddenReason": "editorial_filter_high_noise_bar_unfriendly",
+      "radioHiddenSource": "noisy_candidates_review_2026-06-19",
+      "radioHiddenNote": "Big Fun (Javier Penna Extended Remix) - Kevin Saunderson / Inner City / Javier Penna; score 54; acid techno genre; high-energy techno; energy 0.78",
+      "barNoiseRisk": {
+        "level": "review",
+        "score": 54,
+        "reasons": [
+          "acid techno genre",
+          "high-energy techno",
+          "energy 0.78"
+        ]
+      }
     },
     {
       "id": "431853407",
@@ -34009,10 +34154,13 @@
       ],
       "taxonomy": {
         "genre": [
+          "house",
+          "tech_house",
           "electronica",
           "classical"
         ],
         "mood": [
+          "groovy",
           "atmospheric",
           "energetic"
         ],
@@ -34034,7 +34182,7 @@
       "onlineGenres": [],
       "onlineTags": [],
       "genreSources": [],
-      "genreConfidence": "metadata+heuristic",
+      "genreConfidence": "playlist+heuristic",
       "catalogMatchConfidence": 0.0,
       "catalogMatches": [],
       "releaseDate": "",
@@ -34223,7 +34371,7 @@
       "replacementTrackId": "",
       "playable": true,
       "playabilityStatus": "playable_by_browser_probe",
-      "hiddenFromRadio": false,
+      "hiddenFromRadio": true,
       "picUrl": "http://p3.music.126.net/554ktq3sXwyGY9FOOdl0CQ==/109951164545796268.jpg",
       "styleTags": [
         "acid_techno",
@@ -34296,7 +34444,20 @@
       ],
       "playlistCount": 1,
       "createdPlaylistCount": 1,
-      "inLikedMusic": false
+      "inLikedMusic": false,
+      "radioHiddenReason": "editorial_filter_high_noise_bar_unfriendly",
+      "radioHiddenSource": "noisy_candidates_review_2026-06-19",
+      "radioHiddenNote": "Black Ice (Original Version) - Carl Finlow; score 60; high-energy acid techno",
+      "barNoiseRisk": {
+        "level": "high",
+        "score": 60,
+        "reasons": [
+          "acid techno genre",
+          "high-energy techno",
+          "energy 0.79",
+          "129 bpm"
+        ]
+      }
     },
     {
       "id": "21178416",
@@ -34576,7 +34737,15 @@
       ],
       "playlistCount": 2,
       "createdPlaylistCount": 1,
-      "inLikedMusic": true
+      "inLikedMusic": true,
+      "barNoiseRisk": {
+        "level": "high",
+        "score": 46,
+        "reasons": [
+          "electro house",
+          "127 bpm"
+        ]
+      }
     },
     {
       "id": "525734930",
@@ -37399,11 +37568,13 @@
       "taxonomy": {
         "genre": [
           "house",
+          "nu_disco",
           "electronica"
         ],
         "mood": [
           "groovy",
-          "energetic"
+          "energetic",
+          "playful"
         ],
         "context": [
           "club"
@@ -38004,11 +38175,13 @@
       "taxonomy": {
         "genre": [
           "house",
+          "nu_disco",
           "electronica"
         ],
         "mood": [
           "groovy",
-          "energetic"
+          "energetic",
+          "playful"
         ],
         "context": [
           "club"
@@ -39491,7 +39664,16 @@
       "playlistNames": [],
       "playlistCount": 1,
       "createdPlaylistCount": 0,
-      "inLikedMusic": true
+      "inLikedMusic": true,
+      "barNoiseRisk": {
+        "level": "review",
+        "score": 46,
+        "reasons": [
+          "fast high-energy edm",
+          "energy 0.89",
+          "129 bpm"
+        ]
+      }
     },
     {
       "id": "1426787685",
@@ -40443,12 +40625,17 @@
       ],
       "taxonomy": {
         "genre": [
-          "downtempo"
+          "nu_disco",
+          "downtempo",
+          "funk_soul"
         ],
         "mood": [
-          "chill"
+          "chill",
+          "groovy",
+          "playful"
         ],
         "context": [
+          "club",
           "lounge"
         ],
         "era": []
@@ -41434,7 +41621,7 @@
       "replacementTrackId": "",
       "playable": true,
       "playabilityStatus": "playable_by_browser_probe",
-      "hiddenFromRadio": false,
+      "hiddenFromRadio": true,
       "picUrl": "http://p3.music.126.net/ctukorAcH79Xaxro-vwMgQ==/109951168278735782.jpg",
       "styleTags": [
         "edm"
@@ -41507,7 +41694,19 @@
       ],
       "playlistCount": 1,
       "createdPlaylistCount": 1,
-      "inLikedMusic": false
+      "inLikedMusic": false,
+      "radioHiddenReason": "editorial_filter_high_noise_bar_unfriendly",
+      "radioHiddenSource": "noisy_candidates_review_2026-06-19",
+      "radioHiddenNote": "Burn the Stars - Massive Vibes; score 52; fast high-energy edm; energy 0.86; 144 bpm",
+      "barNoiseRisk": {
+        "level": "review",
+        "score": 52,
+        "reasons": [
+          "fast high-energy edm",
+          "energy 0.86",
+          "144 bpm"
+        ]
+      }
     },
     {
       "id": "17455796",
@@ -41631,12 +41830,16 @@
       ],
       "taxonomy": {
         "genre": [
+          "house",
+          "nu_disco",
           "downtempo",
           "electronica"
         ],
         "mood": [
           "chill",
-          "energetic"
+          "groovy",
+          "energetic",
+          "playful"
         ],
         "context": [
           "club",
@@ -44401,12 +44604,14 @@
       "taxonomy": {
         "genre": [
           "house",
+          "nu_disco",
           "downtempo",
           "electronica"
         ],
         "mood": [
           "chill",
-          "groovy"
+          "groovy",
+          "playful"
         ],
         "context": [
           "club",
@@ -46784,7 +46989,8 @@
         ],
         "context": [
           "club",
-          "lounge"
+          "lounge",
+          "sunset"
         ],
         "era": []
       },
@@ -48147,7 +48353,8 @@
         ],
         "context": [
           "club",
-          "lounge"
+          "lounge",
+          "sunset"
         ],
         "era": []
       },
@@ -49244,13 +49451,18 @@
       ],
       "taxonomy": {
         "genre": [
-          "downtempo"
+          "nu_disco",
+          "downtempo",
+          "electronica"
         ],
         "mood": [
-          "chill"
+          "chill",
+          "groovy",
+          "warm"
         ],
         "context": [
-          "lounge"
+          "lounge",
+          "sunset"
         ],
         "era": []
       },
@@ -49416,14 +49628,16 @@
       "taxonomy": {
         "genre": [
           "nu_disco",
-          "pop"
+          "pop",
+          "funk_soul"
         ],
         "mood": [
           "groovy",
           "playful"
         ],
         "context": [
-          "club"
+          "club",
+          "lounge"
         ],
         "era": []
       },
@@ -57907,36 +58121,36 @@
       "hiddenFromRadio": false,
       "picUrl": "https://p3.music.126.net/TSuHsxm7-DwSW5x5fHLzmw==/109951165277463788.jpg",
       "styleTags": [
-        "pop"
+        "electronic"
       ],
       "styleLabels": [
-        "Pop"
+        "Electronic"
       ],
       "taxonomy": {
         "genre": [
-          "pop"
+          "electronica"
         ],
         "mood": [
-          "playful"
+          "atmospheric"
         ],
         "context": [
-          "travel"
+          "afterhours"
         ],
         "era": []
       },
-      "estimatedBpm": 117,
+      "estimatedBpm": 123,
       "tempoConfidence": "genre-estimated",
       "tempoSources": [],
       "musicalKey": "",
       "mode": "",
       "keyConfidence": "",
       "keySources": [],
-      "energy": 0.57,
+      "energy": 0.66,
       "beatGridAvailable": false,
       "onlineGenres": [],
       "onlineTags": [],
       "genreSources": [],
-      "genreConfidence": "metadata+heuristic",
+      "genreConfidence": "playlist+heuristic",
       "catalogMatchConfidence": 0.0,
       "catalogMatches": [],
       "releaseDate": "",
@@ -58543,18 +58757,23 @@
       ],
       "taxonomy": {
         "genre": [
+          "nu_disco",
           "downtempo",
+          "electronica",
           "edm"
         ],
         "mood": [
           "chill",
+          "groovy",
+          "warm",
           "euphoric",
           "energetic"
         ],
         "context": [
           "club",
           "lounge",
-          "workout"
+          "workout",
+          "sunset"
         ],
         "era": []
       },
@@ -59742,7 +59961,16 @@
       ],
       "playlistCount": 1,
       "createdPlaylistCount": 1,
-      "inLikedMusic": false
+      "inLikedMusic": false,
+      "barNoiseRisk": {
+        "level": "review",
+        "score": 46,
+        "reasons": [
+          "fast high-energy edm",
+          "energy 0.88",
+          "128 bpm"
+        ]
+      }
     },
     {
       "id": "445867418",
@@ -60405,10 +60633,12 @@
       "taxonomy": {
         "genre": [
           "house",
+          "tech_house",
           "techno",
           "pop"
         ],
         "mood": [
+          "groovy",
           "hypnotic",
           "energetic",
           "playful"
@@ -61176,6 +61406,7 @@
         "genre": [
           "nu_disco",
           "downtempo",
+          "electronica",
           "funk_soul"
         ],
         "mood": [
@@ -61185,7 +61416,8 @@
         ],
         "context": [
           "club",
-          "lounge"
+          "lounge",
+          "sunset"
         ],
         "era": []
       },
@@ -65267,7 +65499,15 @@
       ],
       "playlistCount": 1,
       "createdPlaylistCount": 1,
-      "inLikedMusic": false
+      "inLikedMusic": false,
+      "barNoiseRisk": {
+        "level": "review",
+        "score": 40,
+        "reasons": [
+          "title:acid",
+          "acid techno genre"
+        ]
+      }
     },
     {
       "id": "517918736",
@@ -66517,16 +66757,21 @@
       "hiddenFromRadio": true,
       "picUrl": "https://p3.music.126.net/eoBA85CFgHYw6hklfxCl3A==/109951165981136463.jpg",
       "styleTags": [
-        "pop"
+        "pop",
+        "world_latin"
       ],
       "styleLabels": [
-        "Pop"
+        "Pop",
+        "World / Latin"
       ],
       "taxonomy": {
         "genre": [
-          "pop"
+          "pop",
+          "latin_world"
         ],
         "mood": [
+          "groovy",
+          "warm",
           "playful"
         ],
         "context": [
@@ -66534,14 +66779,14 @@
         ],
         "era": []
       },
-      "estimatedBpm": 117,
+      "estimatedBpm": 115,
       "tempoConfidence": "genre-estimated",
       "tempoSources": [],
       "musicalKey": "",
       "mode": "",
       "keyConfidence": "",
       "keySources": [],
-      "energy": 0.54,
+      "energy": 0.55,
       "beatGridAvailable": false,
       "onlineGenres": [],
       "onlineTags": [
@@ -67885,7 +68130,7 @@
       "replacementTrackId": "",
       "playable": true,
       "playabilityStatus": "playable_by_browser_probe",
-      "hiddenFromRadio": false,
+      "hiddenFromRadio": true,
       "picUrl": "http://p3.music.126.net/cI26ZD63BEdEkhNcMI_hOA==/109951165464865154.jpg",
       "styleTags": [
         "disco_nu_disco",
@@ -67961,7 +68206,19 @@
       ],
       "playlistCount": 1,
       "createdPlaylistCount": 1,
-      "inLikedMusic": false
+      "inLikedMusic": false,
+      "radioHiddenReason": "editorial_filter_high_noise_bar_unfriendly",
+      "radioHiddenSource": "noisy_candidates_review_2026-06-19",
+      "radioHiddenNote": "Detection (Extended Mix) - SAVIN; score 40; fast high-energy edm; energy 0.76; 162 bpm",
+      "barNoiseRisk": {
+        "level": "review",
+        "score": 40,
+        "reasons": [
+          "fast high-energy edm",
+          "energy 0.76",
+          "162 bpm"
+        ]
+      }
     },
     {
       "id": "27506485",
@@ -68264,7 +68521,8 @@
         "genre": [
           "nu_disco",
           "electronica",
-          "pop"
+          "pop",
+          "funk_soul"
         ],
         "mood": [
           "groovy",
@@ -68272,7 +68530,8 @@
           "playful"
         ],
         "context": [
-          "club"
+          "club",
+          "lounge"
         ],
         "era": []
       },
@@ -73662,7 +73921,8 @@
           "nu_disco",
           "downtempo",
           "edm",
-          "pop"
+          "pop",
+          "funk_soul"
         ],
         "mood": [
           "chill",
@@ -74088,7 +74348,8 @@
         "context": [
           "club",
           "lounge",
-          "workout"
+          "workout",
+          "sunset"
         ],
         "era": []
       },
@@ -76674,7 +76935,14 @@
       ],
       "playlistCount": 1,
       "createdPlaylistCount": 1,
-      "inLikedMusic": false
+      "inLikedMusic": false,
+      "barNoiseRisk": {
+        "level": "review",
+        "score": 60,
+        "reasons": [
+          "dubstep"
+        ]
+      }
     },
     {
       "id": "27804645",
@@ -79209,6 +79477,7 @@
       "styleTags": [
         "chill_downtempo",
         "electronic",
+        "indie_dance",
         "indie_rock",
         "pop",
         "retro_synth",
@@ -79217,6 +79486,7 @@
       "styleLabels": [
         "Chill / Downtempo",
         "Electronic",
+        "Indie Dance",
         "Indie Rock",
         "Pop",
         "Retro / Synth",
@@ -79224,6 +79494,7 @@
       ],
       "taxonomy": {
         "genre": [
+          "indie_dance",
           "downtempo",
           "electronica",
           "synthwave",
@@ -79233,14 +79504,19 @@
         ],
         "mood": [
           "chill",
+          "groovy",
+          "dark",
+          "atmospheric",
           "dreamy",
           "melancholic",
           "energetic",
           "playful"
         ],
         "context": [
+          "club",
           "lounge",
           "night_drive",
+          "afterhours",
           "travel"
         ],
         "era": []
@@ -79252,7 +79528,7 @@
       "mode": "",
       "keyConfidence": "",
       "keySources": [],
-      "energy": 0.62,
+      "energy": 0.64,
       "beatGridAvailable": false,
       "onlineGenres": [],
       "onlineTags": [
@@ -79496,6 +79772,7 @@
         "genre": [
           "nu_disco",
           "downtempo",
+          "electronica",
           "funk_soul"
         ],
         "mood": [
@@ -79505,7 +79782,8 @@
         ],
         "context": [
           "club",
-          "lounge"
+          "lounge",
+          "sunset"
         ],
         "era": []
       },
@@ -80828,7 +81106,7 @@
       "replacementTrackId": "",
       "playable": true,
       "playabilityStatus": "playable_by_browser_probe",
-      "hiddenFromRadio": false,
+      "hiddenFromRadio": true,
       "picUrl": "http://p4.music.126.net/MyHfEau0xMFx7BA0cnmIDA==/109951164314953679.jpg",
       "styleTags": [
         "acid_techno",
@@ -80901,7 +81179,19 @@
       ],
       "playlistCount": 1,
       "createdPlaylistCount": 1,
-      "inLikedMusic": false
+      "inLikedMusic": false,
+      "radioHiddenReason": "editorial_filter_high_noise_bar_unfriendly",
+      "radioHiddenSource": "noisy_candidates_review_2026-06-19",
+      "radioHiddenNote": "Elastic Collisions - Carl Finlow; score 36; acid techno genre; energy 0.75; 129 bpm",
+      "barNoiseRisk": {
+        "level": "review",
+        "score": 36,
+        "reasons": [
+          "acid techno genre",
+          "energy 0.75",
+          "129 bpm"
+        ]
+      }
     },
     {
       "id": "1862507879",
@@ -90743,6 +91033,7 @@
         "genre": [
           "nu_disco",
           "downtempo",
+          "electronica",
           "funk_soul"
         ],
         "mood": [
@@ -90752,7 +91043,8 @@
         ],
         "context": [
           "club",
-          "lounge"
+          "lounge",
+          "sunset"
         ],
         "era": []
       },
@@ -92159,13 +92451,17 @@
       ],
       "taxonomy": {
         "genre": [
+          "nu_disco",
           "downtempo",
-          "edm"
+          "edm",
+          "funk_soul"
         ],
         "mood": [
           "chill",
+          "groovy",
           "euphoric",
-          "energetic"
+          "energetic",
+          "playful"
         ],
         "context": [
           "club",
@@ -92741,7 +93037,16 @@
       ],
       "playlistCount": 1,
       "createdPlaylistCount": 1,
-      "inLikedMusic": false
+      "inLikedMusic": false,
+      "barNoiseRisk": {
+        "level": "review",
+        "score": 46,
+        "reasons": [
+          "fast high-energy edm",
+          "energy 0.90",
+          "129 bpm"
+        ]
+      }
     },
     {
       "id": "1806742712",
@@ -92778,11 +93083,13 @@
       "taxonomy": {
         "genre": [
           "electronica",
-          "synthwave"
+          "synthwave",
+          "pop"
         ],
         "mood": [
           "dreamy",
-          "energetic"
+          "energetic",
+          "playful"
         ],
         "context": [
           "club",
@@ -93541,7 +93848,16 @@
       ],
       "playlistCount": 1,
       "createdPlaylistCount": 1,
-      "inLikedMusic": false
+      "inLikedMusic": false,
+      "barNoiseRisk": {
+        "level": "review",
+        "score": 52,
+        "reasons": [
+          "fast high-energy edm",
+          "energy 0.84",
+          "188 bpm"
+        ]
+      }
     },
     {
       "id": "1394000545",
@@ -95615,13 +95931,18 @@
       ],
       "taxonomy": {
         "genre": [
-          "downtempo"
+          "downtempo",
+          "rnb_soul",
+          "hiphop_rap"
         ],
         "mood": [
-          "chill"
+          "chill",
+          "groovy",
+          "warm"
         ],
         "context": [
-          "lounge"
+          "lounge",
+          "night_drive"
         ],
         "era": []
       },
@@ -96187,12 +96508,17 @@
       ],
       "taxonomy": {
         "genre": [
+          "house",
+          "nu_disco",
           "downtempo"
         ],
         "mood": [
-          "chill"
+          "chill",
+          "groovy",
+          "playful"
         ],
         "context": [
+          "club",
           "lounge",
           "sunset"
         ],
@@ -99248,7 +99574,7 @@
       "mode": "",
       "keyConfidence": "",
       "keySources": [],
-      "energy": 0.66,
+      "energy": 0.67,
       "beatGridAvailable": false,
       "onlineGenres": [],
       "onlineTags": [],
@@ -104693,7 +105019,8 @@
         "context": [
           "club",
           "lounge",
-          "workout"
+          "workout",
+          "sunset"
         ],
         "era": []
       },
@@ -107097,13 +107424,18 @@
       ],
       "taxonomy": {
         "genre": [
-          "downtempo"
+          "downtempo",
+          "rnb_soul",
+          "hiphop_rap"
         ],
         "mood": [
-          "chill"
+          "chill",
+          "groovy",
+          "warm"
         ],
         "context": [
-          "lounge"
+          "lounge",
+          "night_drive"
         ],
         "era": []
       },
@@ -108477,16 +108809,19 @@
         "chill_downtempo",
         "disco_nu_disco",
         "edm",
-        "electronic"
+        "electronic",
+        "house"
       ],
       "styleLabels": [
         "Chill / Downtempo",
         "Disco / Nu-Disco",
         "EDM",
-        "Electronic"
+        "Electronic",
+        "House"
       ],
       "taxonomy": {
         "genre": [
+          "house",
           "nu_disco",
           "downtempo",
           "electronica",
@@ -108507,14 +108842,14 @@
         ],
         "era": []
       },
-      "estimatedBpm": 114,
+      "estimatedBpm": 116,
       "tempoConfidence": "genre-estimated",
       "tempoSources": [],
       "musicalKey": "",
       "mode": "",
       "keyConfidence": "",
       "keySources": [],
-      "energy": 0.65,
+      "energy": 0.66,
       "beatGridAvailable": false,
       "onlineGenres": [],
       "onlineTags": [],
@@ -111631,7 +111966,7 @@
       "replacementTrackId": "",
       "playable": true,
       "playabilityStatus": "playable_by_browser_probe",
-      "hiddenFromRadio": false,
+      "hiddenFromRadio": true,
       "picUrl": "http://p3.music.126.net/0eiXuMTGSwZVRUOSi1NiqQ==/109951164827824774.jpg",
       "styleTags": [
         "disco_nu_disco",
@@ -111708,7 +112043,20 @@
       ],
       "playlistCount": 1,
       "createdPlaylistCount": 1,
-      "inLikedMusic": false
+      "inLikedMusic": false,
+      "radioHiddenReason": "editorial_filter_high_noise_bar_unfriendly",
+      "radioHiddenSource": "noisy_candidates_review_2026-06-19",
+      "radioHiddenNote": "Hard Reset - Stephan Zovsky; score 80; rave/title hard",
+      "barNoiseRisk": {
+        "level": "high",
+        "score": 80,
+        "reasons": [
+          "rave",
+          "title:rave",
+          "title:hard",
+          "energy 0.74"
+        ]
+      }
     },
     {
       "id": "26391425",
@@ -111732,7 +112080,7 @@
       "replacementTrackId": "",
       "playable": true,
       "playabilityStatus": "playable_by_browser_probe",
-      "hiddenFromRadio": false,
+      "hiddenFromRadio": true,
       "picUrl": "http://p3.music.126.net/WVMw2f-0No2sQxW9FXjXLQ==/109951163770653621.jpg",
       "styleTags": [
         "acid_techno",
@@ -111805,7 +112153,20 @@
       ],
       "playlistCount": 1,
       "createdPlaylistCount": 1,
-      "inLikedMusic": false
+      "inLikedMusic": false,
+      "radioHiddenReason": "editorial_filter_high_noise_bar_unfriendly",
+      "radioHiddenSource": "noisy_candidates_review_2026-06-19",
+      "radioHiddenNote": "Hashtag (Fleck E.S.C. Remix) - Carl Finlow; score 66; high-energy acid techno",
+      "barNoiseRisk": {
+        "level": "high",
+        "score": 66,
+        "reasons": [
+          "acid techno genre",
+          "high-energy techno",
+          "energy 0.79",
+          "133 bpm"
+        ]
+      }
     },
     {
       "id": "1426234228",
@@ -113685,7 +114046,17 @@
       ],
       "playlistCount": 1,
       "createdPlaylistCount": 1,
-      "inLikedMusic": false
+      "inLikedMusic": false,
+      "barNoiseRisk": {
+        "level": "review",
+        "score": 69,
+        "reasons": [
+          "fast high-energy edm",
+          "drum and bass profile",
+          "energy 0.75",
+          "129 bpm"
+        ]
+      }
     },
     {
       "id": "1498211507",
@@ -115891,6 +116262,7 @@
       "taxonomy": {
         "genre": [
           "nu_disco",
+          "electronica",
           "pop",
           "funk_soul"
         ],
@@ -115901,7 +116273,8 @@
         ],
         "context": [
           "club",
-          "lounge"
+          "lounge",
+          "sunset"
         ],
         "era": []
       },
@@ -117010,36 +117383,41 @@
       "hiddenFromRadio": false,
       "picUrl": "http://p3.music.126.net/5ny7iSaeNSreWjrJoPv1BA==/101155069768090.jpg",
       "styleTags": [
+        "electronic",
         "hiphop_jazzhop",
         "jazz"
       ],
       "styleLabels": [
+        "Electronic",
         "Hip-hop / Jazz-hop",
         "Jazz"
       ],
       "taxonomy": {
         "genre": [
+          "electronica",
           "hiphop_rap",
           "jazz"
         ],
         "mood": [
           "groovy",
-          "warm"
+          "warm",
+          "atmospheric"
         ],
         "context": [
           "lounge",
+          "afterhours",
           "dinner"
         ],
         "era": []
       },
-      "estimatedBpm": 98,
+      "estimatedBpm": 106,
       "tempoConfidence": "genre-estimated",
       "tempoSources": [],
       "musicalKey": "",
       "mode": "",
       "keyConfidence": "",
       "keySources": [],
-      "energy": 0.49,
+      "energy": 0.55,
       "beatGridAvailable": false,
       "onlineGenres": [],
       "onlineTags": [
@@ -119146,7 +119524,8 @@
         "electronic",
         "house",
         "pop",
-        "rnb_soul"
+        "rnb_soul",
+        "world_latin"
       ],
       "styleLabels": [
         "Deep House",
@@ -119154,7 +119533,8 @@
         "Electronic",
         "House",
         "Pop",
-        "R&B / Soul"
+        "R&B / Soul",
+        "World / Latin"
       ],
       "taxonomy": {
         "genre": [
@@ -119164,7 +119544,8 @@
           "electronica",
           "edm",
           "pop",
-          "rnb_soul"
+          "rnb_soul",
+          "latin_world"
         ],
         "mood": [
           "groovy",
@@ -119186,14 +119567,14 @@
         ],
         "era": []
       },
-      "estimatedBpm": 121,
+      "estimatedBpm": 120,
       "tempoConfidence": "genre-estimated",
       "tempoSources": [],
       "musicalKey": "",
       "mode": "",
       "keyConfidence": "",
       "keySources": [],
-      "energy": 0.64,
+      "energy": 0.63,
       "beatGridAvailable": false,
       "onlineGenres": [],
       "onlineTags": [
@@ -119927,7 +120308,15 @@
       "playlistNames": [],
       "playlistCount": 1,
       "createdPlaylistCount": 0,
-      "inLikedMusic": true
+      "inLikedMusic": true,
+      "barNoiseRisk": {
+        "level": "review",
+        "score": 36,
+        "reasons": [
+          "high-energy techno",
+          "energy 0.87"
+        ]
+      }
     },
     {
       "id": "1418155727",
@@ -120242,6 +120631,7 @@
         "genre": [
           "nu_disco",
           "downtempo",
+          "electronica",
           "funk_soul"
         ],
         "mood": [
@@ -120252,7 +120642,8 @@
         "context": [
           "club",
           "lounge",
-          "afterhours"
+          "afterhours",
+          "sunset"
         ],
         "era": []
       },
@@ -120585,7 +120976,14 @@
       ],
       "playlistCount": 1,
       "createdPlaylistCount": 1,
-      "inLikedMusic": false
+      "inLikedMusic": false,
+      "barNoiseRisk": {
+        "level": "review",
+        "score": 60,
+        "reasons": [
+          "dubstep"
+        ]
+      }
     },
     {
       "id": "26289183",
@@ -121637,14 +122035,19 @@
       ],
       "taxonomy": {
         "genre": [
-          "downtempo"
+          "downtempo",
+          "rnb_soul",
+          "hiphop_rap"
         ],
         "mood": [
           "chill",
+          "groovy",
+          "warm",
           "romantic"
         ],
         "context": [
-          "lounge"
+          "lounge",
+          "night_drive"
         ],
         "era": []
       },
@@ -128286,13 +128689,17 @@
       ],
       "taxonomy": {
         "genre": [
+          "nu_disco",
           "downtempo",
-          "edm"
+          "edm",
+          "funk_soul"
         ],
         "mood": [
           "chill",
+          "groovy",
           "euphoric",
-          "energetic"
+          "energetic",
+          "playful"
         ],
         "context": [
           "club",
@@ -129077,17 +129484,20 @@
         "electronic",
         "house",
         "minimal",
+        "tech_house",
         "techno"
       ],
       "styleLabels": [
         "Electronic",
         "House",
         "Minimal",
+        "Tech House",
         "Techno"
       ],
       "taxonomy": {
         "genre": [
           "house",
+          "tech_house",
           "techno",
           "minimal",
           "electronica"
@@ -129112,7 +129522,7 @@
       "mode": "",
       "keyConfidence": "",
       "keySources": [],
-      "energy": 0.74,
+      "energy": 0.75,
       "beatGridAvailable": false,
       "onlineGenres": [],
       "onlineTags": [
@@ -135583,7 +135993,7 @@
       "replacementTrackId": "",
       "playable": true,
       "playabilityStatus": "playable_by_browser_probe",
-      "hiddenFromRadio": false,
+      "hiddenFromRadio": true,
       "picUrl": "http://p3.music.126.net/ea0AIG824IjNCMvaJtKFsw==/109951163276704674.jpg",
       "styleTags": [
         "acid_techno",
@@ -135649,7 +136059,19 @@
       ],
       "playlistCount": 1,
       "createdPlaylistCount": 1,
-      "inLikedMusic": false
+      "inLikedMusic": false,
+      "radioHiddenReason": "editorial_filter_high_noise_bar_unfriendly",
+      "radioHiddenSource": "noisy_candidates_review_2026-06-19",
+      "radioHiddenNote": "In-Ten-Si-T (Justin Robertson Edit) - Mickey Oliver; score 46; title:acid; acid techno genre; 126 bpm",
+      "barNoiseRisk": {
+        "level": "review",
+        "score": 46,
+        "reasons": [
+          "title:acid",
+          "acid techno genre",
+          "126 bpm"
+        ]
+      }
     },
     {
       "id": "29498551",
@@ -140228,9 +140650,11 @@
       "taxonomy": {
         "genre": [
           "house",
+          "tech_house",
           "techno"
         ],
         "mood": [
+          "groovy",
           "hypnotic",
           "energetic"
         ],
@@ -141508,14 +141932,17 @@
       "picUrl": "http://p3.music.126.net/mqUM8p0UvxePHF7AUkAtSw==/109951166735639768.jpg",
       "styleTags": [
         "chill_downtempo",
-        "disco_nu_disco"
+        "disco_nu_disco",
+        "house"
       ],
       "styleLabels": [
         "Chill / Downtempo",
-        "Disco / Nu-Disco"
+        "Disco / Nu-Disco",
+        "House"
       ],
       "taxonomy": {
         "genre": [
+          "house",
           "nu_disco",
           "downtempo"
         ],
@@ -141541,7 +141968,7 @@
       "keySources": [
         "Deezer/Apple official 30-second preview analysis"
       ],
-      "energy": 0.5,
+      "energy": 0.56,
       "beatGridAvailable": true,
       "onlineGenres": [
         "オルタナティヴ"
@@ -142034,7 +142461,7 @@
       "replacementTrackId": "",
       "playable": true,
       "playabilityStatus": "playable_by_browser_probe",
-      "hiddenFromRadio": false,
+      "hiddenFromRadio": true,
       "picUrl": "http://p4.music.126.net/Sas1IBxHMEsUiTfZfpV4cw==/109951167895144051.jpg",
       "styleTags": [
         "acid_techno",
@@ -142097,7 +142524,20 @@
       ],
       "playlistCount": 1,
       "createdPlaylistCount": 1,
-      "inLikedMusic": false
+      "inLikedMusic": false,
+      "radioHiddenReason": "editorial_filter_high_noise_bar_unfriendly",
+      "radioHiddenSource": "noisy_candidates_review_2026-06-19",
+      "radioHiddenNote": "Jack - Luke Vibert; score 52; title:acid; acid techno genre; energy 0.77; 126 bpm",
+      "barNoiseRisk": {
+        "level": "review",
+        "score": 52,
+        "reasons": [
+          "title:acid",
+          "acid techno genre",
+          "energy 0.77",
+          "126 bpm"
+        ]
+      }
     },
     {
       "id": "399354360",
@@ -146693,13 +147133,18 @@
       ],
       "taxonomy": {
         "genre": [
-          "downtempo"
+          "downtempo",
+          "rnb_soul",
+          "hiphop_rap"
         ],
         "mood": [
-          "chill"
+          "chill",
+          "groovy",
+          "warm"
         ],
         "context": [
-          "lounge"
+          "lounge",
+          "night_drive"
         ],
         "era": []
       },
@@ -157572,7 +158017,15 @@
       "playlistNames": [],
       "playlistCount": 1,
       "createdPlaylistCount": 0,
-      "inLikedMusic": true
+      "inLikedMusic": true,
+      "barNoiseRisk": {
+        "level": "review",
+        "score": 58,
+        "reasons": [
+          "rave",
+          "title:rave"
+        ]
+      }
     },
     {
       "id": "1783474",
@@ -158658,7 +159111,7 @@
       "replacementTrackId": "",
       "playable": true,
       "playabilityStatus": "playable_by_browser_probe",
-      "hiddenFromRadio": false,
+      "hiddenFromRadio": true,
       "picUrl": "http://p3.music.126.net/A4E0Wo-f8_NJmWw1H3mBTw==/109951166527286388.jpg",
       "styleTags": [
         "edm",
@@ -158728,7 +159181,19 @@
       ],
       "playlistCount": 1,
       "createdPlaylistCount": 1,
-      "inLikedMusic": false
+      "inLikedMusic": false,
+      "radioHiddenReason": "editorial_filter_high_noise_bar_unfriendly",
+      "radioHiddenSource": "noisy_candidates_review_2026-06-19",
+      "radioHiddenNote": "Life In A Mind - Ross From Friends; score 40; fast high-energy edm; energy 0.75; 136 bpm",
+      "barNoiseRisk": {
+        "level": "review",
+        "score": 40,
+        "reasons": [
+          "fast high-energy edm",
+          "energy 0.75",
+          "136 bpm"
+        ]
+      }
     },
     {
       "id": "1301970434",
@@ -164807,9 +165272,11 @@
       "taxonomy": {
         "genre": [
           "house",
+          "tech_house",
           "techno"
         ],
         "mood": [
+          "groovy",
           "hypnotic",
           "energetic"
         ],
@@ -165039,7 +165506,7 @@
       "replacementTrackId": "",
       "playable": true,
       "playabilityStatus": "playable_by_browser_probe",
-      "hiddenFromRadio": false,
+      "hiddenFromRadio": true,
       "picUrl": "http://p4.music.126.net/EqPFQ_1ROoZvb5tmvDDg0w==/109951164784039691.jpg",
       "styleTags": [
         "acid_techno",
@@ -165112,7 +165579,19 @@
       ],
       "playlistCount": 1,
       "createdPlaylistCount": 1,
-      "inLikedMusic": false
+      "inLikedMusic": false,
+      "radioHiddenReason": "editorial_filter_high_noise_bar_unfriendly",
+      "radioHiddenSource": "noisy_candidates_review_2026-06-19",
+      "radioHiddenNote": "Lost - Alex Mine; score 54; acid techno genre; high-energy techno; energy 0.79",
+      "barNoiseRisk": {
+        "level": "review",
+        "score": 54,
+        "reasons": [
+          "acid techno genre",
+          "high-energy techno",
+          "energy 0.79"
+        ]
+      }
     },
     {
       "id": "507585224",
@@ -165137,7 +165616,7 @@
       "replacementTrackId": "",
       "playable": true,
       "playabilityStatus": "playable_by_browser_probe",
-      "hiddenFromRadio": false,
+      "hiddenFromRadio": true,
       "picUrl": "http://p3.music.126.net/_khDFSlIIC2AiAq-jIrG4Q==/109951168786031313.jpg",
       "styleTags": [
         "edm",
@@ -165205,7 +165684,18 @@
       ],
       "playlistCount": 1,
       "createdPlaylistCount": 1,
-      "inLikedMusic": false
+      "inLikedMusic": false,
+      "radioHiddenReason": "editorial_filter_high_noise_bar_unfriendly",
+      "radioHiddenSource": "noisy_candidates_review_2026-06-19",
+      "radioHiddenNote": "Lost - ILLENIUM / Emilie Brandt; score 66; dubstep",
+      "barNoiseRisk": {
+        "level": "high",
+        "score": 66,
+        "reasons": [
+          "dubstep",
+          "energy 0.75"
+        ]
+      }
     },
     {
       "id": "1329170240",
@@ -165422,7 +165912,8 @@
         ],
         "context": [
           "club",
-          "lounge"
+          "lounge",
+          "sunset"
         ],
         "era": []
       },
@@ -168728,6 +169219,7 @@
         "genre": [
           "nu_disco",
           "downtempo",
+          "electronica",
           "funk_soul"
         ],
         "mood": [
@@ -170597,13 +171089,18 @@
       ],
       "taxonomy": {
         "genre": [
-          "downtempo"
+          "downtempo",
+          "rnb_soul",
+          "hiphop_rap"
         ],
         "mood": [
-          "chill"
+          "chill",
+          "groovy",
+          "warm"
         ],
         "context": [
-          "lounge"
+          "lounge",
+          "night_drive"
         ],
         "era": []
       },
@@ -175512,7 +176009,7 @@
       "mode": "",
       "keyConfidence": "",
       "keySources": [],
-      "energy": 0.59,
+      "energy": 0.58,
       "beatGridAvailable": false,
       "onlineGenres": [],
       "onlineTags": [],
@@ -176077,18 +176574,23 @@
       ],
       "taxonomy": {
         "genre": [
+          "nu_disco",
           "downtempo",
+          "electronica",
           "edm"
         ],
         "mood": [
           "chill",
+          "groovy",
+          "warm",
           "euphoric",
           "energetic"
         ],
         "context": [
           "club",
           "lounge",
-          "workout"
+          "workout",
+          "sunset"
         ],
         "era": []
       },
@@ -177323,15 +177825,20 @@
       "taxonomy": {
         "genre": [
           "downtempo",
-          "electronica"
+          "electronica",
+          "rnb_soul",
+          "hiphop_rap"
         ],
         "mood": [
           "chill",
+          "groovy",
+          "warm",
           "energetic"
         ],
         "context": [
           "club",
-          "lounge"
+          "lounge",
+          "night_drive"
         ],
         "era": []
       },
@@ -180354,14 +180861,16 @@
       ],
       "taxonomy": {
         "genre": [
-          "nu_disco"
+          "nu_disco",
+          "funk_soul"
         ],
         "mood": [
           "groovy",
           "playful"
         ],
         "context": [
-          "club"
+          "club",
+          "lounge"
         ],
         "era": []
       },
@@ -180488,37 +180997,35 @@
       "playabilityStatus": "playable_by_browser_probe",
       "hiddenFromRadio": false,
       "picUrl": "http://p4.music.126.net/9DRZ70DQlK7UD7m3TLy3JQ==/109951171916469596.jpg",
-      "styleTags": [
-        "pop"
-      ],
-      "styleLabels": [
-        "Pop"
-      ],
+      "styleTags": [],
+      "styleLabels": [],
       "taxonomy": {
         "genre": [
-          "pop"
+          "techno",
+          "minimal"
         ],
         "mood": [
-          "romantic"
+          "hypnotic"
         ],
         "context": [
-          "travel"
+          "club",
+          "afterhours"
         ],
         "era": []
       },
-      "estimatedBpm": 119,
+      "estimatedBpm": 115,
       "tempoConfidence": "genre-estimated",
       "tempoSources": [],
       "musicalKey": "",
       "mode": "",
       "keyConfidence": "",
       "keySources": [],
-      "energy": 0.59,
+      "energy": 0.54,
       "beatGridAvailable": false,
       "onlineGenres": [],
       "onlineTags": [],
       "genreSources": [],
-      "genreConfidence": "metadata+heuristic",
+      "genreConfidence": "playlist+heuristic",
       "catalogMatchConfidence": 0.0,
       "catalogMatches": [],
       "releaseDate": "",
@@ -183336,7 +183843,7 @@
       "replacementTrackId": "",
       "playable": true,
       "playabilityStatus": "playable_by_browser_probe",
-      "hiddenFromRadio": false,
+      "hiddenFromRadio": true,
       "picUrl": "http://p3.music.126.net/NpNl2SJIKrCqPt2v_njIAQ==/109951169889309330.jpg",
       "styleTags": [
         "acid_techno",
@@ -183407,7 +183914,19 @@
       ],
       "playlistCount": 1,
       "createdPlaylistCount": 1,
-      "inLikedMusic": false
+      "inLikedMusic": false,
+      "radioHiddenReason": "editorial_filter_high_noise_bar_unfriendly",
+      "radioHiddenSource": "noisy_candidates_review_2026-06-19",
+      "radioHiddenNote": "Moroccan Chant Number 2 (Roel Salemink & Drumcomplex Remix) - Carl Cox / Eric Powell; score 36; acid techno genre; energy 0.74; 126 bpm",
+      "barNoiseRisk": {
+        "level": "review",
+        "score": 36,
+        "reasons": [
+          "acid techno genre",
+          "energy 0.74",
+          "126 bpm"
+        ]
+      }
     },
     {
       "id": "1399397321",
@@ -186831,14 +187350,16 @@
         "genre": [
           "nu_disco",
           "electronica",
-          "pop"
+          "pop",
+          "funk_soul"
         ],
         "mood": [
           "groovy",
           "playful"
         ],
         "context": [
-          "club"
+          "club",
+          "lounge"
         ],
         "era": []
       },
@@ -190974,6 +191495,7 @@
         "genre": [
           "nu_disco",
           "downtempo",
+          "electronica",
           "funk_soul"
         ],
         "mood": [
@@ -196625,20 +197147,24 @@
       "hiddenFromRadio": false,
       "picUrl": "http://p3.music.126.net/mtLf3MWL1EV2cyuBwde7Ig==/109951169832575879.jpg",
       "styleTags": [
-        "pop"
+        "electronic"
       ],
       "styleLabels": [
-        "Pop"
+        "Electronic"
       ],
       "taxonomy": {
         "genre": [
-          "pop"
+          "techno",
+          "electronica"
         ],
         "mood": [
-          "playful"
+          "dark",
+          "hypnotic",
+          "atmospheric"
         ],
         "context": [
-          "travel"
+          "club",
+          "afterhours"
         ],
         "era": []
       },
@@ -196653,7 +197179,7 @@
       "keySources": [
         "Deezer/Apple official 30-second preview analysis"
       ],
-      "energy": 0.52,
+      "energy": 0.61,
       "beatGridAvailable": true,
       "onlineGenres": [
         "IDM/Experimental",
@@ -196930,7 +197456,7 @@
       "keySources": [
         "Deezer/Apple official 30-second preview analysis"
       ],
-      "energy": 0.71,
+      "energy": 0.7,
       "beatGridAvailable": true,
       "onlineGenres": [
         "Techno"
@@ -197595,7 +198121,14 @@
       "playlistNames": [],
       "playlistCount": 1,
       "createdPlaylistCount": 0,
-      "inLikedMusic": true
+      "inLikedMusic": true,
+      "barNoiseRisk": {
+        "level": "review",
+        "score": 60,
+        "reasons": [
+          "dubstep"
+        ]
+      }
     },
     {
       "id": "34916002",
@@ -198976,6 +199509,7 @@
         "genre": [
           "nu_disco",
           "downtempo",
+          "electronica",
           "funk_soul"
         ],
         "mood": [
@@ -198986,7 +199520,8 @@
         "context": [
           "club",
           "lounge",
-          "afterhours"
+          "afterhours",
+          "sunset"
         ],
         "era": []
       },
@@ -200206,14 +200741,16 @@
       ],
       "taxonomy": {
         "genre": [
-          "nu_disco"
+          "nu_disco",
+          "funk_soul"
         ],
         "mood": [
           "groovy",
           "playful"
         ],
         "context": [
-          "club"
+          "club",
+          "lounge"
         ],
         "era": []
       },
@@ -201102,10 +201639,12 @@
         ],
         "mood": [
           "groovy",
+          "atmospheric",
           "energetic"
         ],
         "context": [
-          "club"
+          "club",
+          "afterhours"
         ],
         "era": []
       },
@@ -201317,7 +201856,14 @@
       "playlistNames": [],
       "playlistCount": 1,
       "createdPlaylistCount": 0,
-      "inLikedMusic": true
+      "inLikedMusic": true,
+      "barNoiseRisk": {
+        "level": "high",
+        "score": 40,
+        "reasons": [
+          "electro house"
+        ]
+      }
     },
     {
       "id": "1492098161",
@@ -203294,7 +203840,16 @@
       ],
       "playlistCount": 1,
       "createdPlaylistCount": 1,
-      "inLikedMusic": false
+      "inLikedMusic": false,
+      "barNoiseRisk": {
+        "level": "review",
+        "score": 46,
+        "reasons": [
+          "fast high-energy edm",
+          "energy 0.85",
+          "131 bpm"
+        ]
+      }
     },
     {
       "id": "2146267043",
@@ -205628,7 +206183,8 @@
         "mood": [
           "chill",
           "dark",
-          "hypnotic"
+          "hypnotic",
+          "atmospheric"
         ],
         "context": [
           "lounge",
@@ -207313,32 +207869,31 @@
       "playabilityStatus": "blocked_by_browser_probe",
       "hiddenFromRadio": true,
       "picUrl": "https://p4.music.126.net/e_ZJ9zZXYlwAbycvFqKbkg==/109951170678919881.jpg",
-      "styleTags": [
-        "pop"
-      ],
-      "styleLabels": [
-        "Pop"
-      ],
+      "styleTags": [],
+      "styleLabels": [],
       "taxonomy": {
         "genre": [
-          "pop"
+          "nu_disco",
+          "electronica"
         ],
         "mood": [
-          "playful"
+          "groovy",
+          "warm"
         ],
         "context": [
-          "travel"
+          "lounge",
+          "sunset"
         ],
         "era": []
       },
-      "estimatedBpm": 113,
+      "estimatedBpm": 109,
       "tempoConfidence": "genre-estimated",
       "tempoSources": [],
       "musicalKey": "",
       "mode": "",
       "keyConfidence": "",
       "keySources": [],
-      "energy": 0.51,
+      "energy": 0.46,
       "beatGridAvailable": false,
       "onlineGenres": [],
       "onlineTags": [],
@@ -207886,18 +208441,23 @@
       ],
       "taxonomy": {
         "genre": [
+          "nu_disco",
           "downtempo",
+          "electronica",
           "edm"
         ],
         "mood": [
           "chill",
+          "groovy",
+          "warm",
           "euphoric",
           "energetic"
         ],
         "context": [
           "club",
           "lounge",
-          "workout"
+          "workout",
+          "sunset"
         ],
         "era": []
       },
@@ -207965,19 +208525,23 @@
       ],
       "taxonomy": {
         "genre": [
+          "nu_disco",
           "downtempo",
           "electronica",
           "edm"
         ],
         "mood": [
           "chill",
+          "groovy",
+          "warm",
           "euphoric",
           "energetic"
         ],
         "context": [
           "club",
           "lounge",
-          "workout"
+          "workout",
+          "sunset"
         ],
         "era": []
       },
@@ -214092,7 +214656,16 @@
       ],
       "playlistCount": 1,
       "createdPlaylistCount": 1,
-      "inLikedMusic": false
+      "inLikedMusic": false,
+      "barNoiseRisk": {
+        "level": "review",
+        "score": 36,
+        "reasons": [
+          "acid techno genre",
+          "energy 0.77",
+          "128 bpm"
+        ]
+      }
     },
     {
       "id": "1807865459",
@@ -214129,11 +214702,13 @@
       "taxonomy": {
         "genre": [
           "electronica",
-          "synthwave"
+          "synthwave",
+          "pop"
         ],
         "mood": [
           "dreamy",
-          "energetic"
+          "energetic",
+          "playful"
         ],
         "context": [
           "club",
@@ -217124,6 +217699,7 @@
       "taxonomy": {
         "genre": [
           "house",
+          "tech_house",
           "electronica"
         ],
         "mood": [
@@ -221467,7 +222043,7 @@
       "replacementTrackId": "",
       "playable": true,
       "playabilityStatus": "playable_by_browser_probe",
-      "hiddenFromRadio": false,
+      "hiddenFromRadio": true,
       "picUrl": "http://p4.music.126.net/rhwFbsXoPWfzsyTOr7VMGQ==/109951165714494226.jpg",
       "styleTags": [
         "disco_nu_disco",
@@ -221553,7 +222129,19 @@
       ],
       "playlistCount": 2,
       "createdPlaylistCount": 2,
-      "inLikedMusic": false
+      "inLikedMusic": false,
+      "radioHiddenReason": "editorial_filter_high_noise_bar_unfriendly",
+      "radioHiddenSource": "noisy_candidates_review_2026-06-19",
+      "radioHiddenNote": "Rave Culture (Dub Mix) - SAVIN; score 64; rave; title:rave; energy 0.76",
+      "barNoiseRisk": {
+        "level": "review",
+        "score": 64,
+        "reasons": [
+          "rave",
+          "title:rave",
+          "energy 0.76"
+        ]
+      }
     },
     {
       "id": "1340281350",
@@ -223846,6 +224434,7 @@
       "taxonomy": {
         "genre": [
           "house",
+          "tech_house",
           "melodic_house",
           "afro_house",
           "electronica"
@@ -224439,7 +225028,7 @@
       "replacementTrackId": "",
       "playable": true,
       "playabilityStatus": "playable_by_browser_probe",
-      "hiddenFromRadio": false,
+      "hiddenFromRadio": true,
       "picUrl": "http://p4.music.126.net/pJB4jgqjsY-ZwwMM4K-YBw==/109951163909328962.jpg",
       "styleTags": [
         "acid_techno",
@@ -224512,7 +225101,20 @@
       ],
       "playlistCount": 1,
       "createdPlaylistCount": 1,
-      "inLikedMusic": false
+      "inLikedMusic": false,
+      "radioHiddenReason": "editorial_filter_high_noise_bar_unfriendly",
+      "radioHiddenSource": "noisy_candidates_review_2026-06-19",
+      "radioHiddenNote": "Reject the False Icons (Original Mix) - Symmetric / Future of Matter; score 60; high-energy acid techno",
+      "barNoiseRisk": {
+        "level": "high",
+        "score": 60,
+        "reasons": [
+          "acid techno genre",
+          "high-energy techno",
+          "energy 0.78",
+          "129 bpm"
+        ]
+      }
     },
     {
       "id": "502091726",
@@ -228262,13 +228864,18 @@
       ],
       "taxonomy": {
         "genre": [
-          "downtempo"
+          "downtempo",
+          "rnb_soul",
+          "hiphop_rap"
         ],
         "mood": [
-          "chill"
+          "chill",
+          "groovy",
+          "warm"
         ],
         "context": [
-          "lounge"
+          "lounge",
+          "night_drive"
         ],
         "era": []
       },
@@ -229547,7 +230154,7 @@
       "replacementTrackId": "",
       "playable": true,
       "playabilityStatus": "playable_by_browser_probe",
-      "hiddenFromRadio": false,
+      "hiddenFromRadio": true,
       "picUrl": "http://p3.music.126.net/Umub4t-qvsUZib-873gARw==/109951170385661523.jpg",
       "styleTags": [
         "electronic"
@@ -229603,7 +230210,17 @@
       "playlistNames": [],
       "playlistCount": 1,
       "createdPlaylistCount": 0,
-      "inLikedMusic": true
+      "inLikedMusic": true,
+      "radioHiddenReason": "editorial_filter_high_noise_bar_unfriendly",
+      "radioHiddenSource": "noisy_candidates_review_2026-06-19",
+      "radioHiddenNote": "Rutten - Skream; score 60; dubstep",
+      "barNoiseRisk": {
+        "level": "high",
+        "score": 60,
+        "reasons": [
+          "dubstep"
+        ]
+      }
     },
     {
       "id": "1877872715",
@@ -229821,6 +230438,7 @@
         "genre": [
           "nu_disco",
           "downtempo",
+          "electronica",
           "funk_soul"
         ],
         "mood": [
@@ -229830,7 +230448,8 @@
         ],
         "context": [
           "club",
-          "lounge"
+          "lounge",
+          "sunset"
         ],
         "era": []
       },
@@ -230672,25 +231291,20 @@
       "hiddenFromRadio": false,
       "picUrl": "http://p4.music.126.net/NZIV85KPZmgpGla9hQFP2g==/6005532510922964.jpg",
       "styleTags": [
-        "chill_downtempo",
-        "pop"
+        "chill_downtempo"
       ],
       "styleLabels": [
-        "Chill / Downtempo",
-        "Pop"
+        "Chill / Downtempo"
       ],
       "taxonomy": {
         "genre": [
-          "downtempo",
-          "pop"
+          "downtempo"
         ],
         "mood": [
-          "chill",
-          "playful"
+          "chill"
         ],
         "context": [
-          "lounge",
-          "focus"
+          "lounge"
         ],
         "era": []
       },
@@ -230705,7 +231319,7 @@
       "keySources": [
         "Deezer/Apple official 30-second preview analysis"
       ],
-      "energy": 0.46,
+      "energy": 0.37,
       "beatGridAvailable": true,
       "onlineGenres": [
         "エレクトロ",
@@ -232732,7 +233346,7 @@
       "replacementTrackId": "",
       "playable": true,
       "playabilityStatus": "playable_by_browser_probe",
-      "hiddenFromRadio": false,
+      "hiddenFromRadio": true,
       "picUrl": "http://p4.music.126.net/PbzSmZNS7xSAVYQr2Du8oA==/109951163838896639.jpg",
       "styleTags": [
         "acid_techno",
@@ -232810,7 +233424,19 @@
       ],
       "playlistCount": 1,
       "createdPlaylistCount": 1,
-      "inLikedMusic": false
+      "inLikedMusic": false,
+      "radioHiddenReason": "editorial_filter_high_noise_bar_unfriendly",
+      "radioHiddenSource": "noisy_candidates_review_2026-06-19",
+      "radioHiddenNote": "Say Something - Nasser Baker; score 36; acid techno genre; energy 0.77; 126 bpm",
+      "barNoiseRisk": {
+        "level": "review",
+        "score": 36,
+        "reasons": [
+          "acid techno genre",
+          "energy 0.77",
+          "126 bpm"
+        ]
+      }
     },
     {
       "id": "2632631471",
@@ -233481,7 +234107,7 @@
       "replacementTrackId": "",
       "playable": true,
       "playabilityStatus": "playable_by_browser_probe",
-      "hiddenFromRadio": false,
+      "hiddenFromRadio": true,
       "picUrl": "http://p4.music.126.net/HhAat6NLT8e0x-OCDEp21w==/109951165723023564.jpg",
       "styleTags": [
         "edm"
@@ -233554,7 +234180,19 @@
       ],
       "playlistCount": 1,
       "createdPlaylistCount": 1,
-      "inLikedMusic": false
+      "inLikedMusic": false,
+      "radioHiddenReason": "editorial_filter_high_noise_bar_unfriendly",
+      "radioHiddenSource": "noisy_candidates_review_2026-06-19",
+      "radioHiddenNote": "Scream (Nina Kraviz Mix) - Okain; score 48; scream; title:scream; energy 0.82",
+      "barNoiseRisk": {
+        "level": "review",
+        "score": 48,
+        "reasons": [
+          "scream",
+          "title:scream",
+          "energy 0.82"
+        ]
+      }
     },
     {
       "id": "30064087",
@@ -233579,7 +234217,7 @@
       "replacementTrackId": "",
       "playable": true,
       "playabilityStatus": "playable_by_browser_probe",
-      "hiddenFromRadio": false,
+      "hiddenFromRadio": true,
       "picUrl": "http://p4.music.126.net/zAY_6Yd3tDXXOVsKkeuKzA==/109951163318680333.jpg",
       "styleTags": [
         "house"
@@ -233634,7 +234272,19 @@
       ],
       "playlistCount": 1,
       "createdPlaylistCount": 1,
-      "inLikedMusic": false
+      "inLikedMusic": false,
+      "radioHiddenReason": "editorial_filter_high_noise_bar_unfriendly",
+      "radioHiddenSource": "noisy_candidates_review_2026-06-19",
+      "radioHiddenNote": "Scream for Pleasure (Original Mix) - Croatia Squad / Me & My Toothbrush; score 36; scream; title:scream; energy 0.76",
+      "barNoiseRisk": {
+        "level": "review",
+        "score": 36,
+        "reasons": [
+          "scream",
+          "title:scream",
+          "energy 0.76"
+        ]
+      }
     },
     {
       "id": "1942348304",
@@ -239226,10 +239876,12 @@
       "taxonomy": {
         "genre": [
           "house",
+          "nu_disco",
           "electronica"
         ],
         "mood": [
-          "groovy"
+          "groovy",
+          "playful"
         ],
         "context": [
           "club"
@@ -240213,12 +240865,13 @@
       "replacementTrackId": "",
       "playable": true,
       "playabilityStatus": "playable_by_browser_probe",
-      "hiddenFromRadio": false,
+      "hiddenFromRadio": true,
       "picUrl": "http://p3.music.126.net/FUkFORhFNeAAGBxKo4NHew==/109951167213166007.jpg",
       "styleTags": [
         "ambient",
         "deep_house",
         "electronic",
+        "funk",
         "house",
         "jazz"
       ],
@@ -240226,6 +240879,7 @@
         "Ambient",
         "Deep House",
         "Electronic",
+        "Funk",
         "House",
         "Jazz"
       ],
@@ -240235,7 +240889,8 @@
           "deep_house",
           "ambient",
           "electronica",
-          "jazz"
+          "jazz",
+          "funk_soul"
         ],
         "mood": [
           "chill",
@@ -240261,7 +240916,7 @@
       "mode": "",
       "keyConfidence": "",
       "keySources": [],
-      "energy": 0.51,
+      "energy": 0.52,
       "beatGridAvailable": false,
       "onlineGenres": [],
       "onlineTags": [
@@ -240295,7 +240950,17 @@
       "playlistNames": [],
       "playlistCount": 1,
       "createdPlaylistCount": 0,
-      "inLikedMusic": true
+      "inLikedMusic": true,
+      "radioHiddenReason": "editorial_filter_high_noise_bar_unfriendly",
+      "radioHiddenSource": "noisy_candidates_review_2026-06-19",
+      "radioHiddenNote": "Silhouettes (I, II & III) - Floating Points; score 60; dubstep",
+      "barNoiseRisk": {
+        "level": "review",
+        "score": 60,
+        "reasons": [
+          "dubstep"
+        ]
+      }
     },
     {
       "id": "33419043",
@@ -241800,13 +242465,17 @@
       ],
       "taxonomy": {
         "genre": [
+          "nu_disco",
           "downtempo",
-          "edm"
+          "edm",
+          "funk_soul"
         ],
         "mood": [
           "chill",
+          "groovy",
           "euphoric",
-          "energetic"
+          "energetic",
+          "playful"
         ],
         "context": [
           "club",
@@ -244289,7 +244958,16 @@
       ],
       "playlistCount": 1,
       "createdPlaylistCount": 1,
-      "inLikedMusic": false
+      "inLikedMusic": false,
+      "barNoiseRisk": {
+        "level": "review",
+        "score": 46,
+        "reasons": [
+          "fast high-energy edm",
+          "energy 0.89",
+          "130 bpm"
+        ]
+      }
     },
     {
       "id": "531040176",
@@ -244586,7 +245264,7 @@
       "replacementTrackId": "",
       "playable": true,
       "playabilityStatus": "playable_by_browser_probe",
-      "hiddenFromRadio": false,
+      "hiddenFromRadio": true,
       "picUrl": "http://p4.music.126.net/-9u736ARwsX6LWKBP0t41A==/109951167762788912.jpg",
       "styleTags": [
         "acid_techno",
@@ -244660,7 +245338,20 @@
       ],
       "playlistCount": 1,
       "createdPlaylistCount": 1,
-      "inLikedMusic": false
+      "inLikedMusic": false,
+      "radioHiddenReason": "editorial_filter_high_noise_bar_unfriendly",
+      "radioHiddenSource": "noisy_candidates_review_2026-06-19",
+      "radioHiddenNote": "So Where Are You - Corporation of One; score 66; high-energy acid techno",
+      "barNoiseRisk": {
+        "level": "high",
+        "score": 66,
+        "reasons": [
+          "acid techno genre",
+          "high-energy techno",
+          "energy 0.79",
+          "162 bpm"
+        ]
+      }
     },
     {
       "id": "29450806",
@@ -246056,11 +246747,13 @@
       "taxonomy": {
         "genre": [
           "electronica",
-          "synthwave"
+          "synthwave",
+          "pop"
         ],
         "mood": [
           "dreamy",
-          "energetic"
+          "energetic",
+          "playful"
         ],
         "context": [
           "club",
@@ -247277,13 +247970,18 @@
       ],
       "taxonomy": {
         "genre": [
-          "downtempo"
+          "nu_disco",
+          "downtempo",
+          "electronica"
         ],
         "mood": [
-          "chill"
+          "chill",
+          "groovy",
+          "warm"
         ],
         "context": [
-          "lounge"
+          "lounge",
+          "sunset"
         ],
         "era": []
       },
@@ -250980,7 +251678,16 @@
       ],
       "playlistCount": 2,
       "createdPlaylistCount": 2,
-      "inLikedMusic": false
+      "inLikedMusic": false,
+      "barNoiseRisk": {
+        "level": "review",
+        "score": 46,
+        "reasons": [
+          "fast high-energy edm",
+          "energy 0.85",
+          "130 bpm"
+        ]
+      }
     },
     {
       "id": "571339613",
@@ -252620,12 +253327,17 @@
       ],
       "taxonomy": {
         "genre": [
-          "downtempo"
+          "nu_disco",
+          "downtempo",
+          "funk_soul"
         ],
         "mood": [
-          "chill"
+          "chill",
+          "groovy",
+          "playful"
         ],
         "context": [
+          "club",
           "lounge",
           "sunset"
         ],
@@ -254133,13 +254845,17 @@
       ],
       "taxonomy": {
         "genre": [
+          "nu_disco",
           "downtempo",
-          "edm"
+          "edm",
+          "funk_soul"
         ],
         "mood": [
           "chill",
+          "groovy",
           "euphoric",
-          "energetic"
+          "energetic",
+          "playful"
         ],
         "context": [
           "club",
@@ -255548,7 +256264,16 @@
       ],
       "playlistCount": 1,
       "createdPlaylistCount": 1,
-      "inLikedMusic": false
+      "inLikedMusic": false,
+      "barNoiseRisk": {
+        "level": "review",
+        "score": 46,
+        "reasons": [
+          "fast high-energy edm",
+          "energy 0.86",
+          "127 bpm"
+        ]
+      }
     },
     {
       "id": "1857960635",
@@ -256132,10 +256857,14 @@
       ],
       "taxonomy": {
         "genre": [
-          "downtempo"
+          "nu_disco",
+          "downtempo",
+          "electronica"
         ],
         "mood": [
-          "chill"
+          "chill",
+          "groovy",
+          "warm"
         ],
         "context": [
           "lounge",
@@ -257787,7 +258516,8 @@
         ],
         "context": [
           "club",
-          "lounge"
+          "lounge",
+          "sunset"
         ],
         "era": []
       },
@@ -261438,7 +262168,7 @@
       "mode": "",
       "keyConfidence": "",
       "keySources": [],
-      "energy": 0.69,
+      "energy": 0.68,
       "beatGridAvailable": false,
       "onlineGenres": [],
       "onlineTags": [],
@@ -264877,14 +265607,16 @@
       ],
       "taxonomy": {
         "genre": [
-          "nu_disco"
+          "nu_disco",
+          "funk_soul"
         ],
         "mood": [
           "groovy",
           "playful"
         ],
         "context": [
-          "club"
+          "club",
+          "lounge"
         ],
         "era": []
       },
@@ -268257,7 +268989,7 @@
       "replacementTrackId": "",
       "playable": true,
       "playabilityStatus": "playable_by_browser_probe",
-      "hiddenFromRadio": false,
+      "hiddenFromRadio": true,
       "picUrl": "http://p4.music.126.net/Pivprf__s74o3DrrgLJLLA==/109951165806175505.jpg",
       "styleTags": [
         "acid_techno",
@@ -268332,7 +269064,19 @@
       ],
       "playlistCount": 1,
       "createdPlaylistCount": 1,
-      "inLikedMusic": false
+      "inLikedMusic": false,
+      "radioHiddenReason": "editorial_filter_high_noise_bar_unfriendly",
+      "radioHiddenSource": "noisy_candidates_review_2026-06-19",
+      "radioHiddenNote": "The Age Of Love (Manuel De La Mare Remix) - Age Of Love; score 36; acid techno genre; energy 0.77; 129 bpm",
+      "barNoiseRisk": {
+        "level": "review",
+        "score": 36,
+        "reasons": [
+          "acid techno genre",
+          "energy 0.77",
+          "129 bpm"
+        ]
+      }
     },
     {
       "id": "27828212",
@@ -269573,7 +270317,16 @@
       ],
       "playlistCount": 1,
       "createdPlaylistCount": 1,
-      "inLikedMusic": false
+      "inLikedMusic": false,
+      "barNoiseRisk": {
+        "level": "review",
+        "score": 46,
+        "reasons": [
+          "fast high-energy edm",
+          "energy 0.90",
+          "127 bpm"
+        ]
+      }
     },
     {
       "id": "2042884376",
@@ -273324,7 +274077,16 @@
       ],
       "playlistCount": 1,
       "createdPlaylistCount": 1,
-      "inLikedMusic": false
+      "inLikedMusic": false,
+      "barNoiseRisk": {
+        "level": "review",
+        "score": 46,
+        "reasons": [
+          "fast high-energy edm",
+          "energy 0.90",
+          "127 bpm"
+        ]
+      }
     },
     {
       "id": "28615540",
@@ -273760,7 +274522,16 @@
       ],
       "playlistCount": 1,
       "createdPlaylistCount": 1,
-      "inLikedMusic": false
+      "inLikedMusic": false,
+      "barNoiseRisk": {
+        "level": "review",
+        "score": 46,
+        "reasons": [
+          "fast high-energy edm",
+          "energy 0.88",
+          "126 bpm"
+        ]
+      }
     },
     {
       "id": "526470165",
@@ -278206,13 +278977,15 @@
       "taxonomy": {
         "genre": [
           "house",
+          "nu_disco",
           "downtempo",
           "electronica"
         ],
         "mood": [
           "chill",
           "groovy",
-          "energetic"
+          "energetic",
+          "playful"
         ],
         "context": [
           "club",
@@ -278498,7 +279271,16 @@
       ],
       "playlistCount": 1,
       "createdPlaylistCount": 1,
-      "inLikedMusic": false
+      "inLikedMusic": false,
+      "barNoiseRisk": {
+        "level": "review",
+        "score": 46,
+        "reasons": [
+          "fast high-energy edm",
+          "energy 0.82",
+          "130 bpm"
+        ]
+      }
     },
     {
       "id": "24854312",
@@ -280489,7 +281271,16 @@
       ],
       "playlistCount": 1,
       "createdPlaylistCount": 1,
-      "inLikedMusic": false
+      "inLikedMusic": false,
+      "barNoiseRisk": {
+        "level": "review",
+        "score": 40,
+        "reasons": [
+          "fast high-energy edm",
+          "energy 0.75",
+          "136 bpm"
+        ]
+      }
     },
     {
       "id": "411314681",
@@ -280587,7 +281378,16 @@
       ],
       "playlistCount": 2,
       "createdPlaylistCount": 1,
-      "inLikedMusic": true
+      "inLikedMusic": true,
+      "barNoiseRisk": {
+        "level": "review",
+        "score": 52,
+        "reasons": [
+          "fast high-energy edm",
+          "energy 0.86",
+          "162 bpm"
+        ]
+      }
     },
     {
       "id": "1811960749",
@@ -280624,11 +281424,13 @@
       "taxonomy": {
         "genre": [
           "electronica",
-          "synthwave"
+          "synthwave",
+          "pop"
         ],
         "mood": [
           "dreamy",
-          "energetic"
+          "energetic",
+          "playful"
         ],
         "context": [
           "club",
@@ -281327,12 +282129,17 @@
       ],
       "taxonomy": {
         "genre": [
+          "house",
+          "nu_disco",
           "downtempo"
         ],
         "mood": [
-          "chill"
+          "chill",
+          "groovy",
+          "playful"
         ],
         "context": [
+          "club",
           "lounge",
           "sunset"
         ],
@@ -285179,11 +285986,13 @@
       "hiddenFromRadio": false,
       "picUrl": "http://p3.music.126.net/2bKHN_xCLlbQUw4V_s-4Wg==/109951168766168758.jpg",
       "styleTags": [
+        "funk",
         "indie_rock",
         "jazz",
         "rock"
       ],
       "styleLabels": [
+        "Funk",
         "Indie Rock",
         "Jazz",
         "Rock"
@@ -285192,9 +286001,11 @@
         "genre": [
           "indie_rock",
           "rock",
-          "jazz"
+          "jazz",
+          "funk_soul"
         ],
         "mood": [
+          "groovy",
           "warm",
           "dreamy",
           "melancholic",
@@ -285208,14 +286019,14 @@
         ],
         "era": []
       },
-      "estimatedBpm": 117,
+      "estimatedBpm": 114,
       "tempoConfidence": "genre-estimated",
       "tempoSources": [],
       "musicalKey": "",
       "mode": "",
       "keyConfidence": "",
       "keySources": [],
-      "energy": 0.57,
+      "energy": 0.58,
       "beatGridAvailable": false,
       "onlineGenres": [],
       "onlineTags": [
@@ -287241,7 +288052,7 @@
       "replacementTrackId": "",
       "playable": true,
       "playabilityStatus": "playable_by_browser_probe",
-      "hiddenFromRadio": false,
+      "hiddenFromRadio": true,
       "picUrl": "http://p3.music.126.net/WkCa3LDCNifRtETM2Rj_kw==/109951163588865634.jpg",
       "styleTags": [
         "acid_techno",
@@ -287313,7 +288124,20 @@
       ],
       "playlistCount": 1,
       "createdPlaylistCount": 1,
-      "inLikedMusic": false
+      "inLikedMusic": false,
+      "radioHiddenReason": "editorial_filter_high_noise_bar_unfriendly",
+      "radioHiddenSource": "noisy_candidates_review_2026-06-19",
+      "radioHiddenNote": "Trance Me Up (Skudge Remix) - Achterbahn D'Amour; score 52; title:acid; acid techno genre; energy 0.77; 129 bpm",
+      "barNoiseRisk": {
+        "level": "review",
+        "score": 52,
+        "reasons": [
+          "title:acid",
+          "acid techno genre",
+          "energy 0.77",
+          "129 bpm"
+        ]
+      }
     },
     {
       "id": "573230983",
@@ -287945,10 +288769,14 @@
       ],
       "taxonomy": {
         "genre": [
-          "downtempo"
+          "nu_disco",
+          "downtempo",
+          "electronica"
         ],
         "mood": [
-          "chill"
+          "chill",
+          "groovy",
+          "warm"
         ],
         "context": [
           "lounge",
@@ -290127,12 +290955,17 @@
       ],
       "taxonomy": {
         "genre": [
-          "downtempo"
+          "nu_disco",
+          "downtempo",
+          "funk_soul"
         ],
         "mood": [
-          "chill"
+          "chill",
+          "groovy",
+          "playful"
         ],
         "context": [
+          "club",
           "lounge",
           "sunset"
         ],
@@ -293297,7 +294130,7 @@
       "replacementTrackId": "",
       "playable": true,
       "playabilityStatus": "playable_by_browser_probe",
-      "hiddenFromRadio": false,
+      "hiddenFromRadio": true,
       "picUrl": "http://p3.music.126.net/oc97CeSY7mWWhrOHrp9riQ==/109951169112334832.jpg",
       "styleTags": [
         "edm",
@@ -293350,7 +294183,19 @@
       ],
       "playlistCount": 1,
       "createdPlaylistCount": 1,
-      "inLikedMusic": false
+      "inLikedMusic": false,
+      "radioHiddenReason": "editorial_filter_high_noise_bar_unfriendly",
+      "radioHiddenSource": "noisy_candidates_review_2026-06-19",
+      "radioHiddenNote": "United We Dance (Club Mix) - Vicetone; score 40; fast high-energy edm; energy 0.78; 127 bpm",
+      "barNoiseRisk": {
+        "level": "review",
+        "score": 40,
+        "reasons": [
+          "fast high-energy edm",
+          "energy 0.78",
+          "127 bpm"
+        ]
+      }
     },
     {
       "id": "22263846",
@@ -293581,10 +294426,12 @@
       "taxonomy": {
         "genre": [
           "house",
+          "nu_disco",
           "electronica"
         ],
         "mood": [
-          "groovy"
+          "groovy",
+          "playful"
         ],
         "context": [
           "club"
@@ -297313,15 +298160,27 @@
       "playabilityStatus": "playable_by_browser_probe",
       "hiddenFromRadio": false,
       "picUrl": "https://p3.music.126.net/ZuLmy1Vj2cO_cRBB9jXWGw==/109951168045432176.jpg",
-      "styleTags": [],
-      "styleLabels": [],
+      "styleTags": [
+        "electronic",
+        "minimal",
+        "tech_house"
+      ],
+      "styleLabels": [
+        "Electronic",
+        "Minimal",
+        "Tech House"
+      ],
       "taxonomy": {
         "genre": [
           "house",
+          "tech_house",
+          "techno",
+          "minimal",
           "electronica"
         ],
         "mood": [
           "euphoric",
+          "hypnotic",
           "melancholic"
         ],
         "context": [
@@ -297330,14 +298189,14 @@
         ],
         "era": []
       },
-      "estimatedBpm": 109,
+      "estimatedBpm": 121,
       "tempoConfidence": "genre-estimated",
       "tempoSources": [],
       "musicalKey": "",
       "mode": "",
       "keyConfidence": "",
       "keySources": [],
-      "energy": 0.49,
+      "energy": 0.71,
       "beatGridAvailable": false,
       "onlineGenres": [],
       "onlineTags": [
@@ -298561,7 +299420,16 @@
       ],
       "playlistCount": 1,
       "createdPlaylistCount": 1,
-      "inLikedMusic": false
+      "inLikedMusic": false,
+      "barNoiseRisk": {
+        "level": "review",
+        "score": 46,
+        "reasons": [
+          "fast high-energy edm",
+          "energy 0.82",
+          "128 bpm"
+        ]
+      }
     },
     {
       "id": "31356499",
@@ -298634,7 +299502,16 @@
       ],
       "playlistCount": 1,
       "createdPlaylistCount": 1,
-      "inLikedMusic": false
+      "inLikedMusic": false,
+      "barNoiseRisk": {
+        "level": "review",
+        "score": 46,
+        "reasons": [
+          "fast high-energy edm",
+          "energy 0.87",
+          "129 bpm"
+        ]
+      }
     },
     {
       "id": "26290105",
@@ -299870,13 +300747,18 @@
       ],
       "taxonomy": {
         "genre": [
-          "downtempo"
+          "downtempo",
+          "rnb_soul",
+          "hiphop_rap"
         ],
         "mood": [
-          "chill"
+          "chill",
+          "groovy",
+          "warm"
         ],
         "context": [
-          "lounge"
+          "lounge",
+          "night_drive"
         ],
         "era": []
       },
@@ -302140,7 +303022,16 @@
       ],
       "playlistCount": 1,
       "createdPlaylistCount": 1,
-      "inLikedMusic": false
+      "inLikedMusic": false,
+      "barNoiseRisk": {
+        "level": "review",
+        "score": 46,
+        "reasons": [
+          "fast high-energy edm",
+          "energy 0.83",
+          "128 bpm"
+        ]
+      }
     },
     {
       "id": "508782268",
@@ -304027,15 +304918,18 @@
       "taxonomy": {
         "genre": [
           "nu_disco",
+          "synthwave",
           "pop"
         ],
         "mood": [
           "groovy",
+          "dreamy",
           "romantic",
           "playful"
         ],
         "context": [
-          "club"
+          "club",
+          "night_drive"
         ],
         "era": [
           "80s"
@@ -317572,7 +318466,14 @@
       ],
       "playlistCount": 2,
       "createdPlaylistCount": 2,
-      "inLikedMusic": false
+      "inLikedMusic": false,
+      "barNoiseRisk": {
+        "level": "review",
+        "score": 60,
+        "reasons": [
+          "dubstep"
+        ]
+      }
     },
     {
       "id": "573583453",
@@ -317597,7 +318498,7 @@
       "replacementTrackId": "",
       "playable": true,
       "playabilityStatus": "playable_by_browser_probe",
-      "hiddenFromRadio": false,
+      "hiddenFromRadio": true,
       "picUrl": "http://p3.music.126.net/WqwfwaVC3CwKAZG05DL_Og==/109951164417144945.jpg",
       "styleTags": [
         "acid_techno",
@@ -317663,7 +318564,19 @@
       ],
       "playlistCount": 1,
       "createdPlaylistCount": 1,
-      "inLikedMusic": false
+      "inLikedMusic": false,
+      "radioHiddenReason": "editorial_filter_high_noise_bar_unfriendly",
+      "radioHiddenSource": "noisy_candidates_review_2026-06-19",
+      "radioHiddenNote": "Your Mind - Adam Beyer / Bart Skils; score 36; acid techno genre; energy 0.74; 128 bpm",
+      "barNoiseRisk": {
+        "level": "review",
+        "score": 36,
+        "reasons": [
+          "acid techno genre",
+          "energy 0.74",
+          "128 bpm"
+        ]
+      }
     },
     {
       "id": "551338379",
@@ -329502,19 +330415,19 @@
   "styleStats": [
     [
       "pop",
-      1220
+      1213
+    ],
+    [
+      "electronic",
+      1046
     ],
     [
       "chill_downtempo",
       1044
     ],
     [
-      "electronic",
-      1042
-    ],
-    [
       "house",
-      576
+      578
     ],
     [
       "disco_nu_disco",
@@ -329558,7 +330471,7 @@
     ],
     [
       "minimal",
-      100
+      101
     ],
     [
       "classical",
@@ -329581,11 +330494,15 @@
       59
     ],
     [
+      "funk",
+      53
+    ],
+    [
       "acid_techno",
       52
     ],
     [
-      "funk",
+      "world_latin",
       51
     ],
     [
@@ -329593,16 +330510,12 @@
       50
     ],
     [
-      "world_latin",
-      49
-    ],
-    [
       "indie_dance",
-      42
+      43
     ],
     [
       "tech_house",
-      37
+      39
     ],
     [
       "ambient",
@@ -329646,23 +330559,23 @@
     "genre": [
       [
         "house",
-        733
+        739
       ],
       [
         "deep_house",
-        213
+        215
       ],
       [
         "tech_house",
-        37
+        47
       ],
       [
         "progressive_house",
-        156
+        158
       ],
       [
         "melodic_house",
-        192
+        194
       ],
       [
         "afro_house",
@@ -329670,7 +330583,7 @@
       ],
       [
         "techno",
-        255
+        259
       ],
       [
         "acid_techno",
@@ -329678,15 +330591,15 @@
       ],
       [
         "minimal",
-        100
+        102
       ],
       [
         "nu_disco",
-        420
+        451
       ],
       [
         "indie_dance",
-        118
+        119
       ],
       [
         "downtempo",
@@ -329698,7 +330611,7 @@
       ],
       [
         "electronica",
-        1154
+        1176
       ],
       [
         "edm",
@@ -329706,7 +330619,7 @@
       ],
       [
         "synthwave",
-        187
+        188
       ],
       [
         "lofi",
@@ -329726,7 +330639,7 @@
       ],
       [
         "pop",
-        1364
+        1362
       ],
       [
         "indie_rock",
@@ -329738,11 +330651,11 @@
       ],
       [
         "rnb_soul",
-        174
+        184
       ],
       [
         "hiphop_rap",
-        208
+        218
       ],
       [
         "jazz",
@@ -329750,11 +330663,11 @@
       ],
       [
         "funk_soul",
-        110
+        128
       ],
       [
         "latin_world",
-        52
+        54
       ],
       [
         "classical",
@@ -329768,31 +330681,31 @@
       ],
       [
         "groovy",
-        1310
+        1352
       ],
       [
         "warm",
-        866
+        892
       ],
       [
         "euphoric",
-        591
+        592
       ],
       [
         "dark",
-        239
+        242
       ],
       [
         "hypnotic",
-        413
+        419
       ],
       [
         "atmospheric",
-        228
+        235
       ],
       [
         "dreamy",
-        343
+        344
       ],
       [
         "melancholic",
@@ -329800,7 +330713,7 @@
       ],
       [
         "romantic",
-        641
+        640
       ],
       [
         "energetic",
@@ -329808,25 +330721,25 @@
       ],
       [
         "playful",
-        1507
+        1524
       ]
     ],
     "context": [
       [
         "club",
-        1621
+        1632
       ],
       [
         "lounge",
-        1302
+        1309
       ],
       [
         "night_drive",
-        484
+        495
       ],
       [
         "afterhours",
-        379
+        387
       ],
       [
         "dinner",
@@ -329834,7 +330747,7 @@
       ],
       [
         "focus",
-        211
+        210
       ],
       [
         "workout",
@@ -329842,7 +330755,7 @@
       ],
       [
         "sunset",
-        364
+        388
       ],
       [
         "summer",
@@ -329850,7 +330763,7 @@
       ],
       [
         "travel",
-        1051
+        1045
       ],
       [
         "holiday",

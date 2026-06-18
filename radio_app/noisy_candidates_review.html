@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><title>Echo Room FM noisy candidates</title>
+<style>
+body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;background:#080808;color:#eee;margin:24px}
+table{border-collapse:collapse;width:100%;font-size:13px}th,td{border:1px solid #333;padding:8px;vertical-align:top}
+th{position:sticky;top:0;background:#111;color:#16f4d0}tr:nth-child(even){background:#111}
+.tools{display:flex;gap:8px;margin:16px 0;position:sticky;top:0;background:#080808;padding:8px 0;z-index:2}
+button{background:#16f4d0;border:0;padding:10px 14px;font-weight:800}textarea{width:100%;height:160px;background:#111;color:#16f4d0;border:1px solid #333;margin-top:12px}
+.muted{color:#999}.high{color:#ff5277;font-weight:800}.review{color:#ffd166;font-weight:800}
+</style></head>
+<body><h1>Echo Room FM 吵歌候选审核</h1>
+<p class="muted">High 会默认从普通时段预设中过滤；Review 只是候选，不会自动过滤。复制下方 JSON 可以发回给 Codex 做正式屏蔽。</p>
+<pre>{}</pre>
+<div class="tools"><button onclick="copySelected()">复制已勾选 ID JSON</button><button onclick="setLevel('high',true)">只选 High</button><button onclick="document.querySelectorAll('input[type=checkbox]').forEach(x=>x.checked=true)">全选</button><button onclick="document.querySelectorAll('input[type=checkbox]').forEach(x=>x.checked=false)">全不选</button></div>
+<table><thead><tr><th>选</th><th>Level</th><th>Score</th><th>ID</th><th>Song</th><th>Artists</th><th>BPM</th><th>Energy</th><th>Genres</th><th>Reason</th></tr></thead><tbody>
+
+</tbody></table><textarea id="out" placeholder="selected ids json"></textarea>
+<script>
+function setLevel(level, checked) {
+  document.querySelectorAll('input[type=checkbox]').forEach((box) => {
+    box.checked = box.dataset.level === level ? checked : false;
+  });
+}
+function copySelected() {
+  const ids = [...document.querySelectorAll('input[type=checkbox]:checked')].map(x => x.dataset.id);
+  const payload = JSON.stringify({noisyTrackIds: ids}, null, 2);
+  document.getElementById('out').value = payload;
+  navigator.clipboard?.writeText(payload);
+}
+</script></body></html>

@@ -376,6 +376,7 @@ const RADIO_PROGRAMS = [
     bpmLabel: "125+ BPM",
     minBpm: 125,
     maxBpm: Infinity,
+    noisePolicy: "allow_high",
     facets: {
       genre: ["house", "tech_house", "techno", "acid_techno", "edm", "progressive_house", "melodic_house", "afro_house", "indie_dance", "drum_bass"],
       mood: ["energetic", "euphoric", "hypnotic"],
@@ -424,6 +425,7 @@ const ACTIVE_PROGRAM_STORAGE_KEY = "echo-room-fm-active-program";
 const PROGRAM_OVERRIDES_STORAGE_KEY = "echo-room-fm-program-overrides";
 const ENTRY_MODE_STORAGE_KEY = "echo-room-fm-entry-mode-version";
 const ENTRY_MODE_VERSION = "style-first-20260610";
+const ONBOARDING_STORAGE_KEY = "echo-room-fm-first-playlist-guide";
 const NETEASE_ORIGIN = "https://music.163.com";
 const NETEASE_DEFAULT_EXPORT_API_BASE = "http://127.0.0.1:3000";
 const CLOUD_LOVED_ENDPOINT = "/.netlify/functions/loved";
@@ -514,6 +516,7 @@ async function init() {
     restoreProgramState();
     if (hasPlaybackScope()) fillQueue(true);
     renderAll();
+    maybeShowOnboardingGuide();
     if (state.profileUsername) {
       activateProfile(state.profileUsername, { restore: true });
     }
@@ -521,7 +524,7 @@ async function init() {
       setStatus("电台已就绪");
       window.setTimeout(() => playNext({ automatic: true, reason: "startup" }), 350);
     } else {
-      setStatus("选择喜欢的风格后生成第一条 playlist");
+      setStatus("选择喜欢的风格后生成第一条播放列表");
     }
   } catch (error) {
     console.error("Echo Room FM initialization failed", error);
@@ -549,6 +552,9 @@ function bindElements() {
     "statusLine",
     "openNeteaseBtn",
     "reloadBtn",
+    "onboardingGuide",
+    "onboardingStartBtn",
+    "onboardingDismissBtn",
     "styleFilters",
     "facetTabs",
     "selectedFacetList",
@@ -602,6 +608,17 @@ function bindElements() {
     "neteaseQrImage",
     "neteaseQrText",
     "loveCurrentBtn",
+    "miniPlayer",
+    "miniInfoBtn",
+    "miniCoverArt",
+    "miniFallbackCover",
+    "miniTrackTitle",
+    "miniTrackMeta",
+    "miniLoveBtn",
+    "miniPrevBtn",
+    "miniPlayPauseBtn",
+    "miniNextBtn",
+    "miniProgressBar",
     "statTracks",
     "statQueue",
     "mixToggle",
@@ -647,7 +664,13 @@ function wireEvents() {
   });
   elements.prevBtn.addEventListener("click", playPrevious);
   elements.playPauseBtn.addEventListener("click", togglePlayPause);
+  elements.miniPrevBtn.addEventListener("click", playPrevious);
+  elements.miniPlayPauseBtn.addEventListener("click", togglePlayPause);
+  elements.miniLoveBtn.addEventListener("click", toggleLoveCurrent);
+  elements.miniInfoBtn.addEventListener("click", scrollToNowPlaying);
   elements.gatePlayBtn.addEventListener("click", startFromGate);
+  elements.onboardingStartBtn.addEventListener("click", startOnboardingSelection);
+  elements.onboardingDismissBtn.addEventListener("click", dismissOnboardingGuide);
   elements.generateMixBtn.addEventListener("click", generateStyleSequence);
   elements.clearMixBtn.addEventListener("click", clearStyleMix);
   elements.autoProgramToggle.addEventListener("change", toggleAutoProgram);
@@ -688,12 +711,13 @@ function wireEvents() {
   elements.lovedOnlyBtn.addEventListener("click", toggleLovedOnly);
   elements.reloadBtn.addEventListener("click", () => {
     if (!state.current && !hasPlaybackScope()) {
-      setStatus("先选择 Genre / Mood / Context，再生成序列");
+      setStatus("先选择 Genre / Mood / Context，再生成播放列表");
+      maybeShowOnboardingGuide();
       return;
     }
     fillQueue(true);
     renderAll();
-    setStatus("播放序列已按当前曲风组合重新生成");
+    setStatus("播放列表已按当前曲风组合重新生成");
   });
   elements.openNeteaseBtn.addEventListener("click", openCurrentInNetease);
   elements.mixToggle.addEventListener("change", () => {
@@ -716,6 +740,10 @@ function wireEvents() {
   elements.coverArt.addEventListener("error", () => {
     elements.albumStage.classList.add("no-cover");
     elements.coverArt.removeAttribute("src");
+  });
+  elements.miniCoverArt.addEventListener("error", () => {
+    elements.miniPlayer.classList.add("no-cover");
+    elements.miniCoverArt.removeAttribute("src");
   });
 
   state.decks.forEach((deck, index) => {
@@ -745,6 +773,42 @@ function wireEvents() {
       }
     });
   });
+}
+
+function scrollToNowPlaying() {
+  const target = document.querySelector(".now-panel");
+  if (!target) return;
+  target.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function maybeShowOnboardingGuide() {
+  if (!elements.onboardingGuide) return;
+  const hasSeenGuide = readLocalPreference(ONBOARDING_STORAGE_KEY) === "1";
+  const shouldShow = !hasSeenGuide && !hasPlaybackScope();
+  elements.onboardingGuide.hidden = !shouldShow;
+  document.body.classList.toggle("show-onboarding", shouldShow);
+}
+
+function markOnboardingComplete() {
+  try {
+    window.localStorage.setItem(ONBOARDING_STORAGE_KEY, "1");
+  } catch (error) {
+    console.warn("First-run guide preference is unavailable for this browser.", error);
+  }
+  if (elements.onboardingGuide) elements.onboardingGuide.hidden = true;
+  document.body.classList.remove("show-onboarding");
+}
+
+function dismissOnboardingGuide() {
+  markOnboardingComplete();
+}
+
+function startOnboardingSelection() {
+  markOnboardingComplete();
+  const target = document.querySelector(".music-control-section");
+  if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+  elements.generateMixBtn.classList.add("guide-pulse");
+  window.setTimeout(() => elements.generateMixBtn.classList.remove("guide-pulse"), 1800);
 }
 
 function hydrateTrackTaxonomy(track) {
@@ -956,6 +1020,7 @@ function toggleAutoProgram() {
 function activateProgram(programId, options = {}) {
   const program = getProgramById(programId);
   if (!program) return;
+  markOnboardingComplete();
   if (!options.automatic) state.autoProgram = false;
   state.activeProgramId = program.id;
   state.lovedOnly = false;
@@ -965,7 +1030,7 @@ function activateProgram(programId, options = {}) {
   persistProgramState();
   fillQueue(true);
   renderAll();
-  setStatus(`${program.name} · ${program.bpmLabel} · 序列已生成`);
+  setStatus(`${program.name} · ${program.bpmLabel} · 播放列表已生成`);
   if (options.play) playNext({ user: true, reason: "program", force: true });
 }
 
@@ -1137,8 +1202,15 @@ function vocalAffinityScore(track) {
 function programMatchesTrack(track, program) {
   const bpm = Number(track.estimatedBpm);
   if (!Number.isFinite(bpm) || bpm < program.minBpm || bpm > program.maxBpm) return false;
+  if (!programAllowsTrackNoise(track, program)) return false;
   if (program.vocalPreference && vocalAffinityScore(track) < 1) return false;
   return programFacetMatches(track, program).length >= 2;
+}
+
+function programAllowsTrackNoise(track, program) {
+  if (program?.noisePolicy === "allow_high") return true;
+  const level = track?.barNoiseRisk?.level || "";
+  return level !== "high";
 }
 
 function renderPrograms() {
@@ -1364,7 +1436,7 @@ function renderSelectedFacetList() {
   if (!selected.length) {
     elements.selectedFacetList.innerHTML = getActiveProgram()
       ? `<span class="empty-selected">由节目预设控制</span>`
-      : `<span class="empty-selected">选择标签生成 playlist</span>`;
+      : `<span class="empty-selected">选择标签生成播放列表</span>`;
     return;
   }
   elements.selectedFacetList.innerHTML = selected.map(({ dimension, key }) => `
@@ -1416,13 +1488,15 @@ function clearStyleMix() {
 function generateStyleSequence() {
   if (!hasPlaybackScope()) {
     setStatus("先选择一个或多个风格标签");
+    maybeShowOnboardingGuide();
     return;
   }
+  markOnboardingComplete();
   if (!state.activeProgramId) persistProgramState();
   state.failedIds.clear();
   fillQueue(true);
   renderAll();
-  setStatus(`已按 ${getMixLabel()} 生成播放序列`);
+  setStatus(`已按 ${getMixLabel()} 生成播放列表`);
   playNext({ user: true, reason: "style-sequence", force: true });
 }
 
@@ -2406,7 +2480,8 @@ async function playNext(options = {}) {
   if (state.isMixing) return;
   if (!state.current && !state.queue.length && !hasPlaybackScope()) {
     elements.autoplayGate.hidden = true;
-    setStatus("先选择 Genre / Mood / Context，再生成序列");
+    setStatus("先选择 Genre / Mood / Context，再生成播放列表");
+    maybeShowOnboardingGuide();
     return;
   }
   if (options.user) state.userStarted = true;
@@ -2567,7 +2642,8 @@ function startFromGate() {
   state.userStarted = true;
   elements.autoplayGate.hidden = true;
   if (!state.current && !state.queue.length && !hasPlaybackScope()) {
-    setStatus("先选择 Genre / Mood / Context，再生成序列");
+    setStatus("先选择 Genre / Mood / Context，再生成播放列表");
+    maybeShowOnboardingGuide();
     return;
   }
   const active = getActiveDeck();
@@ -2699,6 +2775,9 @@ function updateProgress() {
   elements.durationTime.textContent = Number.isFinite(duration) && duration > 0 ? formatTime(duration) : "--:--";
   const percent = Number.isFinite(duration) && duration > 0 ? (current / duration) * 100 : 0;
   elements.progressBar.style.width = `${Math.min(100, Math.max(0, percent))}%`;
+  if (elements.miniProgressBar) {
+    elements.miniProgressBar.style.width = `${Math.min(100, Math.max(0, percent))}%`;
+  }
 }
 
 function renderAll() {
@@ -2717,6 +2796,7 @@ function renderAll() {
   elements.selectedStylesSummary.title = getMixSummaryDetails() || mixSummary;
   elements.statTracks.textContent = String(getFilteredTracks().length);
   elements.crossfadeValue.textContent = getTransitionControlLabel();
+  renderMiniPlayer();
 }
 
 function syncFilterButtons() {
@@ -2743,7 +2823,22 @@ function renderTrack(track, mode) {
   elements.coverArt.src = track.picUrl || "";
   elements.coverArt.alt = track.album ? `${track.album} cover` : "";
   elements.backdrop.style.backgroundImage = track.picUrl ? `url("${track.picUrl}")` : "none";
+  renderMiniPlayer(track);
   updateLoveButton();
+}
+
+function renderMiniPlayer(track = state.current) {
+  if (!elements.miniPlayer) return;
+  const hasTrack = Boolean(track);
+  elements.miniPlayer.classList.toggle("has-track", hasTrack);
+  elements.miniTrackTitle.textContent = hasTrack ? (track.name || "Untitled") : "Echo Room FM";
+  elements.miniTrackMeta.textContent = hasTrack
+    ? `${artistLine(track)}${track.estimatedBpm ? ` · ${formatBpm(getTrackBpm(track))} BPM` : ""}`
+    : "选择风格后开始播放";
+  elements.miniInfoBtn.setAttribute("aria-label", hasTrack ? `查看正在播放：${track.name || "Untitled"}，${artistLine(track)}` : "查看播放器");
+  elements.miniCoverArt.src = hasTrack && track.picUrl ? track.picUrl : "";
+  elements.miniCoverArt.alt = hasTrack && track.album ? `${track.album} cover` : "";
+  elements.miniPlayer.classList.toggle("no-cover", !hasTrack || !track.picUrl);
 }
 
 function renderQueue() {
@@ -2781,12 +2876,13 @@ function renderProfile() {
 }
 
 function updateLoveButton() {
-  if (!elements.loveCurrentBtn) return;
   const loved = Boolean(state.current && state.lovedIds.has(trackId(state.current)));
-  elements.loveCurrentBtn.classList.toggle("active", loved);
-  elements.loveCurrentBtn.setAttribute("aria-pressed", String(loved));
-  elements.loveCurrentBtn.textContent = loved ? "♥" : "♡";
-  elements.loveCurrentBtn.title = loved ? "取消红心" : "红心收藏当前歌曲";
+  [elements.loveCurrentBtn, elements.miniLoveBtn].filter(Boolean).forEach((button) => {
+    button.classList.toggle("active", loved);
+    button.setAttribute("aria-pressed", String(loved));
+    button.textContent = loved ? "♥" : "♡";
+    button.title = loved ? "取消红心" : "红心收藏当前歌曲";
+  });
 }
 
 function renderSmallTrack(track) {
@@ -2841,6 +2937,7 @@ function setPlaying(isPlaying) {
   if (isPlaying) elements.autoplayGate.hidden = true;
   document.body.classList.toggle("is-playing", isPlaying);
   elements.playPauseBtn.textContent = isPlaying ? "Ⅱ" : "▶";
+  if (elements.miniPlayPauseBtn) elements.miniPlayPauseBtn.textContent = isPlaying ? "Ⅱ" : "▶";
   elements.onAirState.textContent = isPlaying ? "ON AIR" : "STANDBY";
 }
 
@@ -3269,7 +3366,7 @@ function getMixSummary() {
   }
   const selected = getSelectedFacetPairs();
   const poolCount = getFilteredTracks().length;
-  if (!selected.length) return `${poolCount} 首唯一歌曲 · 选择 Genre / Mood / Context 生成第一条 playlist`;
+  if (!selected.length) return `${poolCount} 首唯一歌曲 · 选择 Genre / Mood / Context 生成第一条播放列表`;
   return `${selected.length} 个标签 · ${poolCount} 首唯一歌曲 · 队列已去重 · ${getCompactFacetSummary(selected)}`;
 }
 

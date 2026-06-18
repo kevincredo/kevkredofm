@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 142" role="img" aria-labelledby="title">
+  <title id="title">Echo Room</title>
+  <g fill="#fff">
+    <rect x="20" y="10" width="176" height="10"/>
+    <text x="20" y="65" font-family="Arial Black, Impact, Helvetica, Arial, sans-serif" font-size="48" font-weight="900" letter-spacing="-3">ECHO</text>
+    <text x="20" y="112" font-family="Arial Black, Impact, Helvetica, Arial, sans-serif" font-size="48" font-weight="900" letter-spacing="-3">ROOM</text>
+    <rect x="20" y="122" width="196" height="10"/>
+  </g>
+</svg>

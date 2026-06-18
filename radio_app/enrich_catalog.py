@@ -33,6 +33,14 @@ SAVE_EVERY = 10
 KEY_NAMES = ("C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B")
 MAJOR_PROFILE = (6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88)
 MINOR_PROFILE = (6.33, 2.68, 3.52, 5.38, 2.60, 3.53, 2.54, 4.75, 3.98, 2.69, 3.34, 3.17)
+LOW_CONFIDENCE_LABELS = {
+    "playlist+heuristic",
+    "metadata+heuristic",
+    "metadata+catalog+heuristic",
+    "online-low",
+}
+MUSICBRAINZ_ENTITY_CACHE = {}
+MUSICBRAINZ_ENTITY_LOCK = threading.Lock()
 
 
 class RateLimiter:
@@ -60,12 +68,29 @@ def main():
     parser.add_argument("--refresh", action="store_true")
     parser.add_argument("--no-audio-analysis", action="store_true")
     parser.add_argument("--musicbrainz-all", action="store_true")
+    parser.add_argument("--only-visible", action="store_true")
+    parser.add_argument("--only-low-confidence", action="store_true")
+    parser.add_argument("--missing-online", action="store_true")
+    parser.add_argument("--min-match-confidence", type=float, default=None)
     parser.add_argument("--country", default="US")
     args = parser.parse_args()
 
     library = json.loads(OUT.read_text(encoding="utf-8"))
     cache = load_cache()
     candidates = library["tracks"][args.offset :]
+    if args.only_visible:
+        candidates = [track for track in candidates if is_visible_track(track)]
+    if args.only_low_confidence:
+        candidates = [track for track in candidates if is_low_confidence_track(track)]
+    if args.missing_online:
+        candidates = [track for track in candidates if not (track.get("onlineGenres") or track.get("onlineTags"))]
+    if args.min_match_confidence is not None:
+        candidates = [
+            track
+            for track in candidates
+            if positive_number(track.get("catalogMatchConfidence")) is None
+            or positive_number(track.get("catalogMatchConfidence")) < args.min_match_confidence
+        ]
     if args.limit is not None:
         candidates = candidates[: args.limit]
     tracks = [
@@ -302,9 +327,27 @@ def query_musicbrainz(track):
     if not best:
         return None
     confidence, item = best
+    detail = get_musicbrainz_entity(
+        "recording",
+        item.get("id"),
+        "genres+tags+artist-credits+releases+release-groups",
+    )
+    genres = []
+    tags = []
+    add_public_terms(genres, tags, item)
+    add_public_terms(genres, tags, detail)
+
+    for release_group_id in musicbrainz_release_group_ids(detail or item):
+        release_group = get_musicbrainz_entity("release-group", release_group_id, "genres+tags")
+        add_public_terms(genres, tags, release_group)
+
+    for artist_id in musicbrainz_artist_ids(detail or item):
+        artist_detail = get_musicbrainz_entity("artist", artist_id, "genres+tags")
+        add_public_terms(genres, tags, artist_detail)
+
     return {
-        "genres": collect_names(item.get("genres") or []),
-        "tags": collect_names(item.get("tags") or []),
+        "genres": unique(genres),
+        "tags": unique(tags),
         "match": {
             "source": "MusicBrainz",
             "id": item.get("id"),
@@ -358,6 +401,56 @@ def musicbrainz_artist(item):
 def first_release_title(item):
     releases = item.get("releases") or []
     return releases[0].get("title", "") if releases else ""
+
+
+def get_musicbrainz_entity(entity, entity_id, inc):
+    if not entity_id:
+        return {}
+    cache_key = (entity, str(entity_id), inc)
+    with MUSICBRAINZ_ENTITY_LOCK:
+        cached = MUSICBRAINZ_ENTITY_CACHE.get(cache_key)
+    if cached is not None:
+        return cached
+    MUSICBRAINZ_LIMITER.wait()
+    data = get_json(
+        f"{MUSICBRAINZ_BASE}/{entity}/{quote(str(entity_id))}?{urlencode({'fmt': 'json', 'inc': inc})}"
+    )
+    with MUSICBRAINZ_ENTITY_LOCK:
+        MUSICBRAINZ_ENTITY_CACHE[cache_key] = data
+    return data
+
+
+def add_public_terms(genres, tags, item):
+    if not item:
+        return
+    genres.extend(collect_names(item.get("genres") or []))
+    tags.extend(collect_names(item.get("tags") or []))
+
+
+def musicbrainz_release_group_ids(item):
+    ids = []
+    for release in (item or {}).get("releases") or []:
+        release_group = release.get("release-group") or {}
+        release_group_id = release_group.get("id")
+        if release_group_id and release_group_id not in ids:
+            ids.append(release_group_id)
+        if len(ids) >= 3:
+            break
+    return ids
+
+
+def musicbrainz_artist_ids(item):
+    ids = []
+    for credit in (item or {}).get("artist-credit") or []:
+        if not isinstance(credit, dict):
+            continue
+        artist = credit.get("artist") or {}
+        artist_id = artist.get("id")
+        if artist_id and artist_id not in ids:
+            ids.append(artist_id)
+        if len(ids) >= 3:
+            break
+    return ids
 
 
 def analyze_preview(url):
@@ -506,6 +599,18 @@ def similarity(left, right):
 
 def collect_names(items):
     return [item["name"] for item in items if isinstance(item, dict) and item.get("name")]
+
+
+def is_visible_track(track):
+    return track.get("playable") is not False and track.get("hiddenFromRadio") is not True
+
+
+def is_low_confidence_track(track):
+    label = track.get("genreConfidence") or ""
+    match_confidence = positive_number(track.get("catalogMatchConfidence"))
+    if label in LOW_CONFIDENCE_LABELS:
+        return True
+    return match_confidence is None or match_confidence < 0.72
 
 
 def unique(items):

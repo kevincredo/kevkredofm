@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-10T05:36:35.825Z",
+  "updatedAt": "2026-06-19T03:55:00+08:00",
   "description": "Tracks hidden from Echo Room FM frontend playback without deleting archive records.",
   "tracks": {
     "64111": {
@@ -421,6 +421,161 @@
       "reason": "editorial_filter_chinese_vocal_or_vocal_rap",
       "source": "manual_chinese_vocal_cleanup_2026-06-10",
       "note": "达桑嘉措 - 来自尕队与直岗拉卡村"
+    },
+    "1433037146": {
+      "reason": "editorial_filter_high_noise_bar_unfriendly",
+      "source": "noisy_candidates_review_2026-06-19",
+      "note": "Hard Reset - Stephan Zovsky; score 80; rave/title hard"
+    },
+    "26391425": {
+      "reason": "editorial_filter_high_noise_bar_unfriendly",
+      "source": "noisy_candidates_review_2026-06-19",
+      "note": "Hashtag (Fleck E.S.C. Remix) - Carl Finlow; score 66; high-energy acid techno"
+    },
+    "507585224": {
+      "reason": "editorial_filter_high_noise_bar_unfriendly",
+      "source": "noisy_candidates_review_2026-06-19",
+      "note": "Lost - ILLENIUM / Emilie Brandt; score 66; dubstep"
+    },
+    "1815000875": {
+      "reason": "editorial_filter_high_noise_bar_unfriendly",
+      "source": "noisy_candidates_review_2026-06-19",
+      "note": "So Where Are You - Corporation of One; score 66; high-energy acid techno"
+    },
+    "453176892": {
+      "reason": "editorial_filter_high_noise_bar_unfriendly",
+      "source": "noisy_candidates_review_2026-06-19",
+      "note": "Bad and Boujee (R3HAB vs No Riddim & it's different Remix) - R3HAB / No Riddim / it's different / Migos / Lil Uzi Vert; score 60; riddim"
+    },
+    "1409276463": {
+      "reason": "editorial_filter_high_noise_bar_unfriendly",
+      "source": "noisy_candidates_review_2026-06-19",
+      "note": "Black Ice (Original Version) - Carl Finlow; score 60; high-energy acid techno"
+    },
+    "1347621118": {
+      "reason": "editorial_filter_high_noise_bar_unfriendly",
+      "source": "noisy_candidates_review_2026-06-19",
+      "note": "Reject the False Icons (Original Mix) - Symmetric / Future of Matter; score 60; high-energy acid techno"
+    },
+    "19089819": {
+      "reason": "editorial_filter_high_noise_bar_unfriendly",
+      "source": "noisy_candidates_review_2026-06-19",
+      "note": "Rutten - Skream; score 60; dubstep"
+    },
+    "1819278161": {
+      "reason": "editorial_filter_high_noise_bar_unfriendly",
+      "source": "noisy_candidates_review_2026-06-19",
+      "note": "Rave Culture (Dub Mix) - SAVIN; score 64; rave; title:rave; energy 0.76"
+    },
+    "36199508": {
+      "reason": "editorial_filter_high_noise_bar_unfriendly",
+      "source": "noisy_candidates_review_2026-06-19",
+      "note": "Silhouettes (I, II & III) - Floating Points; score 60; dubstep"
+    },
+    "545341147": {
+      "reason": "editorial_filter_high_noise_bar_unfriendly",
+      "source": "noisy_candidates_review_2026-06-19",
+      "note": "Big Fun (Javier Penna Extended Remix) - Kevin Saunderson / Inner City / Javier Penna; score 54; acid techno genre; high-energy techno; energy 0.78"
+    },
+    "516318176": {
+      "reason": "editorial_filter_high_noise_bar_unfriendly",
+      "source": "noisy_candidates_review_2026-06-19",
+      "note": "Lost - Alex Mine; score 54; acid techno genre; high-energy techno; energy 0.79"
+    },
+    "1299550256": {
+      "reason": "editorial_filter_high_noise_bar_unfriendly",
+      "source": "noisy_candidates_review_2026-06-19",
+      "note": "Acid Kiss - Balthazar & JackRock; score 52; title:acid; acid techno genre; energy 0.77; 129 bpm"
+    },
+    "477332354": {
+      "reason": "editorial_filter_high_noise_bar_unfriendly",
+      "source": "noisy_candidates_review_2026-06-19",
+      "note": "Burn the Stars - Massive Vibes; score 52; fast high-energy edm; energy 0.86; 144 bpm"
+    },
+    "548053033": {
+      "reason": "editorial_filter_high_noise_bar_unfriendly",
+      "source": "noisy_candidates_review_2026-06-19",
+      "note": "Jack - Luke Vibert; score 52; title:acid; acid techno genre; energy 0.77; 126 bpm"
+    },
+    "1315742236": {
+      "reason": "editorial_filter_high_noise_bar_unfriendly",
+      "source": "noisy_candidates_review_2026-06-19",
+      "note": "Trance Me Up (Skudge Remix) - Achterbahn D'Amour; score 52; title:acid; acid techno genre; energy 0.77; 129 bpm"
+    },
+    "512079595": {
+      "reason": "editorial_filter_high_noise_bar_unfriendly",
+      "source": "noisy_candidates_review_2026-06-19",
+      "note": "Scream (Nina Kraviz Mix) - Okain; score 48; scream; title:scream; energy 0.82"
+    },
+    "1428796501": {
+      "reason": "editorial_filter_high_noise_bar_unfriendly",
+      "source": "noisy_candidates_review_2026-06-19",
+      "note": "Acid Flash Drive (Original Mix) - Dance System; score 46; title:acid; acid techno genre; energy 0.77"
+    },
+    "28852648": {
+      "reason": "editorial_filter_high_noise_bar_unfriendly",
+      "source": "noisy_candidates_review_2026-06-19",
+      "note": "Bad - David Guetta / Vassy / Showtek; score 46; fast high-energy edm; energy 0.82; 128 bpm"
+    },
+    "556874777": {
+      "reason": "editorial_filter_high_noise_bar_unfriendly",
+      "source": "noisy_candidates_review_2026-06-19",
+      "note": "In-Ten-Si-T (Justin Robertson Edit) - Mickey Oliver; score 46; title:acid; acid techno genre; 126 bpm"
+    },
+    "29362541": {
+      "reason": "editorial_filter_high_noise_bar_unfriendly",
+      "source": "noisy_candidates_review_2026-06-19",
+      "note": "Acid On - Phreak; score 40; title:acid; acid techno genre"
+    },
+    "1494936914": {
+      "reason": "editorial_filter_high_noise_bar_unfriendly",
+      "source": "noisy_candidates_review_2026-06-19",
+      "note": "Detection (Extended Mix) - SAVIN; score 40; fast high-energy edm; energy 0.76; 162 bpm"
+    },
+    "1887637521": {
+      "reason": "editorial_filter_high_noise_bar_unfriendly",
+      "source": "noisy_candidates_review_2026-06-19",
+      "note": "Life In A Mind - Ross From Friends; score 40; fast high-energy edm; energy 0.75; 136 bpm"
+    },
+    "29710375": {
+      "reason": "editorial_filter_high_noise_bar_unfriendly",
+      "source": "noisy_candidates_review_2026-06-19",
+      "note": "United We Dance (Club Mix) - Vicetone; score 40; fast high-energy edm; energy 0.78; 127 bpm"
+    },
+    "29389608": {
+      "reason": "editorial_filter_high_noise_bar_unfriendly",
+      "source": "noisy_candidates_review_2026-06-19",
+      "note": "Another Chance - Sam Paganini; score 36; high-energy techno; energy 0.87"
+    },
+    "1385974205": {
+      "reason": "editorial_filter_high_noise_bar_unfriendly",
+      "source": "noisy_candidates_review_2026-06-19",
+      "note": "Elastic Collisions - Carl Finlow; score 36; acid techno genre; energy 0.75; 129 bpm"
+    },
+    "512150716": {
+      "reason": "editorial_filter_high_noise_bar_unfriendly",
+      "source": "noisy_candidates_review_2026-06-19",
+      "note": "Moroccan Chant Number 2 (Roel Salemink & Drumcomplex Remix) - Carl Cox / Eric Powell; score 36; acid techno genre; energy 0.74; 126 bpm"
+    },
+    "1294754025": {
+      "reason": "editorial_filter_high_noise_bar_unfriendly",
+      "source": "noisy_candidates_review_2026-06-19",
+      "note": "Say Something - Nasser Baker; score 36; acid techno genre; energy 0.77; 126 bpm"
+    },
+    "30064087": {
+      "reason": "editorial_filter_high_noise_bar_unfriendly",
+      "source": "noisy_candidates_review_2026-06-19",
+      "note": "Scream for Pleasure (Original Mix) - Croatia Squad / Me & My Toothbrush; score 36; scream; title:scream; energy 0.76"
+    },
+    "1318239697": {
+      "reason": "editorial_filter_high_noise_bar_unfriendly",
+      "source": "noisy_candidates_review_2026-06-19",
+      "note": "The Age Of Love (Manuel De La Mare Remix) - Age Of Love; score 36; acid techno genre; energy 0.77; 129 bpm"
+    },
+    "573583453": {
+      "reason": "editorial_filter_high_noise_bar_unfriendly",
+      "source": "noisy_candidates_review_2026-06-19",
+      "note": "Your Mind - Adam Beyer / Bart Skils; score 36; acid techno genre; energy 0.74; 128 bpm"
     }
   }
 }

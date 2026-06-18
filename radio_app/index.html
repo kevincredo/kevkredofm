@@ -8,7 +8,7 @@
     <meta name="apple-mobile-web-app-title" content="Echo Room FM">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Echo Room FM</title>
-    <link rel="stylesheet" href="./styles.css?v=20260610-eight-count-slider-fix">
+    <link rel="stylesheet" href="./styles.css?v=20260619-brand-compact">
   </head>
   <body>
     <div class="backdrop" id="backdrop"></div>
@@ -16,9 +16,12 @@
       <header class="topbar">
         <div class="station-mark">
           <span class="signal-dot" aria-hidden="true"></span>
-          <div>
-            <p>Echo Room FM</p>
-            <span id="libraryCount">Loading library</span>
+          <div class="brand-lockup">
+            <div class="brand-logo-row">
+              <img class="brand-logo" src="./assets/echo-room-logo-white.svg" alt="Echo Room">
+              <span class="brand-fm">Music FM</span>
+            </div>
+            <span id="libraryCount" class="brand-meta">Loading library</span>
           </div>
         </div>
         <div class="topbar-center">
@@ -160,7 +163,7 @@
             <div id="selectedFacetList" class="selected-facet-list" aria-label="已选择标签"></div>
             <div id="styleFilters" class="filter-list taxonomy-filter-list"></div>
             <div class="selector-actions">
-              <button id="generateMixBtn" class="text-button strong selector-button" type="button">生成序列</button>
+              <button id="generateMixBtn" class="text-button strong selector-button" type="button">生成播放列表</button>
               <button id="clearMixBtn" class="text-button selector-button" type="button">清空</button>
             </div>
             <div class="program-heading">
@@ -303,6 +306,23 @@
       </main>
     </div>
 
+    <div id="onboardingGuide" class="onboarding-guide" hidden role="dialog" aria-modal="true" aria-labelledby="onboardingTitle">
+      <div class="onboarding-card">
+        <span class="onboarding-kicker">FIRST PLAYLIST</span>
+        <h2 id="onboardingTitle">先选择音乐标签</h2>
+        <p>从 Genre / Mood / Context 里选择几个标签，再点击“生成播放列表”。</p>
+        <ol class="onboarding-steps">
+          <li><strong>1</strong><span>选择想听的曲风、情绪或场景。</span></li>
+          <li><strong>2</strong><span>生成播放列表后，电台会自动排好队列。</span></li>
+          <li><strong>3</strong><span>用底部播放器随时播放、跳过或红心。</span></li>
+        </ol>
+        <div class="onboarding-actions">
+          <button id="onboardingStartBtn" class="text-button strong" type="button">开始选择</button>
+          <button id="onboardingDismissBtn" class="text-button" type="button">我知道了</button>
+        </div>
+      </div>
+    </div>
+
     <div id="autoplayGate" class="autoplay-gate" hidden>
       <div>
         <span>READY</span>
@@ -312,9 +332,29 @@
       <button id="gatePlayBtn" class="text-button strong" type="button">启动电台</button>
     </div>
 
+    <div id="miniPlayer" class="mini-player" aria-label="悬浮播放器">
+      <button id="miniInfoBtn" class="mini-track" type="button" aria-label="查看正在播放">
+        <span class="mini-cover">
+          <img id="miniCoverArt" alt="" src="">
+          <span id="miniFallbackCover" class="mini-fallback-cover">ER</span>
+        </span>
+        <span class="mini-copy">
+          <strong id="miniTrackTitle">Echo Room FM</strong>
+          <span id="miniTrackMeta">选择风格后开始播放</span>
+        </span>
+      </button>
+      <div class="mini-controls">
+        <button id="miniLoveBtn" class="mini-control mini-heart" type="button" aria-label="红心收藏当前歌曲" aria-pressed="false">♡</button>
+        <button id="miniPrevBtn" class="mini-control" type="button" aria-label="上一首">‹</button>
+        <button id="miniPlayPauseBtn" class="mini-control mini-play" type="button" aria-label="播放或暂停">▶</button>
+        <button id="miniNextBtn" class="mini-control" data-action="next" type="button" aria-label="下一首">›</button>
+      </div>
+      <div id="miniProgressBar" class="mini-progress"></div>
+    </div>
+
     <audio id="audioDeckA" preload="auto" autoplay></audio>
     <audio id="audioDeckB" preload="auto"></audio>
-    <script src="./library-data.js?v=20260610-eight-count-slider-fix"></script>
-    <script src="./app.js?v=20260610-eight-count-slider-fix"></script>
+    <script src="./library-data.js?v=20260619-noise-hidden-all"></script>
+    <script src="./app.js?v=20260619-brand-compact"></script>
   </body>
 </html>

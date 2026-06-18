@@ -47,32 +47,32 @@ STYLE_LABELS = {
 
 STYLE_PATTERNS = [
     ("deep_house", ("deep house", "deephouse")),
-    ("tech_house", ("tech house", "tech-house")),
+    ("tech_house", ("tech house", "tech-house", "deep tech", "minimal house")),
     ("progressive_house", ("progressive house", "progressive")),
     ("melodic_house", ("melodic house", "melodic techno", "melodic")),
-    ("afro_house", ("afro house", "afro-house", "afrobeat", "afrobeats", "amapiano")),
+    ("afro_house", ("afro house", "afro-house", "organic house", "organic electronic", "afro tech", "afrobeat", "afrobeats", "amapiano")),
     ("acid_techno", ("acid techno", "acid house", "acid")),
-    ("minimal", ("minimal", "high tech minimal", "boris brejcha")),
-    ("disco_nu_disco", ("nu disco", "nu-disco", "disco", "french touch")),
-    ("indie_dance", ("indie dance", "dark disco", "dance-punk")),
-    ("techno", ("techno", "detroit techno")),
+    ("minimal", ("minimal", "microhouse", "high tech minimal", "boris brejcha")),
+    ("disco_nu_disco", ("nu disco", "nu-disco", "disco", "disco house", "deep disco", "italo disco", "french touch", "balearic")),
+    ("indie_dance", ("indie dance", "dark disco", "dance-punk", "electroclash", "indie electronic")),
+    ("techno", ("techno", "detroit techno", "melodic techno", "afro tech")),
     ("house", ("house",)),
-    ("edm", ("edm", "dance", "electro house", "big room", "future house", "dance-pop")),
+    ("edm", ("edm", "electro house", "big room", "future house", "dance-pop", "progressive edm")),
     ("lofi", ("lo-fi", "lofi", "lo fi")),
-    ("chill_downtempo", ("chill", "downtempo", "trip hop", "lounge", "bar", "late night", "sunset", "breezy", "slowdance")),
-    ("ambient", ("ambient", "new age")),
+    ("chill_downtempo", ("chill", "downtempo", "trip hop", "trip-hop", "chillout", "lounge", "bar", "late night", "sunset", "breezy", "slowdance", "balearic")),
+    ("ambient", ("ambient", "new age", "soundscape", "drone")),
     ("retro_synth", ("synth", "synthpop", "synth-pop", "retrowave", "new wave", "retro", "80s")),
-    ("hiphop_jazzhop", ("hip hop", "hip-hop", "rap", "jazz hop", "jazzhop", "trap")),
+    ("hiphop_jazzhop", ("hip hop", "hip-hop", "rap", "jazz hop", "jazzhop", "abstract hip hop", "instrumental hip hop", "trap")),
     ("rnb_soul", ("r&b", "rnb", "soul", "neo soul", "neo-soul")),
     ("indie_rock", ("indie rock", "alternative rock", "alt rock")),
     ("rock", ("rock", "punk", "britpop", "hard rock", "classic rock")),
-    ("jazz", ("jazz", "bossa nova", "swing")),
-    ("funk", ("funk", "boogie")),
-    ("world_latin", ("latin", "world", "reggae", "afrobeat", "samba")),
+    ("jazz", ("jazz", "nu jazz", "bossa nova", "swing", "soul jazz")),
+    ("funk", ("funk", "boogie", "jazz-funk", "jazz funk")),
+    ("world_latin", ("latin", "world", "reggae", "afrobeat", "samba", "cumbia", "tropical")),
     ("classical", ("classical", "orchestral", "piano", "violin", "canon in d")),
     ("holiday", ("holiday", "christmas", "xmas", "nye")),
     ("pop", ("pop", "cantopop", "mandopop", "k-pop", "j-pop")),
-    ("electronic", ("electronic", "electronica", "electronica/dance", "electronica & dance", "electronica dance")),
+    ("electronic", ("electronic", "electronica", "electronica/dance", "electronica & dance", "electronica dance", "leftfield", "idm", "glitch")),
 ]
 
 STYLE_BPM = {
@@ -360,9 +360,66 @@ GENRE_DEFAULTS = {
     "classical": {"mood": ["atmospheric"], "context": ["focus"]},
 }
 
+BAR_NOISE_STRONG_TERMS = {
+    "dubstep": 60,
+    "brostep": 60,
+    "riddim": 60,
+    "deathstep": 60,
+    "tearout": 60,
+    "drumstep": 55,
+    "hardstyle": 58,
+    "hardcore": 55,
+    "gabber": 55,
+    "neurofunk": 55,
+    "drum and bass": 50,
+    "drum & bass": 50,
+    "dnb": 48,
+    "bass house": 45,
+    "hard trap": 45,
+    "industrial techno": 45,
+    "big room": 40,
+    "electro house": 40,
+    "complextro": 38,
+    "rave": 34,
+    "hard techno": 38,
+    "psytrance": 35,
+    "bass music": 35,
+}
+
+BAR_NOISE_MEDIUM_TERMS = {
+    "trap": 26,
+    "future bass": 24,
+    "moombahton": 22,
+    "industrial": 22,
+    "drop": 18,
+    "banger": 18,
+    "scream": 14,
+    "distortion": 14,
+    "distorted": 14,
+}
+
+BAR_NOISE_TITLE_TERMS = {
+    "acid": 16,
+    "rave": 24,
+    "hard": 16,
+    "scream": 16,
+    "drop": 14,
+    "riot": 14,
+}
+
 METADATA_TAXONOMY_RULES = [
     (("christmas", "xmas", "santa", "jingle", "holiday", "noël", "noel"), ["pop"], ["warm", "playful"], ["holiday"]),
     (("jazz christmas", "swing christmas", "new orleans christmas"), ["jazz"], ["warm", "playful"], ["holiday", "lounge"]),
+    (("melodic techno",), ["melodic_house", "techno"], ["euphoric", "hypnotic"], ["club"]),
+    (("organic house", "organic electronic"), ["afro_house", "melodic_house"], ["warm", "groovy"], ["sunset", "club"]),
+    (("afro tech", "tribal house"), ["afro_house", "techno"], ["warm", "hypnotic"], ["club"]),
+    (("microhouse", "minimal house", "minimal techno"), ["minimal", "tech_house"], ["hypnotic"], ["afterhours", "club"]),
+    (("deep tech", "deep tech house"), ["deep_house", "tech_house"], ["groovy", "hypnotic"], ["club"]),
+    (("balearic", "balearic beat"), ["downtempo", "nu_disco"], ["warm", "chill"], ["sunset", "lounge"]),
+    (("leftfield", "idm", "glitch", "experimental electronic"), ["electronica"], ["atmospheric"], ["afterhours"]),
+    (("future garage", "2-step", "2 step"), ["garage", "electronica"], ["groovy", "melancholic"], ["club", "night_drive"]),
+    (("disco house", "filter house", "deep disco", "italo disco"), ["nu_disco", "house"], ["groovy", "playful"], ["club"]),
+    (("nu jazz", "jazz-funk", "jazz funk", "soul jazz"), ["jazz", "funk_soul"], ["warm", "groovy"], ["dinner", "lounge"]),
     (("original mix", "extended mix", "club mix", "dub mix", "radio edit", "dj set"), ["house"], ["groovy", "energetic"], ["club"]),
     (("remix", "rework", "edit", "bootleg"), ["electronica"], ["energetic"], ["club"]),
     (("deep house", "defected", "toolroom", "dirtybird"), ["deep_house", "house"], ["groovy", "warm"], ["club", "lounge"]),
@@ -390,30 +447,30 @@ KEYWORD_TAXONOMY_RULES = {
         ("progressive_house", ("progressive house", "progressive trance", "progressive")),
         ("melodic_house", ("melodic house", "melodic techno", "melodic")),
         ("deep_house", ("deep house", "deep-house")),
-        ("tech_house", ("tech house", "tech-house")),
-        ("afro_house", ("afro house", "afro-house", "organic house", "afrobeats", "afrobeat", "amapiano")),
+        ("tech_house", ("tech house", "tech-house", "deep tech", "minimal house")),
+        ("afro_house", ("afro house", "afro-house", "organic house", "organic electronic", "afro tech", "tribal house", "afrobeats", "afrobeat", "amapiano")),
         ("acid_techno", ("acid techno", "acid house", "acid")),
-        ("minimal", ("minimal techno", "minimal", "high-tech minimal", "high tech minimal")),
-        ("techno", ("detroit techno", "hard techno", "raw techno", "techno")),
-        ("nu_disco", ("nu disco", "nu-disco", "disco", "french touch", "boogie")),
-        ("indie_dance", ("indie dance", "dance-punk", "dark disco")),
+        ("minimal", ("minimal techno", "microhouse", "minimal", "high-tech minimal", "high tech minimal")),
+        ("techno", ("detroit techno", "hard techno", "raw techno", "melodic techno", "afro tech", "techno")),
+        ("nu_disco", ("nu disco", "nu-disco", "disco house", "filter house", "italo disco", "deep disco", "disco", "french touch", "boogie")),
+        ("indie_dance", ("indie dance", "dance-punk", "dark disco", "electroclash", "indie electronic")),
         ("house", ("classic house", "vocal house", "garage house", "house")),
         ("breakbeat", ("breakbeat", "breaks", "big beat")),
-        ("garage", ("uk garage", "2-step", "2 step", "garage")),
+        ("garage", ("future garage", "uk garage", "2-step", "2 step", "garage")),
         ("drum_bass", ("drum and bass", "drum & bass", "dnb", "jungle")),
-        ("downtempo", ("downtempo", "trip hop", "trip-hop", "lounge", "chillout")),
-        ("ambient", ("ambient", "new age")),
+        ("downtempo", ("downtempo", "trip hop", "trip-hop", "lounge", "chillout", "balearic")),
+        ("ambient", ("ambient", "new age", "soundscape", "drone")),
         ("synthwave", ("synthwave", "synth-pop", "synth pop", "retrowave", "new wave")),
         ("lofi", ("lo-fi", "lofi", "lo fi")),
         ("edm", ("edm", "big room", "future house", "electro house", "dance-pop")),
-        ("electronica", ("electronica", "electronic", "electro")),
+        ("electronica", ("leftfield", "idm", "glitch", "electronica", "electronic", "electro")),
         ("indie_rock", ("indie rock", "alternative rock", "alt rock")),
         ("rock", ("classic rock", "hard rock", "britpop", "punk", "rock")),
         ("rnb_soul", ("neo soul", "neo-soul", "r&b", "rnb")),
         ("hiphop_rap", ("hip hop", "hip-hop", "rap", "trap")),
-        ("jazz", ("jazz", "bossa nova", "swing")),
-        ("funk_soul", ("funk", "boogie")),
-        ("latin_world", ("latin", "samba", "reggae", "world")),
+        ("jazz", ("nu jazz", "soul jazz", "jazz", "bossa nova", "swing")),
+        ("funk_soul", ("jazz-funk", "jazz funk", "funk", "boogie")),
+        ("latin_world", ("latin", "samba", "reggae", "cumbia", "tropical", "world")),
         ("classical", ("classical", "orchestral", "piano", "violin")),
         ("pop", ("k-pop", "j-pop", "cantopop", "mandopop", "pop")),
     ],
@@ -482,7 +539,7 @@ ARTIST_TAXONOMY_RULES = [
     (("josé gonzález", "jose gonzalez", "passenger", "billy raffoul", "stephen sanchez"), {"genre": ["pop"], "mood": ["romantic", "melancholic"], "context": []}),
     (("boy harsher",), {"genre": ["synthwave", "indie_dance"], "mood": ["dark"], "context": ["night_drive"]}),
     (("glass beams",), {"genre": ["funk_soul", "latin_world"], "mood": ["groovy", "warm"], "context": ["sunset"]}),
-    (("black loops", "umami"), {"genre": ["deep_house", "house"], "mood": ["groovy", "warm"], "context": ["club"]}),
+    (("black loops", "umami", "haze-m", "deeptone"), {"genre": ["deep_house", "house"], "mood": ["groovy", "warm"], "context": ["club"]}),
     (("delta funktionen", "nina kraviz"), {"genre": ["techno"], "mood": ["dark", "hypnotic"], "context": ["club"]}),
     (("tinlicker",), {"genre": ["progressive_house", "melodic_house"], "mood": ["euphoric"], "context": ["club"]}),
     (("bicep", "yaeji", "soulwax"), {"genre": ["house", "electronica"], "mood": ["groovy"], "context": ["club"]}),
@@ -496,6 +553,15 @@ ARTIST_TAXONOMY_RULES = [
     (("kokia", "大橋トリオ", "余佳运", "mokita", "gnash", "chelsea lankes"), {"genre": ["pop"], "mood": ["romantic"], "context": []}),
     (("jacoo", "aso", "jobii"), {"genre": ["lofi"], "mood": ["chill", "dreamy"], "context": ["focus"]}),
     (("la femme", "tristesse contemporaine", "vox low"), {"genre": ["indie_dance", "synthwave"], "mood": ["dark", "playful"], "context": ["night_drive"]}),
+    (("breakbot", "skylar spence", "madeon", "lemarquis"), {"genre": ["nu_disco", "funk_soul"], "mood": ["groovy", "playful"], "context": ["club", "lounge"]}),
+    (("darius", "else", "moullinex", "onda mundial"), {"genre": ["nu_disco", "electronica"], "mood": ["warm", "groovy"], "context": ["sunset", "lounge"]}),
+    (("morttagua", "olivier giacomotto", "artfaq", "township rebellion"), {"genre": ["progressive_house", "melodic_house"], "mood": ["hypnotic", "euphoric"], "context": ["club"]}),
+    (("tchami", "james hype", "fisher", "jorkes"), {"genre": ["tech_house", "house"], "mood": ["groovy", "energetic"], "context": ["club"]}),
+    (("galate", "moi", "floog", "mahony"), {"genre": ["minimal", "techno"], "mood": ["hypnotic"], "context": ["afterhours", "club"]}),
+    (("alkalino", "ron hardy", "dirty channels"), {"genre": ["nu_disco", "house"], "mood": ["groovy", "playful"], "context": ["club"]}),
+    (("tronicbox",), {"genre": ["synthwave", "pop"], "mood": ["playful", "dreamy"], "context": ["night_drive"]}),
+    (("sango", "elyonbeats"), {"genre": ["hiphop_rap", "rnb_soul"], "mood": ["groovy", "warm"], "context": ["night_drive"]}),
+    (("zaliva-d",), {"genre": ["techno", "electronica"], "mood": ["dark", "hypnotic"], "context": ["afterhours"]}),
 ]
 
 TRACK_METADATA_OVERRIDES = {
@@ -700,6 +766,7 @@ def main():
         tracks.append(item)
 
     refine_catalog_taxonomy(tracks)
+    apply_bar_noise_risk(tracks)
     tracks.sort(key=lambda item: (item["name"].lower(), ",".join(item["artists"]), item["id"]))
     frontend_playable_count = sum(
         1
@@ -912,6 +979,144 @@ def refine_catalog_taxonomy(tracks):
         if track.get("tempoConfidence") == "genre-estimated":
             track["estimatedBpm"] = int(round(estimate_bpm(track["id"], style_tags)))
             track["energy"] = estimate_energy(track["id"], style_tags)
+
+
+def apply_bar_noise_risk(tracks):
+    for track in tracks:
+        risk = calculate_bar_noise_risk(track)
+        if risk:
+            track["barNoiseRisk"] = risk
+        else:
+            track.pop("barNoiseRisk", None)
+
+
+def calculate_bar_noise_risk(track):
+    text = bar_noise_text(track)
+    title_text = normalize_bar_noise_text(" ".join([track.get("name", ""), track.get("album", "")]))
+    genres = set((track.get("taxonomy") or {}).get("genre") or [])
+    energy = safe_float(track.get("energy"), 0)
+    bpm = safe_float(track.get("estimatedBpm"), 0)
+    score = 0
+    reasons = []
+    strong_hits = set()
+
+    for term, weight in BAR_NOISE_STRONG_TERMS.items():
+        if taxonomy_needle_matches(text, term):
+            score += weight
+            strong_hits.add(term)
+            reasons.append(term)
+    for term, weight in BAR_NOISE_MEDIUM_TERMS.items():
+        if taxonomy_needle_matches(text, term):
+            score += weight
+            reasons.append(term)
+    for term, weight in BAR_NOISE_TITLE_TERMS.items():
+        if taxonomy_needle_matches(title_text, term):
+            score += weight
+            reasons.append(f"title:{term}")
+
+    if "acid_techno" in genres:
+        score += 24 if energy >= 0.72 else 15
+        reasons.append("acid techno genre")
+    if "edm" in genres and bpm >= 126 and energy >= 0.74:
+        score += 22
+        reasons.append("fast high-energy edm")
+    if "techno" in genres and energy >= 0.78:
+        score += 18
+        reasons.append("high-energy techno")
+    if "tech_house" in genres and energy >= 0.78 and bpm >= 124:
+        score += 12
+        reasons.append("peak tech house")
+    if "drum_bass" in genres and (bpm >= 140 or energy >= 0.70 or strong_hits.intersection({"drum and bass", "drum & bass", "dnb", "neurofunk"})):
+        score += 35
+        reasons.append("drum and bass profile")
+
+    if energy >= 0.82:
+        score += 18
+        reasons.append(f"energy {energy:.2f}")
+    elif energy >= 0.78:
+        score += 12
+        reasons.append(f"energy {energy:.2f}")
+    elif energy >= 0.74:
+        score += 6
+        reasons.append(f"energy {energy:.2f}")
+    if bpm >= 132:
+        score += 12
+        reasons.append(f"{round(bpm)} bpm")
+    elif bpm >= 126:
+        score += 6
+        reasons.append(f"{round(bpm)} bpm")
+
+    if score < 36:
+        return None
+
+    gentle_context = genres.intersection({"ambient", "jazz", "funk_soul", "downtempo"}) and energy < 0.65
+    high_marker = strong_hits.intersection(
+        {
+            "dubstep",
+            "brostep",
+            "riddim",
+            "deathstep",
+            "tearout",
+            "drumstep",
+            "hardstyle",
+            "hardcore",
+            "gabber",
+            "bass house",
+            "big room",
+            "electro house",
+            "industrial techno",
+        }
+    )
+    acid_peak = "acid_techno" in genres and energy >= 0.78 and bpm >= 128
+    hard_title = {"title:rave", "title:hard"}.issubset(set(reasons))
+    level = "review"
+    if not gentle_context and (high_marker or acid_peak or hard_title or score >= 75):
+        level = "high"
+
+    return {
+        "level": level,
+        "score": int(round(score)),
+        "reasons": dedupe_values(reasons)[:8],
+    }
+
+
+def bar_noise_text(track):
+    values = [
+        track.get("name", ""),
+        track.get("album", ""),
+        " ".join(track.get("artists") or []),
+        " ".join(track.get("styleTags") or []),
+        " ".join(track.get("onlineGenres") or []),
+        " ".join(track.get("onlineTags") or []),
+        " ".join(track.get("playlistNames") or []),
+    ]
+    for dimension_values in (track.get("taxonomy") or {}).values():
+        values.extend(dimension_values or [])
+    return normalize_bar_noise_text(" ".join(values))
+
+
+def normalize_bar_noise_text(value):
+    return str(value or "").lower().replace("_", " ").replace("-", " ")
+
+
+def safe_float(value, default=0.0):
+    try:
+        number = float(value)
+        return number if number == number else default
+    except (TypeError, ValueError):
+        return default
+
+
+def dedupe_values(values):
+    result = []
+    seen = set()
+    for value in values or []:
+        key = str(value).lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        result.append(value)
+    return result
 
 
 def build_catalog_profiles(tracks, scope):
