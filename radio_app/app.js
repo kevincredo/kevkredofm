@@ -315,6 +315,67 @@ const ARTIST_TAXONOMY_RULES = [
   [["bobby puma"], { genre: ["house", "edm"], mood: ["energetic", "euphoric"], context: ["club", "workout"] }],
 ];
 
+const STRICT_JAZZ_ARTISTS = [
+  "alfa mist",
+  "berlioz",
+  "bobby caldwell",
+  "craig ruhnke",
+  "ella fitzgerald",
+  "emma-jean thackray",
+  "halie loren",
+  "jacob collier",
+  "john coltrane",
+  "kamasi washington",
+  "kokoroko",
+  "larry carlton",
+  "melody gardot",
+  "nat king cole",
+  "norah jones",
+  "pink martini",
+  "tom misch",
+];
+
+const JAZZ_DANCE_OR_RAP_TAGS = new Set([
+  "hiphop_jazzhop",
+  "house",
+  "deep_house",
+  "tech_house",
+  "progressive_house",
+  "melodic_house",
+  "afro_house",
+  "disco_nu_disco",
+  "edm",
+  "electronic",
+  "techno",
+  "acid_techno",
+  "minimal",
+  "indie_dance",
+]);
+
+const JAZZ_DISQUALIFYING_GENRES = new Set([
+  "hiphop_rap",
+  "house",
+  "deep_house",
+  "tech_house",
+  "progressive_house",
+  "melodic_house",
+  "afro_house",
+  "nu_disco",
+  "indie_dance",
+  "electronica",
+  "edm",
+  "techno",
+  "acid_techno",
+  "minimal",
+]);
+
+const GENRE_MATCH_GROUPS = {
+  house: new Set(["house", "deep_house", "tech_house", "progressive_house", "melodic_house", "afro_house", "garage"]),
+  techno: new Set(["techno", "acid_techno", "minimal"]),
+  rock: new Set(["rock", "indie_rock"]),
+  electronica: new Set(["electronica", "indie_dance", "synthwave", "breakbeat", "garage", "drum_bass"]),
+};
+
 const RADIO_PROGRAMS = [
   {
     id: "day_cafe",
@@ -813,29 +874,39 @@ function startOnboardingSelection() {
 
 function hydrateTrackTaxonomy(track) {
   const taxonomy = normalizeTaxonomy(track.taxonomy || {});
+  const lockedPrimaryGenres = uniqueStrings(track.primaryGenres || track.taxonomy?.primaryGenres || [])
+    .filter((key) => TAXONOMY.genre.order.includes(key))
+    .slice(0, 3);
+  const lockGenres = lockedPrimaryGenres.length > 0;
+  if (lockGenres) taxonomy.genre = lockedPrimaryGenres.slice();
   const text = searchableTrackText(track);
 
   (track.styleTags || []).forEach((tag) => {
     const mapped = STYLE_TO_TAXONOMY[tag];
     if (!mapped) return;
-    addMany(taxonomy.genre, mapped.genre);
+    if (!lockGenres) addMany(taxonomy.genre, mapped.genre);
     addMany(taxonomy.mood, mapped.mood);
     addMany(taxonomy.context, mapped.context);
   });
 
   Object.entries(KEYWORD_TAXONOMY_RULES).forEach(([dimension, rules]) => {
+    if (dimension === "genre" && lockGenres) return;
     rules.forEach(([key, needles]) => {
-      if (needles.some((needle) => taxonomyNeedleMatches(text, needle))) addUnique(taxonomy[dimension], key);
+      if (needles.some((needle) => keywordTaxonomyNeedleMatches(track, dimension, key, needle, text))) {
+        addUnique(taxonomy[dimension], key);
+      }
     });
   });
 
-  applyArtistTaxonomy(track, taxonomy);
+  applyArtistTaxonomy(track, taxonomy, { lockGenres });
   inferEnergyTaxonomy(track, taxonomy);
   inferEraTaxonomy(track, taxonomy, text);
   sortTaxonomy(taxonomy);
+  if (lockGenres) taxonomy.genre = lockedPrimaryGenres.slice();
   return {
     ...track,
     taxonomy,
+    primaryGenres: lockGenres ? lockedPrimaryGenres : uniqueStrings(taxonomy.genre).slice(0, 3),
   };
 }
 
@@ -856,8 +927,33 @@ function searchableTrackText(track) {
     ...(track.playlistNames || []),
     ...(track.onlineGenres || []),
     ...(track.onlineTags || []),
-    ...(track.styleLabels || []),
   ].filter(Boolean).join(" ").toLowerCase();
+}
+
+function keywordTaxonomyNeedleMatches(track, dimension, key, needle, text) {
+  if (dimension === "genre" && key === "jazz") return jazzTaxonomyNeedleMatches(track, needle);
+  return taxonomyNeedleMatches(text, needle);
+}
+
+function jazzTaxonomyNeedleMatches(track, needle) {
+  const value = String(needle || "").trim().toLowerCase();
+  if (!value) return false;
+  const trustedGenreText = [
+    ...(track.onlineGenres || []),
+    ...(track.onlineTags || []),
+  ].filter(Boolean).join(" ").toLowerCase().replace(/\bjazz[-\s]?hop\b/g, " ");
+
+  if (value === "jazz") {
+    return taxonomyNeedleMatches(trustedGenreText, "jazz");
+  }
+
+  const descriptiveText = [
+    track.name,
+    track.album,
+    ...(track.playlistNames || []),
+    trustedGenreText,
+  ].filter(Boolean).join(" ").toLowerCase();
+  return taxonomyNeedleMatches(descriptiveText, value);
 }
 
 function inferEnergyTaxonomy(track, taxonomy) {
@@ -878,13 +974,16 @@ function inferEnergyTaxonomy(track, taxonomy) {
   }
 }
 
-function applyArtistTaxonomy(track, taxonomy) {
+function applyArtistTaxonomy(track, taxonomy, options = {}) {
   const artists = (track.artists || []).map((artist) => String(artist || "").toLowerCase());
   if (!artists.length) return;
   ARTIST_TAXONOMY_RULES.forEach(([needles, mapping]) => {
     const matched = needles.some((needle) => artists.some((artist) => artistRuleMatches(artist, needle)));
     if (!matched) return;
-    Object.entries(mapping).forEach(([dimension, values]) => addMany(taxonomy[dimension], values));
+    Object.entries(mapping).forEach(([dimension, values]) => {
+      if (dimension === "genre" && options.lockGenres) return;
+      addMany(taxonomy[dimension], values);
+    });
   });
 }
 
@@ -1175,7 +1274,7 @@ function getScheduledProgram(now = new Date()) {
 function programFacetMatches(track, program) {
   return ["genre", "mood", "context"].filter((dimension) => {
     const accepted = program.facets[dimension] || [];
-    return getTrackFacetValues(track, dimension).some((key) => accepted.includes(key));
+    return accepted.some((key) => facetValueMatches(track, dimension, key));
   });
 }
 
@@ -1378,11 +1477,24 @@ function buildFacetFilters() {
   return Object.keys(TAXONOMY).reduce((groups, dimension) => {
     if (dimension === "era") return groups;
     const counts = new Map();
-    state.tracks.forEach((track) => {
-      (getTrackFacetValues(track, dimension) || []).forEach((key) => {
-        counts.set(key, (counts.get(key) || 0) + 1);
+    if (dimension === "genre") {
+      const knownKeys = new Set(TAXONOMY.genre.order || []);
+      (TAXONOMY.genre.order || []).forEach((key) => {
+        const count = state.tracks.filter((track) => facetValueMatches(track, "genre", key)).length;
+        if (count > 0) counts.set(key, count);
       });
-    });
+      state.tracks.forEach((track) => {
+        getTrackFacetValues(track, "genre").forEach((key) => {
+          if (!knownKeys.has(key)) counts.set(key, (counts.get(key) || 0) + 1);
+        });
+      });
+    } else {
+      state.tracks.forEach((track) => {
+        (getTrackFacetValues(track, dimension) || []).forEach((key) => {
+          counts.set(key, (counts.get(key) || 0) + 1);
+        });
+      });
+    }
     const order = TAXONOMY[dimension].order || [];
     groups[dimension] = Array.from(counts.entries())
       .map(([key, count]) => ({
@@ -1461,18 +1573,25 @@ function switchFacet(dimension) {
 function toggleFacetFilter(dimension, key) {
   if (!state.selectedFacets[dimension]) return;
   setCustomProgramMode();
+  state.lovedOnly = false;
   if (state.selectedFacets[dimension].has(key)) {
     state.selectedFacets[dimension].delete(key);
   } else {
     state.selectedFacets[dimension].add(key);
   }
   state.failedIds.clear();
+  const currentIsOutOfScope = state.current && hasPlaybackScope() && !trackMatchesPlaybackScope(state.current);
   if (hasPlaybackScope()) {
     fillQueue(true);
   } else {
     state.queue = [];
   }
   renderAll();
+  if (currentIsOutOfScope) {
+    setStatus(`已选择 ${getMixLabel()}，正在切换到匹配歌曲`);
+    playNext({ user: state.userStarted, reason: "scope-change", force: true });
+    return;
+  }
   setStatus(hasPlaybackScope() ? `已选择 ${getMixLabel()}` : "已取消全部标签");
 }
 
@@ -1492,6 +1611,7 @@ function generateStyleSequence() {
     return;
   }
   markOnboardingComplete();
+  state.lovedOnly = false;
   if (!state.activeProgramId) persistProgramState();
   state.failedIds.clear();
   fillQueue(true);
@@ -2433,14 +2553,30 @@ function getWeightedFilteredTracks() {
   });
 }
 
+function trackMatchesPlaybackScope(track) {
+  if (!track) return false;
+  if (state.lovedOnly) return state.lovedIds.has(trackId(track));
+  const program = getActiveProgram();
+  if (program) return programMatchesTrack(track, program);
+  const selected = getSelectedFacetPairs();
+  if (!selected.length) return true;
+  return selectedFacetMatches(track).length > 0;
+}
+
 function fillQueue(reset = false) {
   if (reset) state.queue = [];
+  if (!reset && hasPlaybackScope()) {
+    state.queue = state.queue.filter((track) => trackMatchesPlaybackScope(track));
+  }
   let reference = state.queue[state.queue.length - 1] || state.current;
   while (state.queue.length < QUEUE_TARGET) {
     const track = pickTrack(reference);
     if (!track) break;
     state.queue.push(track);
     reference = track;
+  }
+  if (hasPlaybackScope()) {
+    state.queue = state.queue.filter((track) => trackMatchesPlaybackScope(track));
   }
   elements.statQueue.textContent = String(state.queue.length);
 }
@@ -3294,17 +3430,17 @@ function sharedStyleLabels(a, b) {
 
 function labelLine(track) {
   const labels = [
-    ...getTrackFacetValues(track, "genre").slice(0, 2).map((key) => getFacetLabel("genre", key)),
-    ...getTrackFacetValues(track, "mood").slice(0, 1).map((key) => getFacetLabel("mood", key)),
+    ...getOrderedTrackFacetValues(track, "genre").slice(0, 2).map((key) => getFacetLabel("genre", key)),
+    ...getOrderedTrackFacetValues(track, "mood").slice(0, 1).map((key) => getFacetLabel("mood", key)),
   ];
   return labels.slice(0, 3).join(" · ") || getMixLabel();
 }
 
 function getDisplayTags(track) {
   return [
-    ...getTrackFacetValues(track, "genre").slice(0, 2).map((key) => getFacetLabel("genre", key)),
-    ...getTrackFacetValues(track, "mood").slice(0, 2).map((key) => getFacetLabel("mood", key)),
-    ...getTrackFacetValues(track, "context").slice(0, 1).map((key) => getFacetLabel("context", key)),
+    ...getOrderedTrackFacetValues(track, "genre").slice(0, 2).map((key) => getFacetLabel("genre", key)),
+    ...getOrderedTrackFacetValues(track, "mood").slice(0, 2).map((key) => getFacetLabel("mood", key)),
+    ...getOrderedTrackFacetValues(track, "context").slice(0, 1).map((key) => getFacetLabel("context", key)),
   ].slice(0, 5);
 }
 
@@ -3316,6 +3452,18 @@ function queueMeta(track) {
 
 function getTrackFacetValues(track, dimension) {
   return uniqueStrings(track?.taxonomy?.[dimension] || []);
+}
+
+function getOrderedTrackFacetValues(track, dimension) {
+  const values = getTrackFacetValues(track, dimension);
+  const selected = state.selectedFacets[dimension];
+  if (!selected || !selected.size) return values;
+  return values.slice().sort((a, b) => {
+    const ai = selected.has(a) ? 0 : 1;
+    const bi = selected.has(b) ? 0 : 1;
+    if (ai !== bi) return ai - bi;
+    return values.indexOf(a) - values.indexOf(b);
+  });
 }
 
 function getTrackMixKeys(track) {
@@ -3337,7 +3485,61 @@ function hasPlaybackScope() {
 function selectedFacetMatches(track) {
   const selected = getSelectedFacetPairs();
   if (!selected.length) return [];
-  return selected.filter(({ dimension, key }) => getTrackFacetValues(track, dimension).includes(key));
+  return selected.filter(({ dimension, key }) => facetValueMatches(track, dimension, key));
+}
+
+function facetValueMatches(track, dimension, key) {
+  if (dimension === "genre" && key === "jazz") return isStrictJazzTrack(track);
+  if (dimension === "genre" && GENRE_MATCH_GROUPS[key]) {
+    const values = getTrackFacetValues(track, dimension);
+    return values.some((value) => GENRE_MATCH_GROUPS[key].has(value));
+  }
+  return getTrackFacetValues(track, dimension).includes(key);
+}
+
+function isStrictJazzTrack(track) {
+  if (!getTrackFacetValues(track, "genre").includes("jazz")) return false;
+  if (isHolidayTrack(track)) return false;
+  const trustedJazzGenre = hasTrustedJazzGenreText(track);
+  const strictArtist = hasStrictJazzArtist(track);
+  const hasDanceOrRapSignal = hasJazzDisqualifyingSignal(track);
+  if (trustedJazzGenre || strictArtist) return true;
+  if (hasDanceOrRapSignal) return false;
+  const tags = new Set(uniqueStrings(track.styleTags || []));
+  return tags.has("jazz");
+}
+
+function hasJazzDisqualifyingSignal(track) {
+  const tags = uniqueStrings(track.styleTags || []);
+  const genres = getTrackFacetValues(track, "genre");
+  return tags.some((tag) => JAZZ_DANCE_OR_RAP_TAGS.has(tag))
+    || genres.some((genre) => JAZZ_DISQUALIFYING_GENRES.has(genre));
+}
+
+function hasTrustedJazzGenreText(track) {
+  const text = [
+    ...(track.onlineGenres || []),
+    ...(track.onlineTags || []),
+  ].filter(Boolean).join(" ").toLowerCase()
+    .replace(/\bjazz[-\s]*(?:hip[-\s]*)?hop\b/g, " ")
+    .replace(/\bjazz[-\s]*rap\b/g, " ");
+  return /\b(jazz|bossa nova|bebop|swing|smooth jazz|jazz fusion)\b/.test(text) || /ジャズ/.test(text);
+}
+
+function hasStrictJazzArtist(track) {
+  const artists = (track.artists || []).map((artist) => String(artist || "").toLowerCase());
+  return STRICT_JAZZ_ARTISTS.some((needle) => artists.some((artist) => artistRuleMatches(artist, needle)));
+}
+
+function isHolidayTrack(track) {
+  const text = [
+    track.name,
+    track.album,
+    ...(track.playlistNames || []),
+    ...(track.styleTags || []),
+    ...getTrackFacetValues(track, "context"),
+  ].filter(Boolean).join(" ").toLowerCase();
+  return /christmas|xmas|holiday|santa|jingle|sleigh|let it snow|圣诞|chirsmas/.test(text);
 }
 
 function getFacetLabel(dimension, key) {

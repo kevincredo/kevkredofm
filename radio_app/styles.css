@@ -1956,9 +1956,6 @@ button:active {
   }
 
   .topbar {
-    position: sticky;
-    top: 8px;
-    z-index: 4;
     grid-template-columns: minmax(0, 1fr) auto;
     background: rgba(5, 5, 5, 0.86);
   }
