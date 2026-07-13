@@ -6,6 +6,9 @@ import {
   randomBytes,
   timingSafeEqual,
 } from "node:crypto";
+import { mkdir, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import loginQrKey from "NeteaseCloudMusicApi/module/login_qr_key.js";
 import loginQrCreate from "NeteaseCloudMusicApi/module/login_qr_create.js";
 import loginQrCheck from "NeteaseCloudMusicApi/module/login_qr_check.js";
@@ -14,7 +17,6 @@ import logout from "NeteaseCloudMusicApi/module/logout.js";
 import songUrlV1 from "NeteaseCloudMusicApi/module/song_url_v1.js";
 import playlistCreate from "NeteaseCloudMusicApi/module/playlist_create.js";
 import playlistTracks from "NeteaseCloudMusicApi/module/playlist_tracks.js";
-import neteaseRequest from "NeteaseCloudMusicApi/util/request.js";
 import neteaseUtils from "NeteaseCloudMusicApi/util/index.js";
 
 const { cookieToJson } = neteaseUtils;
@@ -43,6 +45,8 @@ const ROUTES = new Map([
   ["/playlist/create", playlistCreate],
   ["/playlist/tracks", playlistTracks],
 ]);
+
+let neteaseRequestPromise = null;
 
 export default async (request, context) => {
   if (request.method === "OPTIONS") {
@@ -93,6 +97,7 @@ export default async (request, context) => {
       cookie: cookieToJson(neteaseCookie),
       realIP: normalizeIp(context.ip),
     };
+    const neteaseRequest = await getNeteaseRequest();
     const result = await handler(query, neteaseRequest);
     const body = normalizeNeteaseBody(result);
 
@@ -156,6 +161,7 @@ async function unlock(candidate, request, context) {
 async function clearSession(sessionId, session, context) {
   if (session?.neteaseCookie) {
     try {
+      const neteaseRequest = await getNeteaseRequest();
       await logout({
         cookie: cookieToJson(decryptCookie(session.neteaseCookie, context)),
         realIP: normalizeIp(context.ip),
@@ -170,6 +176,19 @@ async function clearSession(sessionId, session, context) {
     200,
     { "Set-Cookie": sessionCookieHeader("", 0) },
   );
+}
+
+function getNeteaseRequest() {
+  if (!neteaseRequestPromise) {
+    neteaseRequestPromise = (async () => {
+      const temporaryDirectory = tmpdir();
+      await mkdir(temporaryDirectory, { recursive: true });
+      await writeFile(join(temporaryDirectory, "anonymous_token"), "", { flag: "a" });
+      const module = await import("NeteaseCloudMusicApi/util/request.js");
+      return module.default;
+    })();
+  }
+  return neteaseRequestPromise;
 }
 
 async function loadSession(sessionId, context) {
