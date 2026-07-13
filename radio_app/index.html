@@ -8,7 +8,7 @@
     <meta name="apple-mobile-web-app-title" content="Echo Room FM">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Echo Room FM</title>
-    <link rel="stylesheet" href="./styles.css?v=20260714-live-sound-v6">
+    <link rel="stylesheet" href="./styles.css?v=20260714-cloud-audio-v2">
   </head>
   <body>
     <div class="backdrop" id="backdrop"></div>
@@ -40,7 +40,7 @@
             <summary class="account-summary">
               <span class="account-summary-copy">
                 <span>ACCOUNT</span>
-                <strong>用户 / 同步 / 上传</strong>
+                <strong>用户 / 网易云 / 同步</strong>
               </span>
               <span class="sync-chevron" aria-hidden="true"></span>
             </summary>
@@ -57,6 +57,55 @@
                 <button id="profileLocalBtn" class="text-button profile-local-button" type="button" hidden>切回本地</button>
                 <p id="profileHelp" class="profile-help">不输入用户名时，红心只保存在这台设备。</p>
               </section>
+              <details id="neteaseAudioPanel" class="sync-panel netease-audio-panel" open>
+                <summary class="sync-summary">
+                  <span class="sync-summary-label">
+                    <span>NETEASE AUDIO</span>
+                    <strong id="neteaseAudioSummary">会员音质未授权</strong>
+                  </span>
+                  <span class="sync-chevron" aria-hidden="true"></span>
+                </summary>
+                <div class="sync-body netease-audio-body">
+                  <div id="neteaseAudioLock" class="netease-audio-lock">
+                    <label class="sync-field" for="neteaseAudioPasswordInput">
+                      <span>私人访问密码</span>
+                    </label>
+                    <div class="netease-password-row">
+                      <input id="neteaseAudioPasswordInput" type="password" autocomplete="current-password" placeholder="输入密码">
+                      <button id="neteaseAudioUnlockBtn" class="text-button" type="button">解锁</button>
+                    </div>
+                    <p id="neteaseAudioLockStatus" class="sync-status">解锁后显示扫码登录；线上会话由加密云端服务保管。</p>
+                  </div>
+                  <div id="neteaseAudioControls" class="netease-audio-controls" hidden>
+                    <div class="netease-session-row">
+                      <span id="neteaseAudioSessionState">私人区域已解锁，尚未登录网易云。</span>
+                      <button id="neteaseAudioLogoutBtn" class="compact-action" type="button" hidden>退出授权</button>
+                    </div>
+                    <label class="sync-field">
+                      <span>播放音质</span>
+                      <select id="neteaseAudioQualitySelect">
+                        <option value="auto">自动（无损优先）</option>
+                        <option value="exhigh">极高（最高 320 kbps）</option>
+                        <option value="lossless">无损（FLAC）</option>
+                      </select>
+                    </label>
+                    <div class="netease-audio-actions">
+                      <button id="neteaseQrLoginBtn" class="text-button strong" type="button">扫码登录</button>
+                      <button id="checkNeteaseLoginBtn" class="text-button" type="button">刷新状态</button>
+                      <button id="checkNeteaseApiBtn" class="text-button" type="button">检测服务</button>
+                    </div>
+                    <p id="neteaseLoginStatus" class="sync-status">解锁后用网易云音乐 App 扫码。</p>
+                    <div id="neteaseQrBox" class="netease-qr-box" hidden>
+                      <img id="neteaseQrImage" alt="网易云扫码登录二维码">
+                      <div>
+                        <strong>用网易云音乐 App 扫码</strong>
+                        <p id="neteaseQrText">扫码后在手机上确认登录。</p>
+                        <a id="neteaseQrOpenLink" class="text-button netease-qr-open-link" href="#" target="_blank" rel="noopener" hidden>在网易云中打开</a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </details>
               <details id="syncPanel" class="sync-panel">
                 <summary class="sync-summary">
                   <span class="sync-summary-label">
@@ -91,18 +140,11 @@
                     <section id="importLoginStep" class="import-step active">
                       <span class="import-step-number">1</span>
                       <div class="import-step-copy">
-                        <strong>扫码登录网易云</strong>
-                        <p id="neteaseLoginStatus">先在当前电脑启动本机助手，然后用网易云 App 扫码。</p>
+                        <strong>使用会员播放授权</strong>
+                        <p id="exportLoginStatus">先在 NETEASE AUDIO 中解锁并扫码登录。</p>
                       </div>
-                      <button id="neteaseQrLoginBtn" class="text-button import-step-button" type="button">扫码登录</button>
+                      <button id="exportOpenLoginBtn" class="text-button import-step-button" type="button">前往授权</button>
                     </section>
-                    <div id="neteaseQrBox" class="netease-qr-box" hidden>
-                      <img id="neteaseQrImage" alt="网易云扫码登录二维码">
-                      <div>
-                        <strong>用网易云音乐 App 扫码</strong>
-                        <p id="neteaseQrText">扫码后在手机上确认登录。</p>
-                      </div>
-                    </div>
 
                     <section id="importDraftStep" class="import-step">
                       <span class="import-step-number">2</span>
@@ -131,16 +173,14 @@
                         <input id="exportPlaylistNameInput" type="text" autocomplete="off">
                       </label>
                       <label class="sync-field">
-                        <span>本机助手地址</span>
-                        <input id="exportApiInput" type="url" autocomplete="off" placeholder="http://127.0.0.1:3000">
+                        <span>网易云服务地址</span>
+                        <input id="exportApiInput" type="text" autocomplete="off" placeholder="/.netlify/functions/netease">
                       </label>
-                      <p id="exportRuntimeNote" class="sync-status">Netlify 页面会连接当前设备上的本机助手。</p>
+                      <p id="exportRuntimeNote" class="sync-status">线上默认使用同站点的加密云端会话。</p>
                       <div class="netease-login-actions">
-                        <button id="checkNeteaseApiBtn" class="text-button" type="button">检测助手</button>
-                        <button id="checkNeteaseLoginBtn" class="text-button" type="button">刷新登录</button>
                         <button id="copyTrackIdsBtn" class="text-button" type="button">复制 ID</button>
                         <button id="downloadExportBtn" class="text-button" type="button">下载草稿</button>
-                        <a class="text-button helper-download-link" href="./netease-local-helper.mjs" download>下载助手</a>
+                        <a class="text-button helper-download-link" href="./netease-local-helper.mjs" download>本机开发助手</a>
                       </div>
                     </div>
                   </details>
@@ -278,6 +318,9 @@
             <h1 id="trackTitle">调台中</h1>
             <p id="trackArtist">从你的 3841 首基准曲库里抽取下一首</p>
             <p id="trackAlbum"></p>
+            <div class="playback-quality-row" aria-label="当前音源质量">
+              <span id="audioQualityBadge" class="audio-quality-badge">MP3 128K</span>
+            </div>
             <div id="genreTags" class="genre-tags"></div>
             <div class="track-utility-actions">
               <button id="blockCurrentBtn" class="track-utility-button" type="button" aria-label="以后不再播放这首歌" title="以后不再播放这首歌" disabled>
@@ -393,6 +436,6 @@
     <audio id="audioDeckA" preload="auto" autoplay></audio>
     <audio id="audioDeckB" preload="auto"></audio>
     <script src="./library-data.js?v=20260714-live-sound-v2"></script>
-    <script src="./app.js?v=20260714-live-sound-v6"></script>
+    <script src="./app.js?v=20260714-cloud-audio-v2"></script>
   </body>
 </html>

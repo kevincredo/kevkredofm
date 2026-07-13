@@ -481,6 +481,8 @@ const PROFILE_USERNAME_STORAGE_KEY = "kevincredo-fm-profile-username";
 const SYNC_PROXY_STORAGE_KEY = "kevincredo-fm-sync-proxy";
 const NETEASE_EXPORT_DRAFT_STORAGE_KEY = "kevincredo-fm-netease-export-draft";
 const NETEASE_EXPORT_API_STORAGE_KEY = "kevincredo-fm-netease-export-api";
+const NETEASE_AUDIO_QUALITY_STORAGE_KEY = "echo-room-fm-netease-audio-quality-v1";
+const NETEASE_HELPER_TOKEN_SESSION_KEY = "echo-room-fm-netease-helper-token-v1";
 const AUTO_PROGRAM_STORAGE_KEY = "echo-room-fm-auto-program";
 const ACTIVE_PROGRAM_STORAGE_KEY = "echo-room-fm-active-program";
 const PROGRAM_OVERRIDES_STORAGE_KEY = "echo-room-fm-program-overrides";
@@ -491,11 +493,13 @@ const ENTRY_MODE_STORAGE_KEY = "echo-room-fm-entry-mode-version";
 const ENTRY_MODE_VERSION = "style-first-20260610";
 const ONBOARDING_STORAGE_KEY = "echo-room-fm-first-playlist-guide-v2";
 const NETEASE_ORIGIN = "https://music.163.com";
-const NETEASE_DEFAULT_EXPORT_API_BASE = "http://127.0.0.1:3000";
+const NETEASE_CLOUD_API_BASE = "/.netlify/functions/netease";
+const NETEASE_LOCAL_API_BASE = "http://127.0.0.1:3000";
 const CLOUD_LOVED_ENDPOINT = "/.netlify/functions/loved";
 const USERNAME_PATTERN = /^[a-z0-9_-]{2,24}$/;
 const CLOUD_SAVE_DEBOUNCE_MS = 650;
 const NETEASE_EXPORT_CHUNK_SIZE = 80;
+const NETEASE_AUDIO_SOURCE_CACHE_MS = 12 * 60 * 1000;
 const MAX_SAVED_MIXES = 8;
 const ENERGY_CEILING_MIN = 0.60;
 const ENERGY_CEILING_MAX = 0.90;
@@ -539,8 +543,13 @@ const state = {
   exportingToNetease: false,
   neteaseQrKey: "",
   neteaseQrTimer: null,
-  neteaseLoginCookie: "",
+  neteaseHelperToken: "",
+  neteaseHelperUnlocked: false,
   neteaseLoggedIn: false,
+  neteaseAudioQuality: "auto",
+  neteaseAudioSourceCache: new Map(),
+  currentAudioSource: null,
+  audioSourceRequestId: 0,
   queue: [],
   history: [],
   current: null,
@@ -586,9 +595,14 @@ async function init() {
     elements.syncUserIdInput.value = state.syncUserId;
     elements.syncProxyInput.value = readLocalPreference(SYNC_PROXY_STORAGE_KEY) || "";
     elements.exportPlaylistNameInput.value = defaultExportPlaylistName();
-    elements.exportApiInput.value = readLocalPreference(NETEASE_EXPORT_API_STORAGE_KEY) || NETEASE_DEFAULT_EXPORT_API_BASE;
+    elements.exportApiInput.value = initialNeteaseApiBase();
+    state.neteaseAudioQuality = normalizeNeteaseAudioQuality(readLocalPreference(NETEASE_AUDIO_QUALITY_STORAGE_KEY));
+    elements.neteaseAudioQualitySelect.value = state.neteaseAudioQuality;
+    state.neteaseHelperToken = readSessionPreference(NETEASE_HELPER_TOKEN_SESSION_KEY);
+    state.neteaseHelperUnlocked = Boolean(state.neteaseHelperToken);
     state.lastNeteaseExport = loadLastNeteaseExport();
     renderExportRuntimeNote();
+    renderNeteaseAudioAuth();
     updateLibraryCount();
     elements.statTracks.textContent = String(state.tracks.length);
     applyEntryModeMigration();
@@ -597,6 +611,11 @@ async function init() {
     if (hasPlaybackScope()) fillQueue(true);
     renderAll();
     maybeShowOnboardingGuide();
+    if (isCloudNeteaseApiBase(getExportApiBase())) {
+      window.setTimeout(restoreCloudNeteaseSession, 120);
+    } else if (state.neteaseHelperUnlocked) {
+      window.setTimeout(() => checkNeteaseLoginStatus({ manual: false }), 120);
+    }
     if (state.profileUsername) {
       activateProfile(state.profileUsername, { restore: true });
     }
@@ -679,6 +698,18 @@ function bindElements() {
     "syncNeteaseBtn",
     "syncStatus",
     "exportPanel",
+    "neteaseAudioPanel",
+    "neteaseAudioSummary",
+    "neteaseAudioLock",
+    "neteaseAudioPasswordInput",
+    "neteaseAudioUnlockBtn",
+    "neteaseAudioLockStatus",
+    "neteaseAudioControls",
+    "neteaseAudioSessionState",
+    "neteaseAudioLogoutBtn",
+    "neteaseAudioQualitySelect",
+    "exportOpenLoginBtn",
+    "exportLoginStatus",
     "exportSummaryText",
     "exportPlaylistNameInput",
     "exportApiInput",
@@ -700,6 +731,7 @@ function bindElements() {
     "neteaseQrBox",
     "neteaseQrImage",
     "neteaseQrText",
+    "neteaseQrOpenLink",
     "loveCurrentBtn",
     "blockCurrentBtn",
     "miniPlayer",
@@ -725,6 +757,7 @@ function bindElements() {
     "trackTitle",
     "trackArtist",
     "trackAlbum",
+    "audioQualityBadge",
     "genreTags",
     "mixText",
     "elapsedTime",
@@ -803,6 +836,13 @@ function wireEvents() {
     renderExportRuntimeNote();
   });
   elements.exportPlaylistNameInput.addEventListener("input", renderNeteaseExport);
+  elements.neteaseAudioUnlockBtn.addEventListener("click", unlockNeteaseAudio);
+  elements.neteaseAudioPasswordInput.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") unlockNeteaseAudio();
+  });
+  elements.neteaseAudioLogoutBtn.addEventListener("click", logoutNeteaseAudio);
+  elements.neteaseAudioQualitySelect.addEventListener("change", changeNeteaseAudioQuality);
+  elements.exportOpenLoginBtn.addEventListener("click", focusNeteaseAudioPanel);
   elements.checkNeteaseApiBtn.addEventListener("click", checkNeteaseApi);
   elements.neteaseQrLoginBtn.addEventListener("click", startNeteaseQrLogin);
   elements.checkNeteaseLoginBtn.addEventListener("click", () => checkNeteaseLoginStatus({ manual: true }));
@@ -872,7 +912,7 @@ function wireEvents() {
       }
     });
     deck.addEventListener("error", () => {
-      if (index === state.activeDeckIndex && state.current) {
+      if (index === state.activeDeckIndex && state.current && !state.isMixing) {
         handleAudioError(state.current);
       }
     });
@@ -1234,6 +1274,30 @@ function removeLocalPreference(key) {
   } catch (error) {
     console.warn(`Unable to remove browser preference: ${key}`, error);
     return false;
+  }
+}
+
+function readSessionPreference(key) {
+  try {
+    return window.sessionStorage.getItem(key) || "";
+  } catch (error) {
+    return "";
+  }
+}
+
+function writeSessionPreference(key, value) {
+  try {
+    window.sessionStorage.setItem(key, String(value));
+  } catch (error) {
+    // A private browsing policy may disable session storage; the in-memory token still works.
+  }
+}
+
+function removeSessionPreference(key) {
+  try {
+    window.sessionStorage.removeItem(key);
+  } catch (error) {
+    // The current in-memory session is cleared even when storage is unavailable.
   }
 }
 
@@ -2109,6 +2173,7 @@ async function fetchJson(url, options = {}) {
     credentials: options.credentials || "omit",
     headers: options.headers,
     body: options.body,
+    signal: options.signal,
   });
   if (!response.ok) {
     const detail = await readErrorResponse(response);
@@ -2365,43 +2430,180 @@ function setSyncStatus(text) {
 async function checkNeteaseApi() {
   const apiBase = getExportApiBase();
   if (!apiBase) return;
-  if (!isAllowedLocalApiBase(apiBase)) {
-    setNeteaseLoginStatus("真实导入只允许本机 API 地址，避免把登录态和红心列表发到外部。");
+  if (!isAllowedNeteaseApiBase(apiBase)) {
+    setNeteaseLoginStatus("只允许同站点云端服务或本机开发助手。");
     return;
   }
 
-  setNeteaseLoginStatus("正在检测本机助手...");
+  setNeteaseLoginStatus("正在检测网易云服务...");
   try {
-    await requestLocalNetease(apiBase, "/login/status");
-    setNeteaseLoginStatus(`本机助手已连接。下一步扫码登录。`);
+    await requestNeteaseSession(apiBase, "/health");
+    setNeteaseLoginStatus(state.neteaseHelperUnlocked
+      ? "网易云服务已连接，可以扫码登录。"
+      : "网易云服务已连接，请先输入私人访问密码。");
   } catch (error) {
-    setNeteaseLoginStatus(`没有连上本机助手：${error.message}。请先运行 npm run netease:api。`);
+    setNeteaseLoginStatus(`网易云服务暂时不可用：${error.message}。`);
   }
+}
+
+async function restoreCloudNeteaseSession() {
+  const apiBase = getExportApiBase();
+  if (!isCloudNeteaseApiBase(apiBase)) return;
+  try {
+    const session = await requestNeteaseSession(apiBase, "/echo/auth/status");
+    if (!session?.unlocked) return;
+    state.neteaseHelperToken = "cloud-session";
+    state.neteaseHelperUnlocked = true;
+    writeSessionPreference(NETEASE_HELPER_TOKEN_SESSION_KEY, state.neteaseHelperToken);
+    renderNeteaseAudioAuth();
+    if (session.loggedIn) await checkNeteaseLoginStatus({ manual: false });
+  } catch (error) {
+    clearNeteaseHelperSession();
+    state.neteaseLoggedIn = false;
+    renderNeteaseAudioAuth();
+  }
+}
+
+async function unlockNeteaseAudio() {
+  const apiBase = getExportApiBase();
+  const password = elements.neteaseAudioPasswordInput.value;
+  if (!apiBase || !isAllowedNeteaseApiBase(apiBase)) {
+    setNeteaseAudioLockStatus("网易云服务地址无效，请恢复为同站点云端服务。", true);
+    return;
+  }
+  if (!password) {
+    setNeteaseAudioLockStatus("请输入私人访问密码。", true);
+    elements.neteaseAudioPasswordInput.focus();
+    return;
+  }
+
+  elements.neteaseAudioUnlockBtn.disabled = true;
+  elements.neteaseAudioUnlockBtn.textContent = "验证中";
+  setNeteaseAudioLockStatus("正在建立私人云端会话...");
+  try {
+    const payload = await unlockNeteaseSession(apiBase, password);
+    const token = String(payload.token || "");
+    if (!isCloudNeteaseApiBase(apiBase) && !token) throw new Error("本机助手没有返回访问令牌");
+    state.neteaseHelperToken = token || "cloud-session";
+    state.neteaseHelperUnlocked = true;
+    writeSessionPreference(NETEASE_HELPER_TOKEN_SESSION_KEY, state.neteaseHelperToken);
+    elements.neteaseAudioPasswordInput.value = "";
+    renderNeteaseAudioAuth();
+    setNeteaseLoginStatus("私人区域已解锁，正在检查网易云登录状态...");
+    await checkNeteaseLoginStatus({ manual: false });
+  } catch (error) {
+    clearNeteaseHelperSession();
+    setNeteaseAudioLockStatus(`解锁失败：${describeNeteaseServiceError(error, apiBase)}。`, true);
+  } finally {
+    elements.neteaseAudioUnlockBtn.disabled = false;
+    elements.neteaseAudioUnlockBtn.textContent = "解锁";
+  }
+}
+
+async function logoutNeteaseAudio() {
+  const apiBase = getExportApiBase();
+  stopNeteaseQrPolling();
+  try {
+    if (state.neteaseHelperUnlocked && apiBase) {
+      await requestNeteaseSession(apiBase, "/echo/auth/logout", {}, { method: "POST" });
+    }
+  } catch (error) {
+    // The local UI can still forget an unavailable or expired server session.
+  }
+  clearNeteaseHelperSession();
+  state.neteaseLoggedIn = false;
+  state.neteaseQrKey = "";
+  state.neteaseAudioSourceCache.clear();
+  renderNeteaseAudioAuth();
+  setNeteaseAudioLockStatus("已退出授权。重新输入密码后可以再次扫码。");
+  setStatus("网易云会员播放授权已退出");
+}
+
+function clearNeteaseHelperSession() {
+  state.neteaseHelperToken = "";
+  state.neteaseHelperUnlocked = false;
+  removeSessionPreference(NETEASE_HELPER_TOKEN_SESSION_KEY);
+}
+
+function changeNeteaseAudioQuality() {
+  state.neteaseAudioQuality = normalizeNeteaseAudioQuality(elements.neteaseAudioQualitySelect.value);
+  writeLocalPreference(NETEASE_AUDIO_QUALITY_STORAGE_KEY, state.neteaseAudioQuality);
+  state.neteaseAudioSourceCache.clear();
+  renderNeteaseAudioAuth();
+  setStatus(`音质已切换为${neteaseAudioQualityLabel(state.neteaseAudioQuality)}，下一首生效`);
+}
+
+function normalizeNeteaseAudioQuality(value) {
+  return ["auto", "exhigh", "lossless"].includes(value) ? value : "auto";
+}
+
+function neteaseAudioQualityLabel(value) {
+  if (value === "exhigh") return "极高 320K";
+  if (value === "lossless") return "无损 FLAC";
+  return "自动无损优先";
+}
+
+function setNeteaseAudioLockStatus(text, isError = false) {
+  elements.neteaseAudioLockStatus.textContent = text;
+  elements.neteaseAudioLockStatus.classList.toggle("error", isError);
+}
+
+function renderNeteaseAudioAuth() {
+  const unlocked = state.neteaseHelperUnlocked;
+  elements.neteaseAudioLock.hidden = unlocked;
+  elements.neteaseAudioControls.hidden = !unlocked;
+  elements.neteaseAudioLogoutBtn.hidden = !unlocked;
+  elements.neteaseAudioQualitySelect.value = normalizeNeteaseAudioQuality(state.neteaseAudioQuality);
+  elements.neteaseAudioSummary.textContent = state.neteaseLoggedIn
+    ? `已登录 · ${neteaseAudioQualityLabel(state.neteaseAudioQuality)}`
+    : unlocked
+      ? "已解锁 · 等待扫码"
+      : "会员音质未授权";
+  elements.neteaseAudioSessionState.textContent = state.neteaseLoggedIn
+    ? `网易云已登录，下一首优先使用${neteaseAudioQualityLabel(state.neteaseAudioQuality)}。`
+    : "私人区域已解锁，尚未登录网易云。";
+  updateImportFlowState();
+}
+
+function focusNeteaseAudioPanel() {
+  elements.accountPanel.open = true;
+  elements.neteaseAudioPanel.open = true;
+  elements.neteaseAudioPanel.scrollIntoView({ behavior: "smooth", block: "center" });
+  window.setTimeout(() => {
+    const target = state.neteaseHelperUnlocked ? elements.neteaseQrLoginBtn : elements.neteaseAudioPasswordInput;
+    target.focus();
+  }, 350);
 }
 
 async function startNeteaseQrLogin() {
   const apiBase = getExportApiBase();
-  if (!apiBase || !isAllowedLocalApiBase(apiBase)) {
-    setNeteaseLoginStatus("请先填写本机助手地址，例如 http://127.0.0.1:3000。");
+  if (!state.neteaseHelperUnlocked) {
+    setNeteaseLoginStatus("请先输入私人访问密码解锁。 ");
+    focusNeteaseAudioPanel();
+    return;
+  }
+  if (!apiBase || !isAllowedNeteaseApiBase(apiBase)) {
+    setNeteaseLoginStatus("网易云服务地址无效，请恢复默认设置。");
     return;
   }
 
   stopNeteaseQrPolling();
   state.neteaseQrKey = "";
-  state.neteaseLoginCookie = "";
   state.neteaseLoggedIn = false;
   elements.neteaseQrBox.hidden = false;
   elements.neteaseQrImage.removeAttribute("src");
-  elements.neteaseQrText.textContent = "正在向本机 API 申请二维码...";
+  elements.neteaseQrOpenLink.hidden = true;
+  elements.neteaseQrOpenLink.removeAttribute("href");
+  elements.neteaseQrText.textContent = "正在生成安全登录二维码...";
   setNeteaseLoginStatus("正在生成登录二维码...");
 
   try {
-    const keyPayload = await requestLocalNetease(apiBase, "/login/qr/key");
+    const keyPayload = await requestNeteaseSession(apiBase, "/login/qr/key");
     const key = String(keyPayload.data?.unikey || keyPayload.unikey || "");
     if (!key) throw new Error("二维码 key 为空");
     state.neteaseQrKey = key;
 
-    const qrPayload = await requestLocalNetease(apiBase, "/login/qr/create", {
+    const qrPayload = await requestNeteaseSession(apiBase, "/login/qr/create", {
       key,
       qrimg: "true",
     });
@@ -2409,13 +2611,18 @@ async function startNeteaseQrLogin() {
     const qrUrl = qrPayload.data?.qrurl || qrPayload.qrurl || "";
     if (qrImage) {
       elements.neteaseQrImage.src = qrImage;
-    } else if (qrUrl) {
-      elements.neteaseQrText.textContent = qrUrl;
-    } else {
+    } else if (!qrUrl) {
       throw new Error("二维码图片为空");
     }
 
-    elements.neteaseQrText.textContent = "扫码后在手机上确认登录。";
+    if (qrUrl) {
+      elements.neteaseQrOpenLink.href = qrUrl;
+      elements.neteaseQrOpenLink.hidden = false;
+    }
+
+    elements.neteaseQrText.textContent = qrUrl
+      ? "同一台手机可点下方按钮；未自动跳转时，截图后从网易云扫一扫的相册中识别。"
+      : "扫码后在手机上确认登录。";
     setNeteaseLoginStatus("等待网易云 App 扫码确认...");
     state.neteaseQrTimer = window.setInterval(() => checkNeteaseQrStatus({ silent: true }), 2400);
   } catch (error) {
@@ -2432,7 +2639,7 @@ async function checkNeteaseQrStatus(options = {}) {
   }
 
   try {
-    const payload = await requestLocalNetease(apiBase, "/login/qr/check", {
+    const payload = await requestNeteaseSession(apiBase, "/login/qr/check", {
       key: state.neteaseQrKey,
     });
     const code = Number(payload.code || payload.data?.code || 0);
@@ -2453,7 +2660,6 @@ async function checkNeteaseQrStatus(options = {}) {
     }
     if (code === 803) {
       stopNeteaseQrPolling();
-      state.neteaseLoginCookie = String(payload.cookie || payload.data?.cookie || "");
       state.neteaseLoggedIn = true;
       elements.neteaseQrBox.hidden = true;
       setNeteaseLoginStatus("扫码登录成功，正在读取账号状态...");
@@ -2470,14 +2676,14 @@ async function checkNeteaseQrStatus(options = {}) {
 
 async function checkNeteaseLoginStatus(options = {}) {
   const apiBase = getExportApiBase();
-  if (!apiBase || !isAllowedLocalApiBase(apiBase)) {
-    setNeteaseLoginStatus("请先填写本机助手地址，例如 http://127.0.0.1:3000。");
+  if (!apiBase || !isAllowedNeteaseApiBase(apiBase)) {
+    setNeteaseLoginStatus("网易云服务地址无效，请恢复默认设置。");
     return false;
   }
 
   if (options.manual) setNeteaseLoginStatus("正在读取网易云登录状态...");
   try {
-    const payload = await requestLocalNetease(apiBase, "/login/status");
+    const payload = await requestNeteaseSession(apiBase, "/login/status");
     const profile = extractNeteaseProfile(payload);
     if (profile) {
       state.neteaseLoggedIn = true;
@@ -2485,7 +2691,7 @@ async function checkNeteaseLoginStatus(options = {}) {
       renderNeteaseExport();
       return true;
     }
-    if (state.neteaseLoginCookie) {
+    if (state.neteaseLoggedIn) {
       state.neteaseLoggedIn = true;
       setNeteaseLoginStatus("已完成扫码授权，可以生成草稿。");
       renderNeteaseExport();
@@ -2580,12 +2786,12 @@ async function createNeteasePlaylistFromLoved() {
 
   const apiBase = getExportApiBase();
   if (!apiBase) {
-    setExportStatus("请先填写本机网易云 API，例如 http://127.0.0.1:3000。");
+    setExportStatus("请先恢复网易云服务地址。");
     elements.exportPanel.open = true;
     return;
   }
-  if (!isAllowedLocalApiBase(apiBase)) {
-    setExportStatus("真实导入只允许 localhost、127.0.0.1 或 ::1，避免把红心数据发到外部。");
+  if (!isAllowedNeteaseApiBase(apiBase)) {
+    setExportStatus("真实导入只允许同站点云端服务或本机开发助手。");
     return;
   }
 
@@ -2596,7 +2802,7 @@ async function createNeteasePlaylistFromLoved() {
   }
 
   const ok = window.confirm(
-    `将通过本机 API ${apiBase}，在已登录的网易云账号中创建歌单「${draft.playlistName}」，并添加 ${draft.trackCount} 首红心歌曲。继续吗？`
+    `将在已登录的网易云账号中创建歌单「${draft.playlistName}」，并添加 ${draft.trackCount} 首红心歌曲。继续吗？`
   );
   if (!ok) {
     setExportStatus("已取消写入，草稿仍保留在本机。");
@@ -2609,7 +2815,7 @@ async function createNeteasePlaylistFromLoved() {
   setUploadStatus("正在创建网易云歌单...");
 
   try {
-    const created = await requestLocalNeteaseWrite(apiBase, "/playlist/create", {
+    const created = await requestNeteaseSessionWrite(apiBase, "/playlist/create", {
       name: draft.playlistName,
       privacy: "0",
     });
@@ -2620,7 +2826,7 @@ async function createNeteasePlaylistFromLoved() {
     const chunks = chunkArray(draft.trackIds, NETEASE_EXPORT_CHUNK_SIZE);
     for (let index = 0; index < chunks.length; index += 1) {
       setUploadStatus(`歌单已创建，正在上传歌曲 ${index + 1}/${chunks.length}...`);
-      const added = await requestLocalNeteaseWrite(apiBase, "/playlist/tracks", {
+      const added = await requestNeteaseSessionWrite(apiBase, "/playlist/tracks", {
         op: "add",
         pid: playlistId,
         tracks: chunks[index].join(","),
@@ -2758,14 +2964,16 @@ function setUploadStatus(text) {
 
 function setNeteaseLoginStatus(text) {
   elements.neteaseLoginStatus.textContent = text;
+  renderNeteaseAudioAuth();
   updateImportFlowState();
 }
 
 function renderExportRuntimeNote() {
   if (!elements.exportRuntimeNote) return;
   const apiBase = getExportApiBase();
-  const pageMode = window.location.protocol === "https:" ? "Netlify 云端页面" : "本地页面";
-  elements.exportRuntimeNote.textContent = `${pageMode}会连接这台设备上的本机助手：${apiBase}`;
+  elements.exportRuntimeNote.textContent = isCloudNeteaseApiBase(apiBase)
+    ? "当前使用同站点加密云端会话，可在 iPhone、安卓和电脑独立登录。"
+    : `当前使用本机开发助手：${apiBase}`;
 }
 
 function updateImportFlowState() {
@@ -2773,6 +2981,11 @@ function updateImportFlowState() {
   const hasLoved = getLovedTracks().length > 0;
   const hasDraft = isCurrentNeteaseDraft(state.lastNeteaseExport);
   const canUpload = hasLoved && hasDraft && state.neteaseLoggedIn;
+  elements.exportLoginStatus.textContent = state.neteaseLoggedIn
+    ? "网易云已授权，会员播放与歌单上传共用当前会话。"
+    : "先在 NETEASE AUDIO 中解锁并扫码登录。";
+  elements.exportOpenLoginBtn.textContent = state.neteaseLoggedIn ? "已授权" : "前往授权";
+  elements.exportOpenLoginBtn.disabled = state.neteaseLoggedIn;
   elements.importLoginStep.classList.toggle("done", state.neteaseLoggedIn);
   elements.importLoginStep.classList.toggle("active", !state.neteaseLoggedIn);
   elements.importDraftStep.classList.toggle("done", hasDraft);
@@ -2823,6 +3036,7 @@ async function copyText(text) {
 function normalizeExportApiBase(value) {
   const raw = String(value || "").trim().replace(/\/$/, "");
   if (!raw) return "";
+  if (raw === NETEASE_CLOUD_API_BASE) return raw;
   try {
     const url = new URL(raw);
     if (url.hostname === "localhost") {
@@ -2835,8 +3049,24 @@ function normalizeExportApiBase(value) {
   return raw;
 }
 
+function initialNeteaseApiBase() {
+  const fallback = defaultNeteaseApiBase();
+  const saved = normalizeExportApiBase(readLocalPreference(NETEASE_EXPORT_API_STORAGE_KEY));
+  if (!saved) return fallback;
+  if (fallback === NETEASE_CLOUD_API_BASE && saved === NETEASE_LOCAL_API_BASE) return fallback;
+  return saved;
+}
+
+function defaultNeteaseApiBase() {
+  const hostname = window.location.hostname;
+  const usesHostedFunctions = window.location.protocol === "https:"
+    || hostname.endsWith(".netlify.app")
+    || window.location.port === "8888";
+  return usesHostedFunctions ? NETEASE_CLOUD_API_BASE : NETEASE_LOCAL_API_BASE;
+}
+
 function getExportApiBase() {
-  const normalized = normalizeExportApiBase(elements.exportApiInput.value || NETEASE_DEFAULT_EXPORT_API_BASE);
+  const normalized = normalizeExportApiBase(elements.exportApiInput.value || defaultNeteaseApiBase());
   if (elements.exportApiInput.value !== normalized) elements.exportApiInput.value = normalized;
   try {
     window.localStorage.setItem(NETEASE_EXPORT_API_STORAGE_KEY, normalized);
@@ -2846,7 +3076,18 @@ function getExportApiBase() {
   return normalized;
 }
 
-function isAllowedLocalApiBase(value) {
+function isCloudNeteaseApiBase(value) {
+  const raw = normalizeExportApiBase(value);
+  if (raw === NETEASE_CLOUD_API_BASE) return true;
+  try {
+    const url = new URL(raw, window.location.href);
+    return url.origin === window.location.origin && url.pathname === NETEASE_CLOUD_API_BASE;
+  } catch (error) {
+    return false;
+  }
+}
+
+function isLocalNeteaseApiBase(value) {
   try {
     const url = new URL(value);
     return ["localhost", "127.0.0.1", "0.0.0.0", "::1", "[::1]"].includes(url.hostname);
@@ -2855,27 +3096,79 @@ function isAllowedLocalApiBase(value) {
   }
 }
 
-async function requestLocalNeteaseWrite(apiBase, route, params) {
-  return requestLocalNetease(apiBase, route, params, { method: "POST", withLoginCookie: true });
+function isAllowedNeteaseApiBase(value) {
+  return isCloudNeteaseApiBase(value) || isLocalNeteaseApiBase(value);
 }
 
-async function requestLocalNetease(apiBase, route, params = {}, options = {}) {
-  const query = new URLSearchParams({ ...params, timestamp: Date.now() });
-  if (options.withLoginCookie && state.neteaseLoginCookie) {
-    query.set("cookie", state.neteaseLoginCookie);
+async function unlockNeteaseSession(apiBase, password) {
+  if (isCloudNeteaseApiBase(apiBase)) {
+    return fetchJson(apiBase, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ route: "/echo/auth/unlock", password }),
+    });
   }
+  return fetchJson(`${apiBase}/echo/auth/unlock`, {
+    method: "POST",
+    credentials: "omit",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ password }),
+  });
+}
+
+async function requestNeteaseSessionWrite(apiBase, route, params) {
+  return requestNeteaseSession(apiBase, route, params, { method: "POST" });
+}
+
+async function requestNeteaseSession(apiBase, route, params = {}, options = {}) {
+  const query = new URLSearchParams({ ...params, timestamp: Date.now() });
+  const controller = options.timeoutMs ? new AbortController() : null;
+  const timeout = controller
+    ? window.setTimeout(() => controller.abort(), options.timeoutMs)
+    : null;
   try {
+    if (isCloudNeteaseApiBase(apiBase)) {
+      return await fetchJson(apiBase, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          route,
+          params: Object.fromEntries(query),
+          method: options.method || "GET",
+        }),
+        signal: controller?.signal,
+      });
+    }
     return await fetchJson(`${apiBase}${route}?${query}`, {
       method: options.method || "GET",
       credentials: "include",
+      headers: state.neteaseHelperToken
+        ? { "Authorization": `Bearer ${state.neteaseHelperToken}` }
+        : undefined,
+      signal: controller?.signal,
     });
   } catch (error) {
-    throw new Error(describeLocalNeteaseError(error, apiBase));
+    if (/私人访问密码|HTTP 401|unauthorized/i.test(String(error?.message || error))) {
+      clearNeteaseHelperSession();
+      state.neteaseLoggedIn = false;
+      renderNeteaseAudioAuth();
+    }
+    throw new Error(describeNeteaseServiceError(error, apiBase));
+  } finally {
+    if (timeout) window.clearTimeout(timeout);
   }
 }
 
-function describeLocalNeteaseError(error, apiBase) {
+function describeNeteaseServiceError(error, apiBase) {
   const message = String(error?.message || error || "未知错误");
+  if (isCloudNeteaseApiBase(apiBase)) {
+    if (/failed to fetch|networkerror|load failed/i.test(message)) {
+      return "没有连上云端网易云服务，请检查网络后重试";
+    }
+    return message;
+  }
   if (/failed to fetch|networkerror|load failed/i.test(message)) {
     return `没有连上本机助手（${apiBase}）。请在当前打开网页的这台电脑上运行 npm run netease:api，并保持终端窗口打开；如果是在手机或另一台电脑上打开网页，127.0.0.1 指向的是那台设备，不能连接这台电脑的助手`;
   }
@@ -2893,7 +3186,12 @@ function extractNeteaseProfile(response) {
   const profile = response?.data?.profile || response?.profile || response?.body?.profile || null;
   if (profile) return profile;
   const account = response?.data?.account || response?.account || null;
-  if (!account) return null;
+  if (
+    !account
+    || account.anonimousUser === true
+    || Number(account.type) === 1000
+    || Number(account.status) === -10
+  ) return null;
   return {
     userId: account.id || account.userId,
     nickname: account.userName || account.nickname || "",
@@ -3046,6 +3344,7 @@ async function playNext(options = {}) {
 }
 
 async function switchToTrack(track, options = {}) {
+  const sourceRequestId = ++state.audioSourceRequestId;
   const oldTrack = state.current;
   const deck = getActiveDeck();
   getInactiveDeck().pause();
@@ -3063,17 +3362,36 @@ async function switchToTrack(track, options = {}) {
   renderQueue();
   renderHistory();
 
-  deck.src = neteaseAudioUrl(track.id);
-  deck.volume = state.masterVolume;
-  deck.load();
   setStatus("正在连接网易云音源");
+  const audioSource = await resolveNeteasePlaybackSource(track);
+  if (sourceRequestId !== state.audioSourceRequestId || state.current !== track) return;
+  state.currentAudioSource = audioSource;
+  applyAudioSourceToDeck(deck, audioSource);
+  deck.volume = state.masterVolume;
+  setAudioQualityBadge(audioSource);
 
   try {
     await deck.play();
     elements.autoplayGate.hidden = true;
     setStatus("正在播放");
     setPlaying(true);
+    prefetchNextNeteaseSource();
   } catch (error) {
+    if (audioSource.member && deck.dataset.audioSourceKind === "member" && !isAutoplayRejection(error)) {
+      const fallbackSource = publicNeteasePlaybackSource(track);
+      state.currentAudioSource = fallbackSource;
+      applyAudioSourceToDeck(deck, fallbackSource);
+      setAudioQualityBadge(fallbackSource, "会员音源不可用，已降级");
+      try {
+        await deck.play();
+        setStatus("会员音源不可用，已降级到 MP3 128K");
+        setPlaying(true);
+        prefetchNextNeteaseSource();
+        return;
+      } catch (fallbackError) {
+        error = fallbackError;
+      }
+    }
     if (!options.user && !state.userStarted) {
       elements.autoplayGate.hidden = false;
       setStatus("等待点击启动声音");
@@ -3100,25 +3418,44 @@ async function crossfadeToTrack(nextTrack, eightCounts) {
   renderQueue();
   setStatus(`正在按 ${plan.phraseLabel} 对齐过渡 · ${formatSeconds(plan.transitionSeconds)}`);
 
-  newDeck.src = neteaseAudioUrl(nextTrack.id);
-  newDeck.currentTime = 0;
+  let audioSource = await resolveNeteasePlaybackSource(nextTrack);
+  state.currentAudioSource = audioSource;
+  applyAudioSourceToDeck(newDeck, audioSource);
   newDeck.volume = 0;
   setDeckPlaybackRate(oldDeck, 1);
   setDeckPlaybackRate(newDeck, plan.playbackRate);
-  newDeck.load();
+  setAudioQualityBadge(audioSource);
 
   try {
     await newDeck.play();
     if (state.activeMixTransition) state.activeMixTransition.playStarted = true;
   } catch (error) {
-    state.isMixing = false;
-    state.current = oldTrack;
-    state.currentMixPlan = null;
-    state.activeMixTransition = null;
-    state.failedIds.add(nextTrack.id);
-    setStatus("下一首无法直接播放，正在重新选歌");
-    playNext({ automatic: true, reason: "error" });
-    return;
+    if (audioSource.member && !isAutoplayRejection(error)) {
+      audioSource = publicNeteasePlaybackSource(nextTrack);
+      state.currentAudioSource = audioSource;
+      applyAudioSourceToDeck(newDeck, audioSource);
+      newDeck.volume = 0;
+      setDeckPlaybackRate(newDeck, plan.playbackRate);
+      setAudioQualityBadge(audioSource, "会员音源不可用，已降级");
+      try {
+        await newDeck.play();
+        if (state.activeMixTransition) state.activeMixTransition.playStarted = true;
+      } catch (fallbackError) {
+        error = fallbackError;
+      }
+    }
+    if (!newDeck.paused) {
+      // The fallback source started successfully; continue with the transition.
+    } else {
+      state.isMixing = false;
+      state.current = oldTrack;
+      state.currentMixPlan = null;
+      state.activeMixTransition = null;
+      state.failedIds.add(nextTrack.id);
+      setStatus("下一首无法直接播放，正在重新选歌");
+      playNext({ automatic: true, reason: "error" });
+      return;
+    }
   }
 
   if (document.hidden) {
@@ -3165,6 +3502,7 @@ function completeMixTransition(options = {}) {
   renderHistory();
   updateProgress();
   setPlaying(true);
+  prefetchNextNeteaseSource();
   if (options.background) {
     setDeckPlaybackRate(newDeck, 1);
     setStatus("后台播放中");
@@ -3298,6 +3636,32 @@ function maybeAutoMix() {
 }
 
 function handleAudioError(track) {
+  const deck = getActiveDeck();
+  if (
+    track
+    && deck.dataset.audioSourceKind === "member"
+    && deck.dataset.fallbackAttempted !== "true"
+    && deck.dataset.audioTrackId === trackId(track)
+  ) {
+    const cachePrefix = `${trackId(track)}:`;
+    Array.from(state.neteaseAudioSourceCache.keys())
+      .filter((key) => key.startsWith(cachePrefix))
+      .forEach((key) => state.neteaseAudioSourceCache.delete(key));
+    const fallbackSource = publicNeteasePlaybackSource(track);
+    state.currentAudioSource = fallbackSource;
+    applyAudioSourceToDeck(deck, fallbackSource);
+    setAudioQualityBadge(fallbackSource, "会员音源连接失败，已自动降级");
+    setStatus("会员音源连接失败，正在降级到 MP3 128K");
+    deck.volume = state.masterVolume;
+    deck.play().then(() => {
+      setPlaying(true);
+      setStatus("正在播放 · MP3 128K 兼容音源");
+    }).catch(() => {
+      state.failedIds.add(track.id);
+      window.setTimeout(() => playNext({ automatic: true, reason: "error", force: true }), 700);
+    });
+    return;
+  }
   if (track) state.failedIds.add(track.id);
   setStatus("当前歌曲无法直接播放，正在换下一首");
   window.setTimeout(() => playNext({ automatic: true, reason: "error", force: true }), 700);
@@ -3483,6 +3847,15 @@ function renderTrack(track, mode) {
   elements.trackTitle.textContent = track.name || "Untitled";
   elements.trackArtist.textContent = artistLine(track);
   elements.trackAlbum.textContent = track.album ? `Album: ${track.album}` : "";
+  if (state.currentAudioSource?.trackId === trackId(track)) {
+    setAudioQualityBadge(state.currentAudioSource);
+  } else if (state.neteaseLoggedIn && state.neteaseHelperUnlocked) {
+    elements.audioQualityBadge.textContent = "CHECKING SOURCE";
+    elements.audioQualityBadge.classList.add("member-source");
+    elements.audioQualityBadge.title = `正在请求${neteaseAudioQualityLabel(state.neteaseAudioQuality)}`;
+  } else {
+    setAudioQualityBadge(publicNeteasePlaybackSource(track));
+  }
   const keyTag = getTrackKeyTag(track);
   const tags = getDisplayTags(track)
     .concat(keyTag ? [keyTag] : [])
@@ -4343,6 +4716,120 @@ function artistLine(track) {
 
 function neteaseAudioUrl(id) {
   return `https://music.163.com/song/media/outer/url?id=${encodeURIComponent(id)}.mp3`;
+}
+
+async function resolveNeteasePlaybackSource(track) {
+  const fallback = publicNeteasePlaybackSource(track);
+  if (!state.neteaseHelperUnlocked || !state.neteaseLoggedIn) return fallback;
+
+  const apiBase = getExportApiBase();
+  if (!apiBase || !isAllowedNeteaseApiBase(apiBase)) return fallback;
+  const requestedQuality = normalizeNeteaseAudioQuality(state.neteaseAudioQuality);
+  const cacheKey = `${trackId(track)}:${requestedQuality}`;
+  const cached = state.neteaseAudioSourceCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) return cached.source;
+  if (cached) state.neteaseAudioSourceCache.delete(cacheKey);
+
+  const levels = requestedQuality === "auto" ? ["lossless", "exhigh"] : [requestedQuality, "exhigh"];
+  for (const level of uniqueStrings(levels)) {
+    try {
+      const payload = await requestNeteaseSession(apiBase, "/song/url/v1", {
+        id: trackId(track),
+        level,
+      }, { timeoutMs: 7000 });
+      const item = Array.isArray(payload?.data) ? payload.data[0] : payload?.data;
+      if (!item?.url) continue;
+      const source = {
+        trackId: trackId(track),
+        url: normalizeRemoteAudioUrl(item.url),
+        member: true,
+        bitrate: Number(item.br) || 0,
+        format: String(item.type || item.encodeType || "audio").toLowerCase(),
+        level: String(item.level || level),
+        trial: isNeteaseTrialSource(item),
+      };
+      state.neteaseAudioSourceCache.set(cacheKey, {
+        source,
+        expiresAt: Date.now() + NETEASE_AUDIO_SOURCE_CACHE_MS,
+      });
+      return source;
+    } catch (error) {
+      console.warn(`High-quality source failed for ${trackId(track)} at ${level}`, error);
+      if (!state.neteaseHelperUnlocked) break;
+    }
+  }
+  return fallback;
+}
+
+function prefetchNextNeteaseSource() {
+  if (!state.neteaseLoggedIn || !state.neteaseHelperUnlocked || !state.queue.length) return;
+  const nextTrack = state.queue[0];
+  window.setTimeout(() => {
+    resolveNeteasePlaybackSource(nextTrack).catch(() => {});
+  }, 0);
+}
+
+function isNeteaseTrialSource(item) {
+  if (item?.freeTrialInfo) return true;
+  const privilege = item?.freeTimeTrialPrivilege;
+  return Boolean(
+    privilege
+    && (
+      privilege.resConsumable
+      || privilege.userConsumable
+      || Number(privilege.type) > 0
+      || Number(privilege.remainTime) > 0
+    )
+  );
+}
+
+function publicNeteasePlaybackSource(track) {
+  return {
+    trackId: trackId(track),
+    url: neteaseAudioUrl(trackId(track)),
+    member: false,
+    bitrate: 128000,
+    format: "mp3",
+    level: "standard",
+    trial: false,
+  };
+}
+
+function normalizeRemoteAudioUrl(value) {
+  const url = String(value || "");
+  return window.location.protocol === "https:" && url.startsWith("http://")
+    ? `https://${url.slice(7)}`
+    : url;
+}
+
+function applyAudioSourceToDeck(deck, source) {
+  deck.pause();
+  deck.src = source.url;
+  deck.currentTime = 0;
+  deck.dataset.audioSourceKind = source.member ? "member" : "public";
+  deck.dataset.audioTrackId = source.trackId;
+  deck.dataset.fallbackAttempted = source.member ? "false" : "true";
+  deck.load();
+}
+
+function setAudioQualityBadge(source, note = "") {
+  if (!elements.audioQualityBadge) return;
+  const resolved = source || publicNeteasePlaybackSource(state.current || {});
+  const kbps = resolved.bitrate > 0 ? Math.round(resolved.bitrate / 1000) : 0;
+  const format = String(resolved.format || "audio").toUpperCase();
+  let label = resolved.member
+    ? (format === "FLAC" ? "FLAC LOSSLESS" : `${format}${kbps ? ` ${kbps}K` : ""}`)
+    : "MP3 128K";
+  if (resolved.trial) label += " TRIAL";
+  elements.audioQualityBadge.textContent = label;
+  elements.audioQualityBadge.classList.toggle("member-source", resolved.member);
+  elements.audioQualityBadge.title = note || (resolved.member
+    ? `网易云会员音源 · ${resolved.level}${kbps ? ` · ${kbps} kbps` : ""}`
+    : "匿名兼容音源 · 约 128 kbps");
+}
+
+function isAutoplayRejection(error) {
+  return /notallowed|user.*gesture|play\(\).*request/i.test(`${error?.name || ""} ${error?.message || ""}`);
 }
 
 function neteaseSongUrl(id) {

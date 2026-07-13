@@ -1011,7 +1011,8 @@ body:not(.is-playing) .on-air {
   font-size: 0.74rem;
 }
 
-.sync-field input {
+.sync-field input,
+.sync-field select {
   width: 100%;
   min-height: 36px;
   border: 1px solid rgba(255, 255, 255, 0.12);
@@ -1022,8 +1023,96 @@ body:not(.is-playing) .on-air {
   border-radius: 6px;
 }
 
-.sync-field input:focus {
+.sync-field input:focus,
+.sync-field select:focus {
   border-color: rgba(22, 244, 208, 0.56);
+}
+
+.netease-audio-panel {
+  border-color: rgba(22, 244, 208, 0.22);
+  background: linear-gradient(135deg, rgba(22, 244, 208, 0.07), rgba(77, 163, 255, 0.025));
+}
+
+.netease-audio-body {
+  gap: 10px;
+}
+
+.netease-audio-lock,
+.netease-audio-controls {
+  display: grid;
+  gap: 10px;
+}
+
+.netease-audio-lock[hidden],
+.netease-audio-controls[hidden] {
+  display: none;
+}
+
+.netease-audio-lock .sync-status.error {
+  color: #ff8ca7;
+}
+
+.netease-password-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.netease-password-row input {
+  width: 100%;
+  min-width: 0;
+  min-height: 40px;
+  padding: 0 10px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 6px;
+  outline: none;
+  background: rgba(0, 0, 0, 0.34);
+  color: var(--text);
+}
+
+.netease-password-row input:focus {
+  border-color: rgba(22, 244, 208, 0.62);
+}
+
+.netease-password-row .text-button {
+  min-width: 72px;
+  color: var(--mint);
+}
+
+.netease-session-row {
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 0.76rem;
+  line-height: 1.4;
+}
+
+.compact-action {
+  flex: 0 0 auto;
+  min-height: 30px;
+  padding: 0 8px;
+  border: 1px solid rgba(255, 59, 100, 0.30);
+  border-radius: 5px;
+  background: rgba(255, 59, 100, 0.06);
+  color: #ff8ca7;
+  font-size: 0.7rem;
+  font-weight: 900;
+}
+
+.netease-audio-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.netease-audio-actions .text-button {
+  min-width: 0;
+  min-height: 38px;
+  padding: 0 8px;
+  font-size: 0.74rem;
 }
 
 .sync-button {
@@ -1221,6 +1310,20 @@ body:not(.is-playing) .on-air {
   font-size: 0.74rem;
   line-height: 1.45;
   overflow-wrap: anywhere;
+}
+
+.netease-qr-open-link {
+  width: 100%;
+  min-height: 38px;
+  margin-top: 10px;
+  display: grid;
+  place-items: center;
+  color: var(--mint);
+  text-decoration: none;
+}
+
+.netease-qr-open-link[hidden] {
+  display: none;
 }
 
 .export-create-button {
@@ -1549,6 +1652,32 @@ body:not(.is-playing) .on-air {
 #trackAlbum {
   min-height: 18px;
   color: var(--soft);
+}
+
+.playback-quality-row {
+  min-height: 26px;
+  display: flex;
+  justify-content: center;
+}
+
+.audio-quality-badge {
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border: 1px solid rgba(77, 163, 255, 0.38);
+  border-radius: 5px;
+  background: rgba(77, 163, 255, 0.09);
+  color: #8bc4ff;
+  font-size: 0.7rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.audio-quality-badge.member-source {
+  border-color: rgba(22, 244, 208, 0.42);
+  background: rgba(22, 244, 208, 0.09);
+  color: var(--mint);
 }
 
 .genre-tags {
@@ -2454,8 +2583,13 @@ button:disabled {
   }
 
   .netease-login-actions,
+  .netease-audio-actions,
   .export-actions {
     grid-template-columns: 1fr;
+  }
+
+  .netease-session-row {
+    align-items: flex-start;
   }
 
   .helper-download-link {

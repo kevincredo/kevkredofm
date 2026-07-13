@@ -53,7 +53,7 @@ def build_site() -> Path:
     shutil.rmtree(SITE)
   SITE.mkdir(parents=True)
 
-  for name in ["index.html", "styles.css", "app.js", "library-data.js", "library.json"]:
+  for name in ["index.html", "styles.css", "app.js", "library-data.js", "library.json", "netease-local-helper.mjs"]:
     shutil.copy2(ROOT / name, SITE / name)
   copy_assets(SITE)
 
@@ -79,6 +79,7 @@ const APP_SHELL = [
   "./app.js?v=__CACHE_VERSION__",
   "./library-data.js?v=__CACHE_VERSION__",
   "./assets/echo-room-logo-white.svg",
+  "./netease-local-helper.mjs",
   "./manifest.webmanifest"
 ];
 
@@ -165,7 +166,7 @@ def build_netlify_project() -> Path:
   (NETLIFY_PROJECT / "radio_app").mkdir(parents=True)
   (NETLIFY_PROJECT / "netlify" / "functions").mkdir(parents=True)
 
-  for name in ["index.html", "styles.css", "app.js", "library-data.js", "library.json"]:
+  for name in ["index.html", "styles.css", "app.js", "library-data.js", "library.json", "netease-local-helper.mjs"]:
     shutil.copy2(ROOT / name, NETLIFY_PROJECT / "radio_app" / name)
   copy_assets(NETLIFY_PROJECT / "radio_app")
   shutil.copy2(WORKSPACE / "netlify" / "functions" / "loved.mjs", NETLIFY_PROJECT / "netlify" / "functions" / "loved.mjs")
@@ -182,6 +183,7 @@ def build_netlify_project() -> Path:
 3. 选择这个仓库。
 4. Netlify 会读取 netlify.toml：发布目录是 radio_app，Functions 目录是 netlify/functions。
 5. 部署完成后，网页里输入用户名，红心歌单会保存到 Netlify Blobs。
+6. 会员音质登录需要在使用网页的电脑上运行 npm run netease:api；页面默认私人访问密码为 lumos。建议通过 ECHO_ROOM_PASSWORD 环境变量改成自己的密码。
 
 也可以使用 Netlify CLI：
 1. 在这个文件夹里运行 npm install。

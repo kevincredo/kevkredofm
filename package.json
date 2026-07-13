@@ -15,7 +15,7 @@
     "netease:api:raw": "npx NeteaseCloudMusicApi@latest"
   },
   "dependencies": {
-    "@netlify/blobs": "^10.0.10"
-  },
-  "devDependencies": {}
+    "@netlify/blobs": "^10.0.10",
+    "NeteaseCloudMusicApi": "^4.32.0"
+  }
 }
