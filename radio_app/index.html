@@ -8,7 +8,7 @@
     <meta name="apple-mobile-web-app-title" content="Echo Room FM">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Echo Room FM</title>
-    <link rel="stylesheet" href="./styles.css?v=20260619-primary-genres-v3">
+    <link rel="stylesheet" href="./styles.css?v=20260714-live-sound-v6">
   </head>
   <body>
     <div class="backdrop" id="backdrop"></div>
@@ -25,8 +25,8 @@
           </div>
         </div>
         <div class="topbar-center">
-          <span id="onAirState" class="on-air">ON AIR</span>
-          <span id="statusLine">Preparing station</span>
+          <span id="onAirState" class="on-air">STANDBY</span>
+          <span id="statusLine" role="status" aria-live="polite">Preparing station</span>
         </div>
         <div class="topbar-actions">
           <button id="nextTopBtn" class="text-button top-next-button" data-action="next" type="button" aria-label="下一首" title="跳过当前歌曲">下一首</button>
@@ -154,7 +154,7 @@
               <span>STYLE MIX</span>
               <strong id="channelName">All Styles</strong>
             </div>
-            <div id="selectedStylesSummary" class="mix-summary">0 selected</div>
+            <div id="selectedStylesSummary" class="mix-summary" role="status" aria-live="polite">0 selected</div>
             <div id="facetTabs" class="facet-tabs" role="tablist" aria-label="标签维度">
               <button class="facet-tab active" type="button" data-facet="genre" role="tab" aria-selected="true">GENRE</button>
               <button class="facet-tab" type="button" data-facet="mood" role="tab" aria-selected="false">MOOD</button>
@@ -164,8 +164,16 @@
             <div id="styleFilters" class="filter-list taxonomy-filter-list"></div>
             <div class="selector-actions">
               <button id="generateMixBtn" class="text-button strong selector-button" type="button">生成播放列表</button>
+              <button id="saveMixBtn" class="text-button selector-button save-mix-button" type="button">保存组合</button>
               <button id="clearMixBtn" class="text-button selector-button" type="button">清空</button>
             </div>
+            <section id="savedMixesSection" class="saved-mixes-section" hidden aria-label="已保存的音乐组合">
+              <div class="saved-mixes-heading">
+                <span>MY MIXES</span>
+                <strong id="savedMixesCount">0</strong>
+              </div>
+              <div id="savedMixesList" class="saved-mixes-list"></div>
+            </section>
             <div class="program-heading">
               <span>PROGRAMS</span>
               <label class="program-auto">
@@ -218,6 +226,28 @@
                 <strong id="statQueue">0</strong>
               </div>
             </div>
+            <details id="soundProfilePanel" class="sound-profile-panel" open>
+              <summary>
+                <span>LIVE SOUND</span>
+                <strong id="soundProfileSummary">Bar Safe · Vocal Auto</strong>
+                <span class="sync-chevron" aria-hidden="true"></span>
+              </summary>
+              <div class="sound-profile-body">
+                <label class="toggle-row sound-toggle-row">
+                  <input id="loudnessGuardToggle" type="checkbox" checked>
+                  <span>Loudness Guard</span>
+                </label>
+                <label class="range-row sound-range-row">
+                  <span>能量上限 <strong id="energyCeilingValue">78%</strong></span>
+                  <input id="energyCeilingSlider" type="range" min="0.60" max="0.90" step="0.01" value="0.78">
+                </label>
+                <label class="range-row sound-range-row">
+                  <span>人声比例 <strong id="vocalRatioValue">自动</strong></span>
+                  <input id="vocalRatioSlider" type="range" min="0" max="100" step="10" value="0">
+                </label>
+                <button id="restoreBlockedBtn" class="text-button restore-blocked-button" type="button" hidden>恢复已隐藏歌曲</button>
+              </div>
+            </details>
             <label class="toggle-row">
               <input id="mixToggle" type="checkbox" checked>
               <span>DJ 平滑接歌</span>
@@ -236,7 +266,7 @@
         <section class="now-panel" aria-label="正在播放">
           <div class="album-stage" id="albumStage">
             <img id="coverArt" alt="" src="">
-            <div class="fallback-cover" id="fallbackCover">KC</div>
+            <div class="fallback-cover" id="fallbackCover">ER</div>
             <div class="meter" aria-hidden="true">
               <span></span><span></span><span></span><span></span><span></span><span></span>
               <span></span><span></span><span></span><span></span><span></span><span></span>
@@ -249,6 +279,14 @@
             <p id="trackArtist">从你的 3841 首基准曲库里抽取下一首</p>
             <p id="trackAlbum"></p>
             <div id="genreTags" class="genre-tags"></div>
+            <div class="track-utility-actions">
+              <button id="blockCurrentBtn" class="track-utility-button" type="button" aria-label="以后不再播放这首歌" title="以后不再播放这首歌" disabled>
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                  <circle cx="12" cy="12" r="9"></circle>
+                  <path d="M5.6 5.6 18.4 18.4"></path>
+                </svg>
+              </button>
+            </div>
           </div>
 
           <div class="mix-strip">
@@ -296,7 +334,7 @@
             <span>UP NEXT</span>
             <strong>Queue</strong>
           </div>
-          <div id="queueList" class="queue-list"></div>
+          <div id="queueList" class="queue-list" aria-live="polite"></div>
           <div class="panel-heading history-heading">
             <span>RECENT</span>
             <strong>History</strong>
@@ -354,7 +392,7 @@
 
     <audio id="audioDeckA" preload="auto" autoplay></audio>
     <audio id="audioDeckB" preload="auto"></audio>
-    <script src="./library-data.js?v=20260619-primary-genres-v3"></script>
-    <script src="./app.js?v=20260619-primary-genres-v3"></script>
+    <script src="./library-data.js?v=20260714-live-sound-v2"></script>
+    <script src="./app.js?v=20260714-live-sound-v6"></script>
   </body>
 </html>

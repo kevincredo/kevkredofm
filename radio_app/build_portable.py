@@ -68,13 +68,16 @@ def build_site() -> Path:
   }
   (SITE / "manifest.webmanifest").write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
 
-  service_worker = """const CACHE_NAME = "echo-room-fm-v1";
+  source_index = read_text(ROOT / "index.html")
+  version_match = re.search(r'styles\.css\?v=([^"&]+)', source_index)
+  asset_version = version_match.group(1) if version_match else dt.datetime.now().strftime("%Y%m%d%H%M")
+  service_worker = """const CACHE_NAME = "echo-room-fm-__CACHE_VERSION__";
 const APP_SHELL = [
   "./",
   "./index.html",
-  "./styles.css",
-  "./app.js",
-  "./library-data.js",
+  "./styles.css?v=__CACHE_VERSION__",
+  "./app.js?v=__CACHE_VERSION__",
+  "./library-data.js?v=__CACHE_VERSION__",
   "./assets/echo-room-logo-white.svg",
   "./manifest.webmanifest"
 ];
@@ -92,9 +95,23 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
   if (url.origin !== self.location.origin) return;
-  event.respondWith(caches.match(event.request).then((cached) => cached || fetch(event.request)));
+  if (event.request.mode === "navigate") {
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match("./index.html"))
+    );
+    return;
+  }
+  event.respondWith(
+    caches.match(event.request).then((cached) => cached || fetch(event.request).then((response) => {
+      if (!response || !response.ok) return response;
+      const copy = response.clone();
+      caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+      return response;
+    }))
+  );
 });
 """
+  service_worker = service_worker.replace("__CACHE_VERSION__", asset_version)
   (SITE / "service-worker.js").write_text(service_worker, encoding="utf-8")
 
   index_path = SITE / "index.html"

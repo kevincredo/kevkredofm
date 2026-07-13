@@ -484,6 +484,9 @@ const NETEASE_EXPORT_API_STORAGE_KEY = "kevincredo-fm-netease-export-api";
 const AUTO_PROGRAM_STORAGE_KEY = "echo-room-fm-auto-program";
 const ACTIVE_PROGRAM_STORAGE_KEY = "echo-room-fm-active-program";
 const PROGRAM_OVERRIDES_STORAGE_KEY = "echo-room-fm-program-overrides";
+const SAVED_MIXES_STORAGE_KEY = "echo-room-fm-saved-mixes-v1";
+const SOUND_PROFILE_STORAGE_KEY = "echo-room-fm-sound-profile-v1";
+const BLOCKED_TRACKS_STORAGE_KEY = "echo-room-fm-user-blocked-track-ids-v1";
 const ENTRY_MODE_STORAGE_KEY = "echo-room-fm-entry-mode-version";
 const ENTRY_MODE_VERSION = "style-first-20260610";
 const ONBOARDING_STORAGE_KEY = "echo-room-fm-first-playlist-guide-v2";
@@ -493,6 +496,14 @@ const CLOUD_LOVED_ENDPOINT = "/.netlify/functions/loved";
 const USERNAME_PATTERN = /^[a-z0-9_-]{2,24}$/;
 const CLOUD_SAVE_DEBOUNCE_MS = 650;
 const NETEASE_EXPORT_CHUNK_SIZE = 80;
+const MAX_SAVED_MIXES = 8;
+const ENERGY_CEILING_MIN = 0.60;
+const ENERGY_CEILING_MAX = 0.90;
+const DEFAULT_SOUND_PROFILE = Object.freeze({
+  loudnessGuardEnabled: true,
+  energyCeiling: 0.78,
+  vocalTarget: 0,
+});
 
 const elements = {};
 const state = {
@@ -509,6 +520,11 @@ const state = {
   autoProgram: false,
   programTimer: null,
   programOverrides: {},
+  savedMixes: [],
+  loudnessGuardEnabled: DEFAULT_SOUND_PROFILE.loudnessGuardEnabled,
+  energyCeiling: DEFAULT_SOUND_PROFILE.energyCeiling,
+  vocalTarget: DEFAULT_SOUND_PROFILE.vocalTarget,
+  blockedIds: new Set(),
   activeProgramEditorFacet: "genre",
   activeFacet: "genre",
   lovedIds: new Set(),
@@ -559,15 +575,18 @@ async function init() {
     state.tracks = state.allTracks.filter(isFrontendPlayable);
     state.lovedIds = loadLovedIds();
     state.programOverrides = loadProgramOverrides();
-    state.profileUsername = window.localStorage.getItem(PROFILE_USERNAME_STORAGE_KEY) || "";
+    state.savedMixes = loadSavedMixes();
+    Object.assign(state, loadSoundProfile());
+    state.blockedIds = loadBlockedIds();
+    state.profileUsername = readLocalPreference(PROFILE_USERNAME_STORAGE_KEY) || "";
     if (state.profileUsername) {
       elements.profileUsernameInput.value = state.profileUsername;
     }
     state.syncUserId = String(library.scope?.user_id || "");
     elements.syncUserIdInput.value = state.syncUserId;
-    elements.syncProxyInput.value = window.localStorage.getItem(SYNC_PROXY_STORAGE_KEY) || "";
+    elements.syncProxyInput.value = readLocalPreference(SYNC_PROXY_STORAGE_KEY) || "";
     elements.exportPlaylistNameInput.value = defaultExportPlaylistName();
-    elements.exportApiInput.value = window.localStorage.getItem(NETEASE_EXPORT_API_STORAGE_KEY) || NETEASE_DEFAULT_EXPORT_API_BASE;
+    elements.exportApiInput.value = readLocalPreference(NETEASE_EXPORT_API_STORAGE_KEY) || NETEASE_DEFAULT_EXPORT_API_BASE;
     state.lastNeteaseExport = loadLastNeteaseExport();
     renderExportRuntimeNote();
     updateLibraryCount();
@@ -634,12 +653,25 @@ function bindElements() {
     "saveProgramBtn",
     "resetProgramBtn",
     "generateMixBtn",
+    "saveMixBtn",
     "clearMixBtn",
+    "savedMixesSection",
+    "savedMixesCount",
+    "savedMixesList",
+    "soundProfilePanel",
+    "soundProfileSummary",
+    "loudnessGuardToggle",
+    "energyCeilingSlider",
+    "energyCeilingValue",
+    "vocalRatioSlider",
+    "vocalRatioValue",
+    "restoreBlockedBtn",
     "profileStatus",
     "profileUsernameInput",
     "profileLoginBtn",
     "profileLocalBtn",
     "profileHelp",
+    "accountPanel",
     "syncPanel",
     "syncSummaryText",
     "syncUserIdInput",
@@ -669,6 +701,7 @@ function bindElements() {
     "neteaseQrImage",
     "neteaseQrText",
     "loveCurrentBtn",
+    "blockCurrentBtn",
     "miniPlayer",
     "miniInfoBtn",
     "miniCoverArt",
@@ -733,7 +766,16 @@ function wireEvents() {
   elements.onboardingStartBtn.addEventListener("click", startOnboardingSelection);
   elements.onboardingDismissBtn.addEventListener("click", dismissOnboardingGuide);
   elements.generateMixBtn.addEventListener("click", generateStyleSequence);
+  elements.saveMixBtn.addEventListener("click", saveCurrentMix);
   elements.clearMixBtn.addEventListener("click", clearStyleMix);
+  elements.loudnessGuardToggle.addEventListener("change", applySoundProfileControls);
+  elements.energyCeilingSlider.addEventListener("input", previewSoundProfileControls);
+  elements.energyCeilingSlider.addEventListener("change", applySoundProfileControls);
+  elements.energyCeilingSlider.addEventListener("click", applySoundProfileControls);
+  elements.vocalRatioSlider.addEventListener("input", previewSoundProfileControls);
+  elements.vocalRatioSlider.addEventListener("change", applySoundProfileControls);
+  elements.vocalRatioSlider.addEventListener("click", applySoundProfileControls);
+  elements.restoreBlockedBtn.addEventListener("click", restoreBlockedTracks);
   elements.autoProgramToggle.addEventListener("change", toggleAutoProgram);
   elements.programMinBpmInput.addEventListener("change", updateActiveProgramBpm);
   elements.programMaxBpmInput.addEventListener("change", updateActiveProgramBpm);
@@ -753,11 +795,11 @@ function wireEvents() {
   elements.profileLocalBtn.addEventListener("click", useLocalProfile);
   elements.syncNeteaseBtn.addEventListener("click", syncNeteaseLibrary);
   elements.syncProxyInput.addEventListener("change", () => {
-    window.localStorage.setItem(SYNC_PROXY_STORAGE_KEY, elements.syncProxyInput.value.trim());
+    writeLocalPreference(SYNC_PROXY_STORAGE_KEY, elements.syncProxyInput.value.trim());
   });
   elements.exportApiInput.addEventListener("change", () => {
     elements.exportApiInput.value = getExportApiBase();
-    window.localStorage.setItem(NETEASE_EXPORT_API_STORAGE_KEY, elements.exportApiInput.value);
+    writeLocalPreference(NETEASE_EXPORT_API_STORAGE_KEY, elements.exportApiInput.value);
     renderExportRuntimeNote();
   });
   elements.exportPlaylistNameInput.addEventListener("input", renderNeteaseExport);
@@ -769,6 +811,7 @@ function wireEvents() {
   elements.downloadExportBtn.addEventListener("click", downloadNeteaseExportDraft);
   elements.exportCreateBtn.addEventListener("click", createNeteasePlaylistFromLoved);
   elements.loveCurrentBtn.addEventListener("click", toggleLoveCurrent);
+  elements.blockCurrentBtn.addEventListener("click", blockCurrentTrack);
   elements.lovedOnlyBtn.addEventListener("click", toggleLovedOnly);
   elements.reloadBtn.addEventListener("click", () => {
     if (!state.current && !hasPlaybackScope()) {
@@ -789,15 +832,15 @@ function wireEvents() {
     elements.crossfadeValue.textContent = getTransitionControlLabel();
     updateMixText(state.current, state.queue[0]);
   });
-  elements.volumeSlider.addEventListener("input", () => {
-    state.masterVolume = Number(elements.volumeSlider.value);
-    if (!state.isMixing) {
-      getActiveDeck().volume = state.masterVolume;
-      getInactiveDeck().volume = 0;
-    }
-  });
+  elements.volumeSlider.addEventListener("input", applyVolumeControl);
+  elements.volumeSlider.addEventListener("click", applyVolumeControl);
   elements.progressTrack.addEventListener("click", seekAudio);
+  [elements.queueList, elements.lovedList, elements.historyList].forEach((list) => {
+    list.addEventListener("click", playListedTrack);
+  });
   document.addEventListener("visibilitychange", handleVisibilityChange);
+  document.addEventListener("keydown", handleGlobalKeydown);
+  configureMediaSession();
   elements.coverArt.addEventListener("error", () => {
     elements.albumStage.classList.add("no-cover");
     elements.coverArt.removeAttribute("src");
@@ -836,6 +879,14 @@ function wireEvents() {
   });
 }
 
+function applyVolumeControl() {
+  state.masterVolume = Number(elements.volumeSlider.value);
+  if (!state.isMixing) {
+    getActiveDeck().volume = state.masterVolume;
+    getInactiveDeck().volume = 0;
+  }
+}
+
 function scrollToNowPlaying() {
   const target = document.querySelector(".now-panel");
   if (!target) return;
@@ -848,14 +899,19 @@ function maybeShowOnboardingGuide() {
   const shouldShow = !hasSeenGuide && !hasPlaybackScope();
   elements.onboardingGuide.hidden = !shouldShow;
   document.body.classList.toggle("show-onboarding", shouldShow);
+  if (shouldShow) {
+    window.requestAnimationFrame(() => elements.onboardingStartBtn.focus());
+  }
+}
+
+function handleGlobalKeydown(event) {
+  if (event.key === "Escape" && elements.onboardingGuide && !elements.onboardingGuide.hidden) {
+    dismissOnboardingGuide();
+  }
 }
 
 function markOnboardingComplete() {
-  try {
-    window.localStorage.setItem(ONBOARDING_STORAGE_KEY, "1");
-  } catch (error) {
-    console.warn("First-run guide preference is unavailable for this browser.", error);
-  }
+  writeLocalPreference(ONBOARDING_STORAGE_KEY, "1");
   if (elements.onboardingGuide) elements.onboardingGuide.hidden = true;
   document.body.classList.remove("show-onboarding");
 }
@@ -1161,6 +1217,111 @@ function readLocalPreference(key) {
   }
 }
 
+function writeLocalPreference(key, value) {
+  try {
+    window.localStorage.setItem(key, String(value));
+    return true;
+  } catch (error) {
+    console.warn(`Unable to save browser preference: ${key}`, error);
+    return false;
+  }
+}
+
+function removeLocalPreference(key) {
+  try {
+    window.localStorage.removeItem(key);
+    return true;
+  } catch (error) {
+    console.warn(`Unable to remove browser preference: ${key}`, error);
+    return false;
+  }
+}
+
+function loadSavedMixes() {
+  try {
+    const parsed = JSON.parse(readLocalPreference(SAVED_MIXES_STORAGE_KEY) || "[]");
+    if (!Array.isArray(parsed)) return [];
+    return parsed.map(normalizeSavedMix).filter(Boolean).slice(0, MAX_SAVED_MIXES);
+  } catch (error) {
+    return [];
+  }
+}
+
+function normalizeSavedMix(value) {
+  if (!value || typeof value !== "object") return null;
+  const facets = normalizeProgramFacets(value.facets || {});
+  const selectedCount = Object.values(facets).reduce((total, keys) => total + keys.length, 0);
+  if (!selectedCount) return null;
+  const signature = getFacetSelectionSignature(facets);
+  return {
+    id: String(value.id || signature),
+    name: String(value.name || getFacetSelectionName(facets)).trim().slice(0, 80),
+    facets,
+    signature,
+    soundProfile: value.soundProfile && typeof value.soundProfile === "object"
+      ? normalizeSoundProfile(value.soundProfile)
+      : null,
+    savedAt: Number(value.savedAt) || Date.now(),
+  };
+}
+
+function persistSavedMixes() {
+  writeLocalPreference(SAVED_MIXES_STORAGE_KEY, JSON.stringify(state.savedMixes.slice(0, MAX_SAVED_MIXES)));
+}
+
+function loadSoundProfile() {
+  try {
+    const parsed = JSON.parse(readLocalPreference(SOUND_PROFILE_STORAGE_KEY) || "null");
+    return normalizeSoundProfile(parsed);
+  } catch (error) {
+    return { ...DEFAULT_SOUND_PROFILE };
+  }
+}
+
+function normalizeSoundProfile(value) {
+  const source = value && typeof value === "object" ? value : DEFAULT_SOUND_PROFILE;
+  const rawCeiling = Number(source.energyCeiling);
+  const rawVocalTarget = Number(source.vocalTarget);
+  return {
+    loudnessGuardEnabled: source.loudnessGuardEnabled !== false,
+    energyCeiling: roundTo(
+      clamp(Number.isFinite(rawCeiling) ? rawCeiling : DEFAULT_SOUND_PROFILE.energyCeiling, ENERGY_CEILING_MIN, ENERGY_CEILING_MAX),
+      0.01
+    ),
+    vocalTarget: clamp(
+      Math.round((Number.isFinite(rawVocalTarget) ? rawVocalTarget : DEFAULT_SOUND_PROFILE.vocalTarget) / 10) * 10,
+      0,
+      100
+    ),
+  };
+}
+
+function getSoundProfileSnapshot() {
+  return normalizeSoundProfile({
+    loudnessGuardEnabled: state.loudnessGuardEnabled,
+    energyCeiling: state.energyCeiling,
+    vocalTarget: state.vocalTarget,
+  });
+}
+
+function persistSoundProfile() {
+  writeLocalPreference(SOUND_PROFILE_STORAGE_KEY, JSON.stringify(getSoundProfileSnapshot()));
+}
+
+function loadBlockedIds() {
+  try {
+    const parsed = JSON.parse(readLocalPreference(BLOCKED_TRACKS_STORAGE_KEY) || "[]");
+    if (!Array.isArray(parsed)) return new Set();
+    return new Set(parsed.map(String).filter(Boolean));
+  } catch (error) {
+    return new Set();
+  }
+}
+
+function persistBlockedIds() {
+  writeLocalPreference(BLOCKED_TRACKS_STORAGE_KEY, JSON.stringify(Array.from(state.blockedIds)));
+}
+
 function loadProgramOverrides() {
   try {
     const parsed = JSON.parse(window.localStorage.getItem(PROGRAM_OVERRIDES_STORAGE_KEY) || "{}");
@@ -1298,7 +1459,21 @@ function vocalAffinityScore(track) {
   return score;
 }
 
+function isLikelyVocal(track) {
+  return vocalAffinityScore(track) >= 1;
+}
+
+function getVocalBalanceScore(track) {
+  const target = clamp(Number(state.vocalTarget) || 0, 0, 100) / 100;
+  if (target <= 0) return 0;
+  const queuedVocalCount = state.queue.reduce((count, queued) => count + (isLikelyVocal(queued) ? 1 : 0), 0);
+  const desiredVocalCount = Math.round((state.queue.length + 1) * target);
+  const needsVocal = queuedVocalCount < desiredVocalCount;
+  return isLikelyVocal(track) === needsVocal ? 24 : -12;
+}
+
 function programMatchesTrack(track, program) {
+  if (!trackPassesPlaybackGuards(track)) return false;
   const bpm = Number(track.estimatedBpm);
   if (!Number.isFinite(bpm) || bpm < program.minBpm || bpm > program.maxBpm) return false;
   if (!programAllowsTrackNoise(track, program)) return false;
@@ -1310,6 +1485,15 @@ function programAllowsTrackNoise(track, program) {
   if (program?.noisePolicy === "allow_high") return true;
   const level = track?.barNoiseRisk?.level || "";
   return level !== "high";
+}
+
+function trackPassesPlaybackGuards(track, profile = getSoundProfileSnapshot()) {
+  if (!track || state.blockedIds.has(trackId(track))) return false;
+  const normalized = normalizeSoundProfile(profile);
+  if (!normalized.loudnessGuardEnabled) return true;
+  if (track?.barNoiseRisk?.level === "high") return false;
+  const energy = Number(track.energy);
+  return !Number.isFinite(energy) || energy <= normalized.energyCeiling;
 }
 
 function renderPrograms() {
@@ -1562,6 +1746,40 @@ function renderSelectedFacetList() {
   });
 }
 
+function renderSavedMixes() {
+  if (!elements.savedMixesSection) return;
+  const hasSavedMixes = state.savedMixes.length > 0;
+  elements.savedMixesSection.hidden = !hasSavedMixes;
+  elements.savedMixesCount.textContent = String(state.savedMixes.length);
+  elements.saveMixBtn.disabled = getSelectedFacetPairs().length === 0 || Boolean(state.activeProgramId) || state.lovedOnly;
+  if (!hasSavedMixes) {
+    elements.savedMixesList.innerHTML = "";
+    return;
+  }
+
+  elements.savedMixesList.innerHTML = state.savedMixes.map((mix) => {
+    const profile = mix.soundProfile || getSoundProfileSnapshot();
+    const poolCount = state.tracks.filter((track) => (
+      trackPassesPlaybackGuards(track, profile) && trackMatchesFacetSelection(track, mix.facets)
+    )).length;
+    return `
+      <div class="saved-mix-row">
+        <button class="saved-mix-load" type="button" data-saved-mix-load="${escapeHtml(mix.id)}">
+          <strong>${escapeHtml(mix.name)}</strong>
+          <span>${poolCount} tracks · ${escapeHtml(formatSoundProfileShort(profile))}</span>
+        </button>
+        <button class="saved-mix-delete" type="button" data-saved-mix-delete="${escapeHtml(mix.id)}" aria-label="删除 ${escapeHtml(mix.name)}" title="删除组合">×</button>
+      </div>
+    `;
+  }).join("");
+  elements.savedMixesList.querySelectorAll("[data-saved-mix-load]").forEach((button) => {
+    button.addEventListener("click", () => applySavedMix(button.dataset.savedMixLoad));
+  });
+  elements.savedMixesList.querySelectorAll("[data-saved-mix-delete]").forEach((button) => {
+    button.addEventListener("click", () => deleteSavedMix(button.dataset.savedMixDelete));
+  });
+}
+
 function switchFacet(dimension) {
   if (!TAXONOMY[dimension] || dimension === state.activeFacet) return;
   state.activeFacet = dimension;
@@ -1604,6 +1822,177 @@ function clearStyleMix() {
   setStatus("已清空曲风选择");
 }
 
+function previewSoundProfileControls() {
+  const profile = normalizeSoundProfile({
+    loudnessGuardEnabled: elements.loudnessGuardToggle.checked,
+    energyCeiling: elements.energyCeilingSlider.value,
+    vocalTarget: elements.vocalRatioSlider.value,
+  });
+  elements.energyCeilingSlider.disabled = !profile.loudnessGuardEnabled;
+  elements.energyCeilingValue.textContent = profile.loudnessGuardEnabled
+    ? `${Math.round(profile.energyCeiling * 100)}%`
+    : "关闭";
+  elements.vocalRatioValue.textContent = profile.vocalTarget > 0 ? `${profile.vocalTarget}%` : "自动";
+  elements.soundProfileSummary.textContent = formatSoundProfileShort(profile);
+}
+
+function applySoundProfileControls() {
+  const nextProfile = normalizeSoundProfile({
+    loudnessGuardEnabled: elements.loudnessGuardToggle.checked,
+    energyCeiling: elements.energyCeilingSlider.value,
+    vocalTarget: elements.vocalRatioSlider.value,
+  });
+  const currentProfile = getSoundProfileSnapshot();
+  const profileChanged = nextProfile.loudnessGuardEnabled !== currentProfile.loudnessGuardEnabled
+    || nextProfile.energyCeiling !== currentProfile.energyCeiling
+    || nextProfile.vocalTarget !== currentProfile.vocalTarget;
+  if (!profileChanged) {
+    renderSoundProfile();
+    return;
+  }
+  Object.assign(state, nextProfile);
+  persistSoundProfile();
+  state.failedIds.clear();
+  const currentIsOutOfScope = state.current && !trackPassesPlaybackGuards(state.current);
+  if (hasPlaybackScope()) {
+    fillQueue(true);
+  } else {
+    state.queue = [];
+  }
+  renderAll();
+  setStatus(`现场声音已更新 · ${formatSoundProfileShort(nextProfile)}`);
+  if (currentIsOutOfScope) {
+    playNext({ user: state.userStarted, reason: "sound-profile", force: true });
+  }
+}
+
+function renderSoundProfile() {
+  const profile = getSoundProfileSnapshot();
+  elements.loudnessGuardToggle.checked = profile.loudnessGuardEnabled;
+  elements.energyCeilingSlider.value = String(profile.energyCeiling);
+  elements.vocalRatioSlider.value = String(profile.vocalTarget);
+  elements.energyCeilingSlider.disabled = !profile.loudnessGuardEnabled;
+  elements.energyCeilingValue.textContent = profile.loudnessGuardEnabled
+    ? `${Math.round(profile.energyCeiling * 100)}%`
+    : "关闭";
+  elements.vocalRatioValue.textContent = profile.vocalTarget > 0 ? `${profile.vocalTarget}%` : "自动";
+  const hiddenCount = state.blockedIds.size;
+  elements.soundProfileSummary.textContent = `${formatSoundProfileShort(profile)}${hiddenCount ? ` · 隐藏 ${hiddenCount}` : ""}`;
+  elements.restoreBlockedBtn.hidden = hiddenCount === 0;
+  elements.restoreBlockedBtn.textContent = hiddenCount ? `恢复已隐藏歌曲（${hiddenCount}）` : "恢复已隐藏歌曲";
+  elements.blockCurrentBtn.disabled = !state.current;
+}
+
+function formatSoundProfileShort(profile = getSoundProfileSnapshot()) {
+  const normalized = normalizeSoundProfile(profile);
+  const guard = normalized.loudnessGuardEnabled
+    ? `Guard ${Math.round(normalized.energyCeiling * 100)}%`
+    : "Guard Off";
+  const vocal = normalized.vocalTarget > 0 ? `Vocal ${normalized.vocalTarget}%` : "Vocal Auto";
+  return `${guard} · ${vocal}`;
+}
+
+async function blockCurrentTrack() {
+  if (!state.current) {
+    setStatus("还没有正在播放的歌曲");
+    return;
+  }
+  const blockedTrack = state.current;
+  state.blockedIds.add(trackId(blockedTrack));
+  persistBlockedIds();
+  state.queue = state.queue.filter((track) => trackId(track) !== trackId(blockedTrack));
+  state.history = state.history.filter((track) => trackId(track) !== trackId(blockedTrack));
+  state.failedIds.delete(trackId(blockedTrack));
+  setStatus(`已隐藏 ${blockedTrack.name || "当前歌曲"}，以后不会自动播放`);
+  await playNext({ user: true, reason: "user-blocked", force: true });
+  renderAll();
+}
+
+function restoreBlockedTracks() {
+  const restoredCount = state.blockedIds.size;
+  state.blockedIds.clear();
+  persistBlockedIds();
+  state.failedIds.clear();
+  if (hasPlaybackScope()) fillQueue(true);
+  renderAll();
+  setStatus(restoredCount ? `已恢复 ${restoredCount} 首手动隐藏的歌曲` : "没有需要恢复的歌曲");
+}
+
+function saveCurrentMix() {
+  const facets = getCurrentFacetSnapshot();
+  const selectedCount = Object.values(facets).reduce((total, keys) => total + keys.length, 0);
+  if (!selectedCount || state.activeProgramId || state.lovedOnly) {
+    setStatus("先在 Genre / Mood / Context 里选择要保存的组合");
+    return;
+  }
+
+  const signature = getFacetSelectionSignature(facets);
+  const existing = state.savedMixes.find((mix) => mix.signature === signature);
+  const savedMix = {
+    id: existing?.id || `mix-${Date.now().toString(36)}`,
+    name: getFacetSelectionName(facets),
+    facets,
+    signature,
+    soundProfile: getSoundProfileSnapshot(),
+    savedAt: Date.now(),
+  };
+  state.savedMixes = [savedMix, ...state.savedMixes.filter((mix) => mix.signature !== signature)]
+    .slice(0, MAX_SAVED_MIXES);
+  persistSavedMixes();
+  renderSavedMixes();
+  setStatus(existing ? `已更新常用组合：${savedMix.name}` : `已保存常用组合：${savedMix.name}`);
+}
+
+function applySavedMix(mixId) {
+  const mix = state.savedMixes.find((item) => item.id === mixId);
+  if (!mix) return;
+  setCustomProgramMode();
+  state.lovedOnly = false;
+  ["genre", "mood", "context"].forEach((dimension) => {
+    state.selectedFacets[dimension] = new Set(mix.facets[dimension] || []);
+  });
+  if (mix.soundProfile) {
+    Object.assign(state, normalizeSoundProfile(mix.soundProfile));
+    persistSoundProfile();
+  }
+  state.failedIds.clear();
+  const currentIsOutOfScope = state.current && !trackMatchesPlaybackScope(state.current);
+  fillQueue(true);
+  renderAll();
+  setStatus(`已载入常用组合：${mix.name}`);
+  if (currentIsOutOfScope) playNext({ user: state.userStarted, reason: "saved-mix", force: true });
+}
+
+function deleteSavedMix(mixId) {
+  const mix = state.savedMixes.find((item) => item.id === mixId);
+  state.savedMixes = state.savedMixes.filter((item) => item.id !== mixId);
+  persistSavedMixes();
+  renderSavedMixes();
+  setStatus(mix ? `已删除常用组合：${mix.name}` : "已删除常用组合");
+}
+
+function getCurrentFacetSnapshot() {
+  return ["genre", "mood", "context"].reduce((facets, dimension) => {
+    facets[dimension] = Array.from(state.selectedFacets[dimension] || []);
+    return facets;
+  }, {});
+}
+
+function getFacetSelectionSignature(facets) {
+  return ["genre", "mood", "context"].map((dimension) => {
+    const keys = uniqueStrings(facets?.[dimension]).sort();
+    return keys.length ? `${dimension}:${keys.join(",")}` : "";
+  }).filter(Boolean).join("|");
+}
+
+function getFacetSelectionName(facets) {
+  const labels = ["genre", "mood", "context"].flatMap((dimension) => (
+    uniqueStrings(facets?.[dimension]).map((key) => getFacetLabel(dimension, key))
+  ));
+  if (labels.length <= 3) return labels.join(" + ");
+  return `${labels.slice(0, 3).join(" + ")} +${labels.length - 3}`;
+}
+
 function generateStyleSequence() {
   if (!hasPlaybackScope()) {
     setStatus("先选择一个或多个风格标签");
@@ -1636,7 +2025,7 @@ async function syncNeteaseLibrary() {
 
   try {
     state.syncUserId = uid;
-    window.localStorage.setItem(SYNC_PROXY_STORAGE_KEY, elements.syncProxyInput.value.trim());
+    writeLocalPreference(SYNC_PROXY_STORAGE_KEY, elements.syncProxyInput.value.trim());
     const playlistResponse = await requestNeteaseJson(`/user/playlist?uid=${encodeURIComponent(uid)}&limit=1000&offset=0`);
     const playlists = normalizePlaylistList(playlistResponse, uid);
     const ownedPlaylists = playlists.filter((playlist) => isOwnedPlaylist(playlist, uid));
@@ -2527,16 +2916,18 @@ function chunkArray(items, size) {
 }
 
 function getFilteredTracks() {
-  if (state.lovedOnly) return getLovedTracks();
+  if (state.lovedOnly) return getLovedTracks().filter((track) => trackPassesPlaybackGuards(track));
   const program = getActiveProgram();
   if (program) return state.tracks.filter((track) => programMatchesTrack(track, program));
   const selected = getSelectedFacetPairs();
-  if (!selected.length) return state.tracks;
-  return state.tracks.filter((track) => selectedFacetMatches(track).length > 0);
+  if (!selected.length) return state.tracks.filter((track) => trackPassesPlaybackGuards(track));
+  return state.tracks.filter((track) => (
+    trackPassesPlaybackGuards(track) && trackMatchesFacetSelection(track)
+  ));
 }
 
 function getWeightedFilteredTracks() {
-  if (state.lovedOnly) return getLovedTracks();
+  if (state.lovedOnly) return getLovedTracks().filter((track) => trackPassesPlaybackGuards(track));
   const program = getActiveProgram();
   if (program) {
     return state.tracks.flatMap((track) => {
@@ -2546,8 +2937,10 @@ function getWeightedFilteredTracks() {
     });
   }
   const selected = getSelectedFacetPairs();
-  if (!selected.length) return state.tracks;
+  if (!selected.length) return state.tracks.filter((track) => trackPassesPlaybackGuards(track));
   return state.tracks.flatMap((track) => {
+    if (!trackPassesPlaybackGuards(track)) return [];
+    if (!trackMatchesFacetSelection(track)) return [];
     const matches = selectedFacetMatches(track);
     return matches.length ? Array.from({ length: matches.length }, () => track) : [];
   });
@@ -2555,12 +2948,13 @@ function getWeightedFilteredTracks() {
 
 function trackMatchesPlaybackScope(track) {
   if (!track) return false;
+  if (!trackPassesPlaybackGuards(track)) return false;
   if (state.lovedOnly) return state.lovedIds.has(trackId(track));
   const program = getActiveProgram();
   if (program) return programMatchesTrack(track, program);
   const selected = getSelectedFacetPairs();
   if (!selected.length) return true;
-  return selectedFacetMatches(track).length > 0;
+  return trackMatchesFacetSelection(track);
 }
 
 function fillQueue(reset = false) {
@@ -2568,6 +2962,7 @@ function fillQueue(reset = false) {
   if (!reset && hasPlaybackScope()) {
     state.queue = state.queue.filter((track) => trackMatchesPlaybackScope(track));
   }
+  state.queue = uniqueTracksById(state.queue);
   let reference = state.queue[state.queue.length - 1] || state.current;
   while (state.queue.length < QUEUE_TARGET) {
     const track = pickTrack(reference);
@@ -2576,7 +2971,7 @@ function fillQueue(reset = false) {
     reference = track;
   }
   if (hasPlaybackScope()) {
-    state.queue = state.queue.filter((track) => trackMatchesPlaybackScope(track));
+    state.queue = uniqueTracksById(state.queue.filter((track) => trackMatchesPlaybackScope(track)));
   }
   elements.statQueue.textContent = String(state.queue.length);
 }
@@ -2592,20 +2987,29 @@ function pickTrack(reference = null) {
     return true;
   });
   const fallback = getFilteredTracks().filter((track) => !state.failedIds.has(trackId(track)));
-  const candidates = pool.length ? pool : fallback;
+  const unusedFallback = fallback.filter((track) => {
+    const id = trackId(track);
+    if (state.current && trackId(state.current) === id) return false;
+    return !state.queue.some((queued) => trackId(queued) === id);
+  });
+  const candidates = pool.length ? pool : unusedFallback;
   if (!candidates.length) return null;
 
   if (!reference) {
     const weighted = [];
     candidates.forEach((track) => {
-      const weight = Math.max(1, Math.min(9, (track.playlistCount || 1) + selectedFacetMatches(track).length * 2));
+      const vocalWeight = Math.round(getVocalBalanceScore(track) / 4);
+      const weight = Math.max(1, Math.min(15, (track.playlistCount || 1) + selectedFacetMatches(track).length * 2 + vocalWeight));
       for (let i = 0; i < weight; i += 1) weighted.push(track);
     });
     return weighted[Math.floor(Math.random() * weighted.length)];
   }
 
   const ranked = uniqueTracksById(candidates)
-    .map((track) => ({ track, score: mixScore(reference, track) + selectionScore(track) }))
+    .map((track) => ({
+      track,
+      score: mixScore(reference, track) + selectionScore(track) + getVocalBalanceScore(track),
+    }))
     .sort((a, b) => b.score - a.score)
     .slice(0, 12);
   const pick = weightedRankedChoice(ranked);
@@ -2614,7 +3018,9 @@ function pickTrack(reference = null) {
 
 async function playNext(options = {}) {
   if (state.isMixing) return;
-  if (!state.current && !state.queue.length && !hasPlaybackScope()) {
+  if (!hasPlaybackScope()) {
+    state.queue = [];
+    renderQueue();
     elements.autoplayGate.hidden = true;
     setStatus("先选择 Genre / Mood / Context，再生成播放列表");
     maybeShowOnboardingGuide();
@@ -2774,6 +3180,91 @@ function handleVisibilityChange() {
   }
 }
 
+function configureMediaSession() {
+  if (!("mediaSession" in navigator)) return;
+  const handlers = {
+    play: () => resumeFromMediaSession(),
+    pause: () => pauseFromMediaSession(),
+    previoustrack: () => playPrevious(),
+    nexttrack: () => playNext({ user: true, reason: "media-session-next", force: true }),
+    seekbackward: (details) => seekFromMediaSession(-(details.seekOffset || 10)),
+    seekforward: (details) => seekFromMediaSession(details.seekOffset || 10),
+    seekto: (details) => seekToFromMediaSession(details.seekTime),
+  };
+  Object.entries(handlers).forEach(([action, handler]) => {
+    try {
+      navigator.mediaSession.setActionHandler(action, handler);
+    } catch (error) {
+      // Some browsers expose Media Session but support only a subset of actions.
+    }
+  });
+}
+
+function resumeFromMediaSession() {
+  state.userStarted = true;
+  const deck = getActiveDeck();
+  if (!state.current || !deck.src) {
+    playNext({ user: true, reason: "media-session-play" });
+    return;
+  }
+  deck.play().then(() => {
+    setPlaying(true);
+    setStatus("正在播放");
+  }).catch(() => {
+    elements.autoplayGate.hidden = false;
+    setStatus("需要回到页面点击启动声音");
+  });
+}
+
+function pauseFromMediaSession() {
+  state.decks.forEach((deck) => deck.pause());
+  setPlaying(false);
+  setStatus("已暂停");
+}
+
+function seekFromMediaSession(offset) {
+  const deck = getActiveDeck();
+  if (!Number.isFinite(deck.duration)) return;
+  deck.currentTime = clamp((deck.currentTime || 0) + offset, 0, deck.duration);
+}
+
+function seekToFromMediaSession(time) {
+  const deck = getActiveDeck();
+  if (!Number.isFinite(deck.duration) || !Number.isFinite(time)) return;
+  deck.currentTime = clamp(time, 0, deck.duration);
+}
+
+function updateMediaSessionMetadata(track) {
+  if (!("mediaSession" in navigator) || typeof window.MediaMetadata !== "function" || !track) return;
+  const artwork = track.picUrl
+    ? [{ src: track.picUrl, sizes: "512x512", type: "image/jpeg" }]
+    : [];
+  try {
+    navigator.mediaSession.metadata = new window.MediaMetadata({
+      title: track.name || "Untitled",
+      artist: artistLine(track),
+      album: track.album || "Echo Room Music FM",
+      artwork,
+    });
+  } catch (error) {
+    // Remote artwork metadata is optional and can be rejected by stricter browsers.
+  }
+}
+
+function updateMediaSessionPosition(current, duration) {
+  if (!("mediaSession" in navigator) || typeof navigator.mediaSession.setPositionState !== "function") return;
+  if (!Number.isFinite(duration) || duration <= 0 || !Number.isFinite(current)) return;
+  try {
+    navigator.mediaSession.setPositionState({
+      duration,
+      playbackRate: getActiveDeck().playbackRate || 1,
+      position: clamp(current, 0, Math.max(0, duration - 0.01)),
+    });
+  } catch (error) {
+    // Position state is a progressive enhancement.
+  }
+}
+
 function startFromGate() {
   state.userStarted = true;
   elements.autoplayGate.hidden = true;
@@ -2849,6 +3340,31 @@ function playSpecific(track) {
   playNext({ user: true, reason: "previous", force: true });
 }
 
+async function playListedTrack(event) {
+  const item = event.target.closest("[data-track-id]");
+  if (!item || !event.currentTarget.contains(item)) return;
+  if (state.isMixing) {
+    setStatus("正在完成当前过渡，请稍候再选歌");
+    return;
+  }
+  const track = state.tracks.find((candidate) => trackId(candidate) === item.dataset.trackId);
+  if (!track) return;
+  if (state.blockedIds.has(trackId(track))) {
+    setStatus("这首歌已被手动隐藏，请先在 LIVE SOUND 中恢复");
+    return;
+  }
+  if (state.current && trackId(state.current) === trackId(track)) {
+    scrollToNowPlaying();
+    return;
+  }
+
+  state.userStarted = true;
+  state.queue = state.queue.filter((queued) => trackId(queued) !== trackId(track));
+  await switchToTrack(track, { user: true, force: true, reason: "list-select" });
+  fillQueue();
+  renderAll();
+}
+
 function openCurrentInNetease() {
   if (!state.current) return;
   window.open(neteaseSongUrl(state.current.id), "_blank", "noopener,noreferrer");
@@ -2914,12 +3430,15 @@ function updateProgress() {
   if (elements.miniProgressBar) {
     elements.miniProgressBar.style.width = `${Math.min(100, Math.max(0, percent))}%`;
   }
+  updateMediaSessionPosition(current, duration);
 }
 
 function renderAll() {
   renderPrograms();
   renderFacetTabs();
   renderSelectedFacetList();
+  renderSavedMixes();
+  renderSoundProfile();
   syncFilterButtons();
   renderProfile();
   renderNeteaseExport();
@@ -2940,7 +3459,23 @@ function syncFilterButtons() {
     const active = Boolean(state.selectedFacets[button.dataset.facet]?.has(button.dataset.filter));
     button.classList.toggle("active", active);
     button.setAttribute("aria-pressed", String(active));
+    const count = getContextualFacetCount(button.dataset.facet, button.dataset.filter);
+    const countNode = button.querySelector("span:last-child");
+    if (countNode) countNode.textContent = String(count);
+    button.disabled = count === 0 && !active;
   });
+}
+
+function getContextualFacetCount(dimension, key) {
+  const selection = ["genre", "mood", "context"].reduce((facets, currentDimension) => {
+    facets[currentDimension] = currentDimension === dimension
+      ? [key]
+      : Array.from(state.selectedFacets[currentDimension] || []);
+    return facets;
+  }, {});
+  return state.tracks.filter((track) => (
+    trackPassesPlaybackGuards(track) && trackMatchesFacetSelection(track, selection)
+  )).length;
 }
 
 function renderTrack(track, mode) {
@@ -2959,6 +3494,8 @@ function renderTrack(track, mode) {
   elements.coverArt.src = track.picUrl || "";
   elements.coverArt.alt = track.album ? `${track.album} cover` : "";
   elements.backdrop.style.backgroundImage = track.picUrl ? `url("${track.picUrl}")` : "none";
+  elements.blockCurrentBtn.disabled = false;
+  updateMediaSessionMetadata(track);
   renderMiniPlayer(track);
   updateLoveButton();
 }
@@ -2979,11 +3516,15 @@ function renderMiniPlayer(track = state.current) {
 
 function renderQueue() {
   elements.statQueue.textContent = String(state.queue.length);
-  elements.queueList.innerHTML = state.queue.map(renderSmallTrack).join("");
+  elements.queueList.innerHTML = state.queue.length
+    ? state.queue.map(renderSmallTrack).join("")
+    : `<div class="empty-list">选择音乐标签并生成播放列表，接下来播放的歌曲会出现在这里。</div>`;
 }
 
 function renderHistory() {
-  elements.historyList.innerHTML = state.history.slice(0, 5).map(renderSmallTrack).join("");
+  elements.historyList.innerHTML = state.history.length
+    ? state.history.slice(0, 5).map(renderSmallTrack).join("")
+    : `<div class="empty-list compact-empty-list">播放过的歌曲会保留在这里。</div>`;
 }
 
 function renderLoved() {
@@ -3024,16 +3565,23 @@ function updateLoveButton() {
 function renderSmallTrack(track) {
   const image = track.picUrl
     ? `<img alt="" src="${escapeHtml(track.picUrl)}">`
-    : `<div class="small-fallback">KC</div>`;
+    : `<div class="small-fallback">ER</div>`;
   return `
-    <div class="queue-item">
+    <button
+      class="queue-item"
+      type="button"
+      data-track-id="${escapeHtml(trackId(track))}"
+      data-track-energy="${Number.isFinite(Number(track.energy)) ? Number(track.energy) : ""}"
+      data-track-vocal="${String(isLikelyVocal(track))}"
+      aria-label="播放 ${escapeHtml(track.name || "Untitled")}，${escapeHtml(artistLine(track))}"
+    >
       ${image}
       <div>
         <strong>${escapeHtml(track.name || "Untitled")}</strong>
         <span>${escapeHtml(artistLine(track))}</span>
         <em>${escapeHtml(queueMeta(track))}</em>
       </div>
-    </div>
+    </button>
   `;
 }
 
@@ -3059,7 +3607,7 @@ function updateMixText(fromTrack, toTrack, mode = "planned", plan = null) {
 }
 
 function pushHistory(track) {
-  if (!track) return;
+  if (!track || state.blockedIds.has(trackId(track))) return;
   state.previous = track;
   state.history = [track, ...state.history.filter((item) => item.id !== track.id)].slice(0, 8);
 }
@@ -3075,6 +3623,13 @@ function setPlaying(isPlaying) {
   elements.playPauseBtn.textContent = isPlaying ? "Ⅱ" : "▶";
   if (elements.miniPlayPauseBtn) elements.miniPlayPauseBtn.textContent = isPlaying ? "Ⅱ" : "▶";
   elements.onAirState.textContent = isPlaying ? "ON AIR" : "STANDBY";
+  if ("mediaSession" in navigator) {
+    try {
+      navigator.mediaSession.playbackState = isPlaying ? "playing" : "paused";
+    } catch (error) {
+      // Playback state is optional on older Media Session implementations.
+    }
+  }
 }
 
 function setStatus(text) {
@@ -3374,8 +3929,8 @@ function selectionScore(track) {
   }
   const selected = getSelectedFacetPairs();
   if (!selected.length) return 0;
+  if (!trackMatchesFacetSelection(track)) return -100;
   const matched = selectedFacetMatches(track).length;
-  if (!matched) return -100;
   return matched * 14 + (matched / selected.length) * 18;
 }
 
@@ -3488,6 +4043,17 @@ function selectedFacetMatches(track) {
   return selected.filter(({ dimension, key }) => facetValueMatches(track, dimension, key));
 }
 
+function trackMatchesFacetSelection(track, selection = state.selectedFacets) {
+  const activeDimensions = ["genre", "mood", "context"].filter((dimension) => {
+    const values = selection?.[dimension];
+    return values && Array.from(values).length > 0;
+  });
+  if (!activeDimensions.length) return true;
+  return activeDimensions.every((dimension) => (
+    Array.from(selection[dimension]).some((key) => facetValueMatches(track, dimension, key))
+  ));
+}
+
 function facetValueMatches(track, dimension, key) {
   if (dimension === "genre" && key === "jazz") return isStrictJazzTrack(track);
   if (dimension === "genre" && GENRE_MATCH_GROUPS[key]) {
@@ -3569,7 +4135,7 @@ function getMixSummary() {
   const selected = getSelectedFacetPairs();
   const poolCount = getFilteredTracks().length;
   if (!selected.length) return `${poolCount} 首唯一歌曲 · 选择 Genre / Mood / Context 生成第一条播放列表`;
-  return `${selected.length} 个标签 · ${poolCount} 首唯一歌曲 · 队列已去重 · ${getCompactFacetSummary(selected)}`;
+  return `${selected.length} 个标签 · ${poolCount} 首唯一歌曲 · 跨维度交集 · ${getCompactFacetSummary(selected)}`;
 }
 
 function getMixSummaryDetails() {
@@ -3649,7 +4215,8 @@ async function activateProfile(rawUsername, options = {}) {
 
   state.profileUsername = username;
   elements.profileUsernameInput.value = username;
-  window.localStorage.setItem(PROFILE_USERNAME_STORAGE_KEY, username);
+  writeLocalPreference(PROFILE_USERNAME_STORAGE_KEY, username);
+  if (elements.accountPanel) elements.accountPanel.open = false;
   state.lovedIds = loadLovedIds(username);
   renderAll();
 
@@ -3675,7 +4242,8 @@ async function activateProfile(rawUsername, options = {}) {
 
 function useLocalProfile() {
   state.profileUsername = "";
-  window.localStorage.removeItem(PROFILE_USERNAME_STORAGE_KEY);
+  removeLocalPreference(PROFILE_USERNAME_STORAGE_KEY);
+  if (elements.accountPanel) elements.accountPanel.open = true;
   state.lovedIds = loadLovedIds("");
   elements.profileUsernameInput.value = "";
   setProfileMessage("已切回本地模式。红心只保存在这台设备。", "本地模式");
