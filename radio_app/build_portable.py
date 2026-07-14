@@ -166,10 +166,11 @@ def build_netlify_project() -> Path:
   (NETLIFY_PROJECT / "radio_app").mkdir(parents=True)
   (NETLIFY_PROJECT / "netlify" / "functions").mkdir(parents=True)
 
-  for name in ["index.html", "styles.css", "app.js", "library-data.js", "library.json", "netease-local-helper.mjs"]:
+  for name in ["index.html", "styles.css", "app.js", "library-data.js", "library.json", "netease-local-helper.mjs", "test_audio_recovery.mjs"]:
     shutil.copy2(ROOT / name, NETLIFY_PROJECT / "radio_app" / name)
   copy_assets(NETLIFY_PROJECT / "radio_app")
-  shutil.copy2(WORKSPACE / "netlify" / "functions" / "loved.mjs", NETLIFY_PROJECT / "netlify" / "functions" / "loved.mjs")
+  for function_name in ["loved.mjs", "netease.mjs"]:
+    shutil.copy2(WORKSPACE / "netlify" / "functions" / function_name, NETLIFY_PROJECT / "netlify" / "functions" / function_name)
   shutil.copy2(WORKSPACE / "package.json", NETLIFY_PROJECT / "package.json")
   shutil.copy2(WORKSPACE / "netlify.toml", NETLIFY_PROJECT / "netlify.toml")
 
@@ -183,7 +184,7 @@ def build_netlify_project() -> Path:
 3. 选择这个仓库。
 4. Netlify 会读取 netlify.toml：发布目录是 radio_app，Functions 目录是 netlify/functions。
 5. 部署完成后，网页里输入用户名，红心歌单会保存到 Netlify Blobs。
-6. 会员音质登录需要在使用网页的电脑上运行 npm run netease:api；页面默认私人访问密码为 lumos。建议通过 ECHO_ROOM_PASSWORD 环境变量改成自己的密码。
+6. 会员音质登录由 netlify/functions/netease.mjs 提供云端会话；在 Netlify 设置 ECHO_ROOM_PASSWORD 环境变量后即可从手机、平板或电脑独立扫码使用。
 
 也可以使用 Netlify CLI：
 1. 在这个文件夹里运行 npm install。

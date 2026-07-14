@@ -500,6 +500,13 @@ const USERNAME_PATTERN = /^[a-z0-9_-]{2,24}$/;
 const CLOUD_SAVE_DEBOUNCE_MS = 650;
 const NETEASE_EXPORT_CHUNK_SIZE = 80;
 const NETEASE_AUDIO_SOURCE_CACHE_MS = 12 * 60 * 1000;
+const AUDIO_STALL_GRACE_MS = 6500;
+const AUDIO_RECOVERY_MAX_ATTEMPTS = 3;
+const AUDIO_RECOVERY_RETRY_DELAYS_MS = [500, 1800, 4500];
+const AUDIO_RECOVERY_METADATA_TIMEOUT_MS = 5500;
+const AUDIO_RECOVERY_REWIND_SECONDS = 1;
+const AUDIO_RECOVERY_HEALTHY_MS = 5000;
+const AUDIO_PROGRESS_WATCHDOG_MS = 11000;
 const MAX_SAVED_MIXES = 8;
 const ENERGY_CEILING_MIN = 0.60;
 const ENERGY_CEILING_MAX = 0.90;
@@ -536,6 +543,8 @@ const state = {
   profileUsername: "",
   profileSaving: false,
   profileSaveTimer: null,
+  profileRequestId: 0,
+  pendingCloudLovedSaves: new Map(),
   libraryMeta: null,
   syncUserId: "",
   syncing: false,
@@ -550,6 +559,17 @@ const state = {
   neteaseAudioSourceCache: new Map(),
   currentAudioSource: null,
   audioSourceRequestId: 0,
+  audioRecoveryTimer: null,
+  audioStallTimer: null,
+  audioRecoveryTrackId: "",
+  audioRecoveryAttempt: 0,
+  audioRecoveryInFlight: false,
+  audioRecoveryPosition: 0,
+  audioAwaitingOnline: false,
+  lastAudioTrackId: "",
+  lastAudioPosition: 0,
+  lastAudioProgressAt: 0,
+  audioHealthySince: 0,
   queue: [],
   history: [],
   current: null,
@@ -559,12 +579,14 @@ const state = {
   decks: [],
   activeDeckIndex: 0,
   isPlaying: false,
+  shouldBePlaying: false,
   isMixing: false,
   userStarted: false,
   failedIds: new Set(),
   recentIds: [],
   styleLabels: { ...STYLE_LABELS },
   masterVolume: 0.78,
+  onboardingReturnFocus: null,
 };
 
 document.addEventListener("DOMContentLoaded", init);
@@ -818,9 +840,11 @@ function wireEvents() {
   elements.programFacetTabs.querySelectorAll("[data-program-facet]").forEach((button) => {
     button.addEventListener("click", () => switchProgramEditorFacet(button.dataset.programFacet));
   });
+  elements.programFacetTabs.addEventListener("keydown", handleFacetTabKeydown);
   elements.facetTabs.querySelectorAll("[data-facet]").forEach((button) => {
     button.addEventListener("click", () => switchFacet(button.dataset.facet));
   });
+  elements.facetTabs.addEventListener("keydown", handleFacetTabKeydown);
   elements.profileLoginBtn.addEventListener("click", () => activateProfile(elements.profileUsernameInput.value));
   elements.profileUsernameInput.addEventListener("keydown", (event) => {
     if (event.key === "Enter") activateProfile(elements.profileUsernameInput.value);
@@ -875,10 +899,14 @@ function wireEvents() {
   elements.volumeSlider.addEventListener("input", applyVolumeControl);
   elements.volumeSlider.addEventListener("click", applyVolumeControl);
   elements.progressTrack.addEventListener("click", seekAudio);
+  elements.progressTrack.addEventListener("keydown", seekAudioWithKeyboard);
   [elements.queueList, elements.lovedList, elements.historyList].forEach((list) => {
     list.addEventListener("click", playListedTrack);
   });
   document.addEventListener("visibilitychange", handleVisibilityChange);
+  window.addEventListener("online", handleNetworkOnline);
+  window.addEventListener("offline", handleNetworkOffline);
+  window.setInterval(checkAudioContinuity, 5000);
   document.addEventListener("keydown", handleGlobalKeydown);
   configureMediaSession();
   elements.coverArt.addEventListener("error", () => {
@@ -895,19 +923,33 @@ function wireEvents() {
     deck.addEventListener("play", () => {
       if (index === state.activeDeckIndex) setPlaying(true);
     });
+    deck.addEventListener("playing", () => {
+      if (index === state.activeDeckIndex) handleAudioPlaying(deck);
+    });
     deck.addEventListener("pause", () => {
       if (index === state.activeDeckIndex && !state.isMixing) setPlaying(false);
     });
     deck.addEventListener("timeupdate", () => {
       if (index !== state.activeDeckIndex) return;
+      recordAudioProgress(deck);
       updateProgress();
       maybeAutoMix();
     });
     deck.addEventListener("loadedmetadata", () => {
       if (index === state.activeDeckIndex) updateProgress();
     });
+    deck.addEventListener("waiting", () => {
+      if (index === state.activeDeckIndex) handleAudioBuffering("waiting");
+    });
+    deck.addEventListener("stalled", () => {
+      if (index === state.activeDeckIndex) handleAudioBuffering("stalled");
+    });
+    deck.addEventListener("canplay", () => {
+      if (index === state.activeDeckIndex) clearAudioStallTimer();
+    });
     deck.addEventListener("ended", () => {
       if (index === state.activeDeckIndex && !state.isMixing) {
+        clearAudioRecovery();
         playNext({ automatic: true, reason: "ended" });
       }
     });
@@ -933,10 +975,31 @@ function scrollToNowPlaying() {
   target.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
+function handleFacetTabKeydown(event) {
+  if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+  const tabs = Array.from(event.currentTarget.querySelectorAll('[role="tab"]'));
+  const currentIndex = tabs.indexOf(event.target);
+  if (currentIndex < 0 || !tabs.length) return;
+  event.preventDefault();
+  let nextIndex = currentIndex;
+  if (event.key === 'Home') nextIndex = 0;
+  if (event.key === 'End') nextIndex = tabs.length - 1;
+  if (event.key === 'ArrowLeft') nextIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+  if (event.key === 'ArrowRight') nextIndex = (currentIndex + 1) % tabs.length;
+  tabs[nextIndex].focus();
+  tabs[nextIndex].click();
+}
+
 function maybeShowOnboardingGuide() {
   if (!elements.onboardingGuide) return;
   const hasSeenGuide = readLocalPreference(ONBOARDING_STORAGE_KEY) === "1";
-  const shouldShow = !hasSeenGuide && !hasPlaybackScope();
+  const forceGuide = new URLSearchParams(window.location.search).get("onboarding") === "1";
+  const shouldShow = forceGuide || (!hasSeenGuide && !hasPlaybackScope());
+  if (shouldShow && elements.onboardingGuide.hidden) {
+    state.onboardingReturnFocus = document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : null;
+  }
   elements.onboardingGuide.hidden = !shouldShow;
   document.body.classList.toggle("show-onboarding", shouldShow);
   if (shouldShow) {
@@ -945,15 +1008,35 @@ function maybeShowOnboardingGuide() {
 }
 
 function handleGlobalKeydown(event) {
-  if (event.key === "Escape" && elements.onboardingGuide && !elements.onboardingGuide.hidden) {
+  const guideIsOpen = elements.onboardingGuide && !elements.onboardingGuide.hidden;
+  if (!guideIsOpen) return;
+  if (event.key === "Escape") {
     dismissOnboardingGuide();
+    return;
+  }
+  if (event.key !== "Tab") return;
+  const focusable = Array.from(elements.onboardingGuide.querySelectorAll('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'));
+  if (!focusable.length) return;
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault();
+    last.focus();
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first.focus();
   }
 }
 
-function markOnboardingComplete() {
+function markOnboardingComplete({ restoreFocus = true } = {}) {
   writeLocalPreference(ONBOARDING_STORAGE_KEY, "1");
   if (elements.onboardingGuide) elements.onboardingGuide.hidden = true;
   document.body.classList.remove("show-onboarding");
+  const returnFocus = state.onboardingReturnFocus;
+  state.onboardingReturnFocus = null;
+  if (restoreFocus && returnFocus?.isConnected && returnFocus !== document.body) {
+    window.requestAnimationFrame(() => returnFocus.focus());
+  }
 }
 
 function dismissOnboardingGuide() {
@@ -961,11 +1044,14 @@ function dismissOnboardingGuide() {
 }
 
 function startOnboardingSelection() {
-  markOnboardingComplete();
+  markOnboardingComplete({ restoreFocus: false });
   const target = document.querySelector(".music-control-section");
   if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
   elements.generateMixBtn.classList.add("guide-pulse");
   window.setTimeout(() => elements.generateMixBtn.classList.remove("guide-pulse"), 1800);
+  window.setTimeout(() => {
+    elements.facetTabs.querySelector('[role="tab"][aria-selected="true"]')?.focus();
+  }, 350);
 }
 
 function hydrateTrackTaxonomy(track) {
@@ -1001,6 +1087,7 @@ function hydrateTrackTaxonomy(track) {
   if (lockGenres) taxonomy.genre = lockedPrimaryGenres.slice();
   return {
     ...track,
+    picUrl: normalizeRemoteImageUrl(track.picUrl),
     taxonomy,
     primaryGenres: lockGenres ? lockedPrimaryGenres : uniqueStrings(taxonomy.genre).slice(0, 3),
   };
@@ -1611,6 +1698,8 @@ function renderProgramEditor(program = getActiveProgram()) {
     const isActive = button.dataset.programFacet === state.activeProgramEditorFacet;
     button.classList.toggle("active", isActive);
     button.setAttribute("aria-selected", String(isActive));
+    button.tabIndex = isActive ? 0 : -1;
+    if (isActive) elements.programTagEditor.setAttribute("aria-labelledby", button.id);
   });
 
   const dimension = state.activeProgramEditorFacet;
@@ -1770,6 +1859,8 @@ function renderFacetTabs() {
     const active = button.dataset.facet === state.activeFacet;
     button.classList.toggle("active", active);
     button.setAttribute("aria-selected", String(active));
+    button.tabIndex = active ? 0 : -1;
+    if (active) elements.styleFilters.setAttribute("aria-labelledby", button.id);
   });
 }
 
@@ -3317,6 +3408,7 @@ function pickTrack(reference = null) {
 async function playNext(options = {}) {
   if (state.isMixing) return;
   if (!hasPlaybackScope()) {
+    state.shouldBePlaying = false;
     state.queue = [];
     renderQueue();
     elements.autoplayGate.hidden = true;
@@ -3325,12 +3417,14 @@ async function playNext(options = {}) {
     return;
   }
   if (options.user) state.userStarted = true;
+  state.shouldBePlaying = true;
   elements.autoplayGate.hidden = true;
 
   fillQueue();
   const nextTrack = state.queue.shift() || pickTrack(state.current);
   fillQueue();
   if (!nextTrack) {
+    state.shouldBePlaying = false;
     setStatus(state.lovedOnly ? "红心列表里还没有可播放歌曲" : "当前频道没有可播放歌曲");
     return;
   }
@@ -3344,9 +3438,17 @@ async function playNext(options = {}) {
 }
 
 async function switchToTrack(track, options = {}) {
+  clearAudioRecovery();
+  state.shouldBePlaying = true;
   const sourceRequestId = ++state.audioSourceRequestId;
   const oldTrack = state.current;
   const deck = getActiveDeck();
+  deck.pause();
+  delete deck.dataset.audioTrackId;
+  delete deck.dataset.audioSourceKind;
+  delete deck.dataset.fallbackAttempted;
+  deck.removeAttribute("src");
+  deck.load();
   getInactiveDeck().pause();
   getInactiveDeck().removeAttribute("src");
   setDeckPlaybackRate(getInactiveDeck(), 1);
@@ -3356,9 +3458,13 @@ async function switchToTrack(track, options = {}) {
 
   if (oldTrack) pushHistory(oldTrack);
   state.current = track;
+  state.lastAudioTrackId = trackId(track);
+  state.lastAudioPosition = 0;
+  state.lastAudioProgressAt = 0;
   rememberRecent(track.id);
   renderTrack(track, "NOW PLAYING");
   updateMixText(oldTrack, track, options.force ? "manual cut" : "direct");
+  updateProgress();
   renderQueue();
   renderHistory();
 
@@ -3372,6 +3478,7 @@ async function switchToTrack(track, options = {}) {
 
   try {
     await deck.play();
+    clearAudioRecovery();
     elements.autoplayGate.hidden = true;
     setStatus("正在播放");
     setPlaying(true);
@@ -3384,6 +3491,7 @@ async function switchToTrack(track, options = {}) {
       setAudioQualityBadge(fallbackSource, "会员音源不可用，已降级");
       try {
         await deck.play();
+        clearAudioRecovery();
         setStatus("会员音源不可用，已降级到 MP3 128K");
         setPlaying(true);
         prefetchNextNeteaseSource();
@@ -3397,21 +3505,37 @@ async function switchToTrack(track, options = {}) {
       setStatus("等待点击启动声音");
       return;
     }
+    if (isAutoplayRejection(error)) {
+      elements.autoplayGate.hidden = false;
+      setStatus("需要点击一次继续播放");
+      return;
+    }
     handleAudioError(track);
   }
 }
 
 async function crossfadeToTrack(nextTrack, eightCounts) {
+  clearAudioRecovery();
+  state.shouldBePlaying = true;
   const oldDeck = getActiveDeck();
   const newDeckIndex = 1 - state.activeDeckIndex;
   const newDeck = state.decks[newDeckIndex];
   const oldTrack = state.current;
+  const oldAudioSource = state.currentAudioSource;
   const plan = getMixPlan(oldTrack, nextTrack, eightCounts);
 
   state.isMixing = true;
   state.current = nextTrack;
   state.currentMixPlan = plan;
-  state.activeMixTransition = { oldDeck, newDeck, newDeckIndex, oldTrack, nextTrack, playStarted: false };
+  state.activeMixTransition = {
+    oldDeck,
+    newDeck,
+    newDeckIndex,
+    oldTrack,
+    oldAudioSource,
+    nextTrack,
+    playStarted: false,
+  };
   rememberRecent(nextTrack.id);
   renderTrack(nextTrack, "MIXING IN");
   updateMixText(oldTrack, nextTrack, "crossfade", plan);
@@ -3449,9 +3573,19 @@ async function crossfadeToTrack(nextTrack, eightCounts) {
     } else {
       state.isMixing = false;
       state.current = oldTrack;
+      state.currentAudioSource = oldAudioSource;
       state.currentMixPlan = null;
       state.activeMixTransition = null;
-      state.failedIds.add(nextTrack.id);
+      renderTrack(oldTrack, "NOW PLAYING");
+      setAudioQualityBadge(oldAudioSource);
+      if (!navigator.onLine) {
+        state.queue = uniqueTracksById([nextTrack, ...state.queue]);
+        renderQueue();
+        captureAudioRecoveryPosition(oldTrack, oldDeck);
+        waitForNetworkRecovery(oldTrack);
+        return;
+      }
+      state.failedIds.add(trackId(nextTrack));
       setStatus("下一首无法直接播放，正在重新选歌");
       playNext({ automatic: true, reason: "error" });
       return;
@@ -3487,6 +3621,7 @@ async function crossfadeToTrack(nextTrack, eightCounts) {
 function completeMixTransition(options = {}) {
   const transition = state.activeMixTransition;
   if (!transition) return;
+  clearAudioRecovery();
   const { oldDeck, newDeck, newDeckIndex, oldTrack, nextTrack } = transition;
   oldDeck.pause();
   oldDeck.removeAttribute("src");
@@ -3496,6 +3631,10 @@ function completeMixTransition(options = {}) {
   newDeck.volume = state.masterVolume;
   state.activeDeckIndex = newDeckIndex;
   state.isMixing = false;
+  state.shouldBePlaying = true;
+  state.lastAudioTrackId = trackId(nextTrack);
+  state.lastAudioPosition = Number.isFinite(newDeck.currentTime) ? newDeck.currentTime : 0;
+  state.lastAudioProgressAt = Date.now();
   state.activeMixTransition = null;
   if (oldTrack) pushHistory(oldTrack);
   renderTrack(nextTrack, "NOW PLAYING");
@@ -3515,6 +3654,10 @@ function completeMixTransition(options = {}) {
 function handleVisibilityChange() {
   if (document.hidden && state.isMixing && state.activeMixTransition?.playStarted) {
     completeMixTransition({ background: true });
+    return;
+  }
+  if (!document.hidden) {
+    window.setTimeout(() => ensurePlaybackContinuity("foreground"), 250);
   }
 }
 
@@ -3540,6 +3683,7 @@ function configureMediaSession() {
 
 function resumeFromMediaSession() {
   state.userStarted = true;
+  state.shouldBePlaying = true;
   const deck = getActiveDeck();
   if (!state.current || !deck.src) {
     playNext({ user: true, reason: "media-session-play" });
@@ -3548,13 +3692,14 @@ function resumeFromMediaSession() {
   deck.play().then(() => {
     setPlaying(true);
     setStatus("正在播放");
-  }).catch(() => {
-    elements.autoplayGate.hidden = false;
-    setStatus("需要回到页面点击启动声音");
+  }).catch((error) => {
+    handlePlaybackRequestFailure(error, "media-session");
   });
 }
 
 function pauseFromMediaSession() {
+  state.shouldBePlaying = false;
+  clearAudioRecovery();
   state.decks.forEach((deck) => deck.pause());
   setPlaying(false);
   setStatus("已暂停");
@@ -3605,6 +3750,7 @@ function updateMediaSessionPosition(current, duration) {
 
 function startFromGate() {
   state.userStarted = true;
+  state.shouldBePlaying = true;
   elements.autoplayGate.hidden = true;
   if (!state.current && !state.queue.length && !hasPlaybackScope()) {
     setStatus("先选择 Genre / Mood / Context，再生成播放列表");
@@ -3616,7 +3762,7 @@ function startFromGate() {
     active.play().then(() => {
       setPlaying(true);
       setStatus("正在播放");
-    }).catch(() => playNext({ user: true, reason: "gate", force: true }));
+    }).catch((error) => handlePlaybackRequestFailure(error, "gate"));
     return;
   }
   playNext({ user: true, reason: "gate" });
@@ -3637,53 +3783,377 @@ function maybeAutoMix() {
 
 function handleAudioError(track) {
   const deck = getActiveDeck();
-  if (
-    track
-    && deck.dataset.audioSourceKind === "member"
-    && deck.dataset.fallbackAttempted !== "true"
-    && deck.dataset.audioTrackId === trackId(track)
-  ) {
-    const cachePrefix = `${trackId(track)}:`;
-    Array.from(state.neteaseAudioSourceCache.keys())
-      .filter((key) => key.startsWith(cachePrefix))
-      .forEach((key) => state.neteaseAudioSourceCache.delete(key));
-    const fallbackSource = publicNeteasePlaybackSource(track);
-    state.currentAudioSource = fallbackSource;
-    applyAudioSourceToDeck(deck, fallbackSource);
-    setAudioQualityBadge(fallbackSource, "会员音源连接失败，已自动降级");
-    setStatus("会员音源连接失败，正在降级到 MP3 128K");
-    deck.volume = state.masterVolume;
-    deck.play().then(() => {
-      setPlaying(true);
-      setStatus("正在播放 · MP3 128K 兼容音源");
-    }).catch(() => {
-      state.failedIds.add(track.id);
-      window.setTimeout(() => playNext({ automatic: true, reason: "error", force: true }), 700);
-    });
+  if (!track || !state.shouldBePlaying || state.current !== track || deck.dataset.audioTrackId !== trackId(track)) return;
+  captureAudioRecoveryPosition(track, deck);
+  setPlaying(false);
+  if (!navigator.onLine) {
+    waitForNetworkRecovery(track);
     return;
   }
-  if (track) state.failedIds.add(track.id);
-  setStatus("当前歌曲无法直接播放，正在换下一首");
-  window.setTimeout(() => playNext({ automatic: true, reason: "error", force: true }), 700);
+  scheduleAudioRecovery(track, "error", 300);
+}
+
+function handleAudioBuffering(reason) {
+  const track = state.current;
+  const deck = getActiveDeck();
+  if (!track || !state.shouldBePlaying || state.isMixing) return;
+  if (deck.dataset.audioTrackId !== trackId(track)) return;
+  captureAudioRecoveryPosition(track, deck);
+  if (!navigator.onLine) {
+    waitForNetworkRecovery(track);
+    return;
+  }
+  if (state.audioRecoveryInFlight || state.audioStallTimer) return;
+  setStatus(reason === "stalled" ? "音源连接停滞，正在等待恢复" : "网络波动，正在缓冲当前歌曲");
+  state.audioStallTimer = window.setTimeout(() => {
+    state.audioStallTimer = null;
+    if (!state.shouldBePlaying || state.isMixing || state.current !== track) return;
+    scheduleAudioRecovery(track, reason, 0);
+  }, AUDIO_STALL_GRACE_MS);
+}
+
+function handleAudioPlaying(deck) {
+  if (!state.shouldBePlaying) {
+    deck.pause();
+    return;
+  }
+  clearAudioStallTimer();
+  state.audioAwaitingOnline = false;
+  state.audioHealthySince = Date.now();
+  setPlaying(true);
+  if (state.audioRecoveryAttempt > 0) {
+    setStatus(`已恢复当前歌曲 · ${formatTime(deck.currentTime || state.audioRecoveryPosition)}`);
+  }
+}
+
+function recordAudioProgress(deck) {
+  if (!state.current || deck.dataset.audioTrackId !== trackId(state.current)) return;
+  const position = Number(deck.currentTime);
+  if (!Number.isFinite(position) || position < 0) return;
+  const currentTrackId = trackId(state.current);
+  const moved = state.lastAudioTrackId !== currentTrackId
+    || Math.abs(position - state.lastAudioPosition) >= 0.02;
+  state.lastAudioTrackId = currentTrackId;
+  state.lastAudioPosition = position;
+  if (!moved) return;
+  state.lastAudioProgressAt = Date.now();
+  clearAudioStallTimer();
+  if (
+    state.audioRecoveryAttempt > 0
+    && !deck.paused
+    && state.isPlaying
+    && state.audioHealthySince
+    && Date.now() - state.audioHealthySince >= AUDIO_RECOVERY_HEALTHY_MS
+  ) {
+    resetAudioRecoveryAttempts();
+    setStatus(document.hidden ? "后台播放中" : "正在播放");
+  }
+}
+
+function scheduleAudioRecovery(track, reason = "error", delayOverride = null) {
+  const id = trackId(track);
+  if (!id || !state.shouldBePlaying || state.isMixing) return;
+  captureAudioRecoveryPosition(track, getActiveDeck());
+  if (!navigator.onLine) {
+    waitForNetworkRecovery(track);
+    return;
+  }
+  if (state.audioRecoveryInFlight) return;
+  if (state.audioRecoveryTimer && state.audioRecoveryTrackId === id) return;
+  clearAudioRecoveryTimer();
+  state.audioRecoveryTrackId = id;
+  const retryIndex = Math.min(state.audioRecoveryAttempt, AUDIO_RECOVERY_RETRY_DELAYS_MS.length - 1);
+  const delay = Number.isFinite(delayOverride)
+    ? Math.max(0, delayOverride)
+    : AUDIO_RECOVERY_RETRY_DELAYS_MS[retryIndex];
+  state.audioRecoveryTimer = window.setTimeout(() => {
+    state.audioRecoveryTimer = null;
+    if (!state.current || trackId(state.current) !== id || state.isMixing || !state.shouldBePlaying) return;
+    recoverCurrentTrack(track, reason);
+  }, delay);
+}
+
+async function recoverCurrentTrack(track, reason) {
+  const id = trackId(track);
+  if (!id || state.audioRecoveryInFlight || !state.shouldBePlaying || state.isMixing) return;
+  if (!navigator.onLine) {
+    waitForNetworkRecovery(track);
+    return;
+  }
+  if (state.audioRecoveryAttempt >= AUDIO_RECOVERY_MAX_ATTEMPTS) {
+    skipAfterRecoveryFailure(track);
+    return;
+  }
+
+  const deck = getActiveDeck();
+  const resumeAt = captureAudioRecoveryPosition(track, deck);
+  const wasMemberSource = deck.dataset.audioSourceKind === "member" || Boolean(state.currentAudioSource?.member);
+  const attempt = state.audioRecoveryAttempt + 1;
+  const sourceRequestId = ++state.audioSourceRequestId;
+  state.audioRecoveryAttempt = attempt;
+  state.audioRecoveryInFlight = true;
+  state.audioRecoveryTrackId = id;
+  state.audioHealthySince = 0;
+  setPlaying(false);
+  setStatus(`连接中断，正在恢复当前歌曲 (${attempt}/${AUDIO_RECOVERY_MAX_ATTEMPTS})`);
+
+  try {
+    let source;
+    if (wasMemberSource && attempt >= 2) {
+      source = publicNeteasePlaybackSource(track);
+    } else {
+      if (wasMemberSource) clearNeteaseSourceCacheForTrack(track);
+      source = await resolveNeteasePlaybackSource(track);
+    }
+    if (!isCurrentAudioRequest(track, sourceRequestId)) return;
+
+    state.currentAudioSource = source;
+    applyAudioSourceToDeck(deck, source);
+    deck.volume = state.masterVolume;
+    setDeckPlaybackRate(deck, 1);
+    setAudioQualityBadge(source, attempt > 1 && !source.member ? "恢复时已切换到兼容音源" : "正在恢复当前歌曲");
+    await waitForAudioMetadata(deck, id, AUDIO_RECOVERY_METADATA_TIMEOUT_MS);
+    if (!isCurrentAudioRequest(track, sourceRequestId)) return;
+    restoreAudioPosition(deck, resumeAt);
+    await deck.play();
+    if (!isCurrentAudioRequest(track, sourceRequestId)) return;
+
+    state.audioRecoveryInFlight = false;
+    state.audioAwaitingOnline = false;
+    state.audioHealthySince = Date.now();
+    state.failedIds.delete(id);
+    elements.autoplayGate.hidden = true;
+    setPlaying(true);
+    setStatus(`已恢复当前歌曲 · 从 ${formatTime(resumeAt)} 继续`);
+  } catch (error) {
+    if (!isCurrentAudioRequest(track, sourceRequestId)) return;
+    state.audioRecoveryInFlight = false;
+    if (isAutoplayRejection(error)) {
+      elements.autoplayGate.hidden = false;
+      setStatus("音源已恢复，需要点击一次继续播放");
+      return;
+    }
+    if (!navigator.onLine) {
+      waitForNetworkRecovery(track);
+      return;
+    }
+    if (attempt >= AUDIO_RECOVERY_MAX_ATTEMPTS) {
+      skipAfterRecoveryFailure(track);
+      return;
+    }
+    scheduleAudioRecovery(track, reason);
+  } finally {
+    if (sourceRequestId === state.audioSourceRequestId && state.audioRecoveryInFlight) {
+      state.audioRecoveryInFlight = false;
+    }
+  }
+}
+
+function waitForAudioMetadata(deck, expectedTrackId, timeoutMs) {
+  if (deck.dataset.audioTrackId !== expectedTrackId) return Promise.resolve(false);
+  if (deck.readyState >= 1) return Promise.resolve(true);
+  return new Promise((resolve) => {
+    let settled = false;
+    const finish = (ready) => {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(timer);
+      deck.removeEventListener("loadedmetadata", onMetadata);
+      deck.removeEventListener("error", onError);
+      resolve(ready);
+    };
+    const onMetadata = () => finish(true);
+    const onError = () => finish(false);
+    const timer = window.setTimeout(() => finish(false), timeoutMs);
+    deck.addEventListener("loadedmetadata", onMetadata, { once: true });
+    deck.addEventListener("error", onError, { once: true });
+  });
+}
+
+function restoreAudioPosition(deck, position) {
+  if (!Number.isFinite(position) || position <= 0) return;
+  const duration = Number(deck.duration);
+  const target = Number.isFinite(duration) && duration > 1
+    ? clamp(position, 0, duration - 0.5)
+    : position;
+  try {
+    deck.currentTime = target;
+    state.lastAudioPosition = target;
+  } catch (error) {
+    // Some non-seekable streams can only restart from the beginning.
+  }
+}
+
+function captureAudioRecoveryPosition(track, deck) {
+  const id = trackId(track);
+  const deckPosition = Number(deck?.currentTime);
+  const remembered = state.lastAudioTrackId === id ? Number(state.lastAudioPosition) : 0;
+  const position = Number.isFinite(deckPosition) && deckPosition > 0 ? deckPosition : remembered;
+  if (state.audioRecoveryTrackId !== id || state.audioRecoveryPosition <= 0) {
+    state.audioRecoveryPosition = Math.max(0, (Number.isFinite(position) ? position : 0) - AUDIO_RECOVERY_REWIND_SECONDS);
+  }
+  state.audioRecoveryTrackId = id;
+  return state.audioRecoveryPosition;
+}
+
+function isCurrentAudioRequest(track, requestId) {
+  return requestId === state.audioSourceRequestId
+    && state.current === track
+    && trackId(state.current) === trackId(track)
+    && state.shouldBePlaying;
+}
+
+function clearNeteaseSourceCacheForTrack(track) {
+  const cachePrefix = `${trackId(track)}:`;
+  Array.from(state.neteaseAudioSourceCache.keys())
+    .filter((key) => key.startsWith(cachePrefix))
+    .forEach((key) => state.neteaseAudioSourceCache.delete(key));
+}
+
+function skipAfterRecoveryFailure(track) {
+  const id = trackId(track);
+  if (!id || !state.current || trackId(state.current) !== id || !state.shouldBePlaying) return;
+  state.audioRecoveryInFlight = false;
+  state.failedIds.add(id);
+  setStatus("当前歌曲连续恢复失败，正在换下一首");
+  clearAudioRecoveryTimer();
+  state.audioRecoveryTrackId = id;
+  state.audioRecoveryTimer = window.setTimeout(() => {
+    state.audioRecoveryTimer = null;
+    if (!state.current || trackId(state.current) !== id || state.isMixing || !state.shouldBePlaying) return;
+    playNext({ automatic: true, reason: "recovery-exhausted", force: true });
+  }, 900);
+}
+
+function waitForNetworkRecovery(track) {
+  clearAudioRecoveryTimer();
+  clearAudioStallTimer();
+  if (state.audioRecoveryInFlight) state.audioSourceRequestId += 1;
+  state.audioRecoveryInFlight = false;
+  state.audioAwaitingOnline = true;
+  state.audioRecoveryTrackId = trackId(track);
+  setPlaying(false);
+  setStatus(`网络已断开，已保留 ${formatTime(state.audioRecoveryPosition)} 的播放进度`);
+}
+
+function handleNetworkOffline() {
+  if (!state.current || !state.shouldBePlaying) return;
+  captureAudioRecoveryPosition(state.current, getActiveDeck());
+  waitForNetworkRecovery(state.current);
+}
+
+function handleNetworkOnline() {
+  if (!state.current || !state.shouldBePlaying) return;
+  setStatus("网络已恢复，正在继续当前歌曲");
+  ensurePlaybackContinuity("online");
+}
+
+function ensurePlaybackContinuity(reason) {
+  if (!state.current || !state.shouldBePlaying || state.isMixing) return;
+  const deck = getActiveDeck();
+  if (deck.ended) {
+    playNext({ automatic: true, reason: `${reason}-ended`, force: true });
+    return;
+  }
+  if (deck.dataset.audioTrackId !== trackId(state.current) || deck.error) {
+    scheduleAudioRecovery(state.current, reason, 0);
+    return;
+  }
+  const progressFresh = state.lastAudioTrackId === trackId(state.current)
+    && Date.now() - state.lastAudioProgressAt < 3000;
+  if (!deck.paused && deck.readyState >= 3 && progressFresh) {
+    state.audioAwaitingOnline = false;
+    clearAudioStallTimer();
+    setPlaying(true);
+    setStatus(document.hidden ? "后台播放中" : "正在播放");
+    return;
+  }
+  if (deck.paused && !deck.ended && !deck.error) {
+    deck.play().then(() => {
+      state.audioAwaitingOnline = false;
+      setPlaying(true);
+      setStatus(document.hidden ? "后台播放中" : "正在播放");
+    }).catch((error) => handlePlaybackRequestFailure(error, reason));
+    return;
+  }
+  scheduleAudioRecovery(state.current, reason, 0);
+}
+
+function checkAudioContinuity() {
+  if (document.hidden || !state.current || !state.shouldBePlaying || state.isMixing) return;
+  if (state.audioRecoveryInFlight || state.audioRecoveryTimer || state.audioStallTimer) return;
+  const deck = getActiveDeck();
+  if (deck.seeking || deck.ended) return;
+  const position = Number(deck.currentTime);
+  if (Number.isFinite(position) && Math.abs(position - state.lastAudioPosition) >= 0.1) {
+    recordAudioProgress(deck);
+    return;
+  }
+  const lastHealthyAt = Math.max(state.lastAudioProgressAt || 0, state.audioHealthySince || 0);
+  if (!lastHealthyAt || Date.now() - lastHealthyAt < AUDIO_PROGRESS_WATCHDOG_MS) return;
+  if (deck.paused || deck.readyState < 3 || !state.isPlaying) {
+    ensurePlaybackContinuity("watchdog");
+    return;
+  }
+  scheduleAudioRecovery(state.current, "watchdog", 0);
+}
+
+function handlePlaybackRequestFailure(error, reason) {
+  if (isAutoplayRejection(error)) {
+    elements.autoplayGate.hidden = false;
+    setStatus("需要点击一次继续播放");
+    return;
+  }
+  if (state.current && state.shouldBePlaying) scheduleAudioRecovery(state.current, reason, 0);
+}
+
+function clearAudioRecoveryTimer() {
+  if (state.audioRecoveryTimer) window.clearTimeout(state.audioRecoveryTimer);
+  state.audioRecoveryTimer = null;
+}
+
+function clearAudioStallTimer() {
+  if (state.audioStallTimer) window.clearTimeout(state.audioStallTimer);
+  state.audioStallTimer = null;
+}
+
+function resetAudioRecoveryAttempts() {
+  state.audioRecoveryAttempt = 0;
+  state.audioRecoveryPosition = 0;
+  state.audioRecoveryTrackId = trackId(state.current);
+  state.audioHealthySince = 0;
+}
+
+function clearAudioRecovery() {
+  if (state.audioRecoveryInFlight) state.audioSourceRequestId += 1;
+  clearAudioRecoveryTimer();
+  clearAudioStallTimer();
+  state.audioRecoveryTrackId = "";
+  state.audioRecoveryAttempt = 0;
+  state.audioRecoveryInFlight = false;
+  state.audioRecoveryPosition = 0;
+  state.audioAwaitingOnline = false;
+  state.audioHealthySince = 0;
 }
 
 function togglePlayPause() {
   state.userStarted = true;
   const active = getActiveDeck();
   if (!state.current) {
+    state.shouldBePlaying = true;
     playNext({ user: true, reason: "play" });
     return;
   }
 
   if (active.paused) {
+    state.shouldBePlaying = true;
     active.play().then(() => {
       setPlaying(true);
       setStatus("正在播放");
-    }).catch(() => {
-      elements.autoplayGate.hidden = false;
-      setStatus("需要点击启动声音");
-    });
+    }).catch((error) => handlePlaybackRequestFailure(error, "play-button"));
   } else {
+    state.shouldBePlaying = false;
+    clearAudioRecovery();
     state.decks.forEach((deck) => deck.pause());
     setStatus("已暂停");
     setPlaying(false);
@@ -3779,8 +4249,21 @@ function seekAudio(event) {
   const active = getActiveDeck();
   if (!Number.isFinite(active.duration)) return;
   const rect = elements.progressTrack.getBoundingClientRect();
+  if (rect.width <= 0) return;
   const ratio = Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width));
   active.currentTime = ratio * active.duration;
+}
+
+function seekAudioWithKeyboard(event) {
+  if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+  const active = getActiveDeck();
+  if (!Number.isFinite(active.duration) || active.duration <= 0) return;
+  event.preventDefault();
+  if (event.key === 'Home') active.currentTime = 0;
+  if (event.key === 'End') active.currentTime = active.duration;
+  if (event.key === 'ArrowLeft') active.currentTime = clamp((active.currentTime || 0) - 5, 0, active.duration);
+  if (event.key === 'ArrowRight') active.currentTime = clamp((active.currentTime || 0) + 5, 0, active.duration);
+  updateProgress();
 }
 
 function updateProgress() {
@@ -3791,6 +4274,10 @@ function updateProgress() {
   elements.durationTime.textContent = Number.isFinite(duration) && duration > 0 ? formatTime(duration) : "--:--";
   const percent = Number.isFinite(duration) && duration > 0 ? (current / duration) * 100 : 0;
   elements.progressBar.style.width = `${Math.min(100, Math.max(0, percent))}%`;
+  elements.progressTrack.setAttribute("aria-valuemax", String(Math.max(0, Math.round(duration))));
+  elements.progressTrack.setAttribute("aria-valuenow", String(Math.max(0, Math.round(current))));
+  elements.progressTrack.setAttribute("aria-valuetext", `${formatTime(current)} / ${duration > 0 ? formatTime(duration) : "--:--"}`);
+  elements.progressTrack.setAttribute("aria-disabled", String(!(Number.isFinite(duration) && duration > 0)));
   if (elements.miniProgressBar) {
     elements.miniProgressBar.style.width = `${Math.min(100, Math.max(0, percent))}%`;
   }
@@ -3930,6 +4417,7 @@ function updateLoveButton() {
   [elements.loveCurrentBtn, elements.miniLoveBtn].filter(Boolean).forEach((button) => {
     button.classList.toggle("active", loved);
     button.setAttribute("aria-pressed", String(loved));
+    button.setAttribute("aria-label", loved ? "取消当前歌曲红心" : "红心收藏当前歌曲");
     button.textContent = loved ? "♥" : "♡";
     button.title = loved ? "取消红心" : "红心收藏当前歌曲";
   });
@@ -4586,6 +5074,7 @@ async function activateProfile(rawUsername, options = {}) {
     return;
   }
 
+  const requestId = ++state.profileRequestId;
   state.profileUsername = username;
   elements.profileUsernameInput.value = username;
   writeLocalPreference(PROFILE_USERNAME_STORAGE_KEY, username);
@@ -4601,6 +5090,7 @@ async function activateProfile(rawUsername, options = {}) {
   setProfileMessage(`正在读取 @${username} 的红心歌单...`, "同步中");
   try {
     const profile = await fetchLovedProfile(username);
+    if (requestId !== state.profileRequestId || state.profileUsername !== username) return;
     state.lovedIds = new Set((profile.lovedIds || []).map(String).filter(Boolean));
     saveLovedIds({ cloud: false });
     renderAll();
@@ -4608,12 +5098,14 @@ async function activateProfile(rawUsername, options = {}) {
     setStatus(`已载入 @${username} 的红心歌单`);
     if (state.lovedOnly) fillQueue(true);
   } catch (error) {
+    if (requestId !== state.profileRequestId || state.profileUsername !== username) return;
     const fallback = options.restore ? "继续使用上次缓存在本机的红心。" : "先使用本机缓存，云端稍后可重试。";
     setProfileMessage(`云端读取失败：${error.message}。${fallback}`, `@${username}`);
   }
 }
 
 function useLocalProfile() {
+  state.profileRequestId += 1;
   state.profileUsername = "";
   removeLocalPreference(PROFILE_USERNAME_STORAGE_KEY);
   if (elements.accountPanel) elements.accountPanel.open = true;
@@ -4637,34 +5129,46 @@ async function fetchLovedProfile(username) {
 }
 
 function scheduleCloudLovedSave() {
-  if (!state.profileUsername || !canUseCloudStorage()) return;
+  const username = state.profileUsername;
+  if (!username || !canUseCloudStorage()) return;
+  state.pendingCloudLovedSaves.set(username, Array.from(state.lovedIds));
   window.clearTimeout(state.profileSaveTimer);
-  setProfileMessage("红心变更待同步...", "待同步");
+  if (state.profileUsername === username) setProfileMessage("红心变更待同步...", "待同步");
   state.profileSaveTimer = window.setTimeout(saveCloudLovedProfile, CLOUD_SAVE_DEBOUNCE_MS);
 }
 
 async function saveCloudLovedProfile() {
-  if (!state.profileUsername || state.profileSaving) return;
+  if (state.profileSaving || !state.pendingCloudLovedSaves.size) return;
+  const [username, lovedIds] = state.pendingCloudLovedSaves.entries().next().value;
+  state.pendingCloudLovedSaves.delete(username);
   state.profileSaving = true;
-  setProfileMessage("正在保存红心...", "同步中");
+  if (state.profileUsername === username) setProfileMessage("正在保存红心...", "同步中");
   try {
     const response = await fetch(CLOUD_LOVED_ENDPOINT, {
       method: "POST",
       headers: { "Content-Type": "application/json", "Accept": "application/json" },
       body: JSON.stringify({
-        username: state.profileUsername,
-        lovedIds: Array.from(state.lovedIds),
+        username,
+        lovedIds,
       }),
     });
     if (!response.ok) {
       const payload = await readJsonSafely(response);
       throw new Error(payload.error || `HTTP ${response.status}`);
     }
-    setProfileMessage(`@${state.profileUsername} 的红心已云端保存。`, `@${state.profileUsername}`);
+    if (state.profileUsername === username) {
+      setProfileMessage(`@${username} 的红心已云端保存。`, `@${username}`);
+    }
   } catch (error) {
-    setProfileMessage(`云端保存失败：${error.message}。本机已保存。`, `@${state.profileUsername}`);
+    if (state.profileUsername === username) {
+      setProfileMessage(`云端保存失败：${error.message}。本机已保存。`, `@${username}`);
+    }
   } finally {
     state.profileSaving = false;
+    if (state.pendingCloudLovedSaves.size) {
+      window.clearTimeout(state.profileSaveTimer);
+      state.profileSaveTimer = window.setTimeout(saveCloudLovedProfile, 0);
+    }
   }
 }
 
@@ -4800,6 +5304,11 @@ function normalizeRemoteAudioUrl(value) {
   return window.location.protocol === "https:" && url.startsWith("http://")
     ? `https://${url.slice(7)}`
     : url;
+}
+
+function normalizeRemoteImageUrl(value) {
+  const url = String(value || "").trim();
+  return url.startsWith("http://") ? `https://${url.slice(7)}` : url;
 }
 
 function applyAudioSourceToDeck(deck, source) {

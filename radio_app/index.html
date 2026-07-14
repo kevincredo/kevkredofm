@@ -8,7 +8,7 @@
     <meta name="apple-mobile-web-app-title" content="Echo Room FM">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Echo Room FM</title>
-    <link rel="stylesheet" href="./styles.css?v=20260714-cloud-audio-v2">
+    <link rel="stylesheet" href="./styles.css?v=20260714-audio-recovery-v2">
   </head>
   <body>
     <div class="backdrop" id="backdrop"></div>
@@ -196,12 +196,12 @@
             </div>
             <div id="selectedStylesSummary" class="mix-summary" role="status" aria-live="polite">0 selected</div>
             <div id="facetTabs" class="facet-tabs" role="tablist" aria-label="标签维度">
-              <button class="facet-tab active" type="button" data-facet="genre" role="tab" aria-selected="true">GENRE</button>
-              <button class="facet-tab" type="button" data-facet="mood" role="tab" aria-selected="false">MOOD</button>
-              <button class="facet-tab" type="button" data-facet="context" role="tab" aria-selected="false">CONTEXT</button>
+              <button id="facetTabGenre" class="facet-tab active" type="button" data-facet="genre" role="tab" aria-controls="styleFilters" aria-selected="true" tabindex="0">GENRE</button>
+              <button id="facetTabMood" class="facet-tab" type="button" data-facet="mood" role="tab" aria-controls="styleFilters" aria-selected="false" tabindex="-1">MOOD</button>
+              <button id="facetTabContext" class="facet-tab" type="button" data-facet="context" role="tab" aria-controls="styleFilters" aria-selected="false" tabindex="-1">CONTEXT</button>
             </div>
             <div id="selectedFacetList" class="selected-facet-list" aria-label="已选择标签"></div>
-            <div id="styleFilters" class="filter-list taxonomy-filter-list"></div>
+            <div id="styleFilters" class="filter-list taxonomy-filter-list" role="tabpanel" aria-labelledby="facetTabGenre"></div>
             <div class="selector-actions">
               <button id="generateMixBtn" class="text-button strong selector-button" type="button">生成播放列表</button>
               <button id="saveMixBtn" class="text-button selector-button save-mix-button" type="button">保存组合</button>
@@ -245,11 +245,11 @@
                   <span>Vocal-friendly</span>
                 </label>
                 <div id="programFacetTabs" class="program-facet-tabs" role="tablist" aria-label="节目标签维度">
-                  <button class="facet-tab active" type="button" data-program-facet="genre" role="tab" aria-selected="true">GENRE</button>
-                  <button class="facet-tab" type="button" data-program-facet="mood" role="tab" aria-selected="false">MOOD</button>
-                  <button class="facet-tab" type="button" data-program-facet="context" role="tab" aria-selected="false">CONTEXT</button>
+                  <button id="programFacetTabGenre" class="facet-tab active" type="button" data-program-facet="genre" role="tab" aria-controls="programTagEditor" aria-selected="true" tabindex="0">GENRE</button>
+                  <button id="programFacetTabMood" class="facet-tab" type="button" data-program-facet="mood" role="tab" aria-controls="programTagEditor" aria-selected="false" tabindex="-1">MOOD</button>
+                  <button id="programFacetTabContext" class="facet-tab" type="button" data-program-facet="context" role="tab" aria-controls="programTagEditor" aria-selected="false" tabindex="-1">CONTEXT</button>
                 </div>
-                <div id="programTagEditor" class="program-tag-editor" aria-label="节目标签"></div>
+                <div id="programTagEditor" class="program-tag-editor" role="tabpanel" aria-labelledby="programFacetTabGenre" aria-label="节目标签"></div>
                 <div class="program-editor-actions">
                   <button id="saveProgramBtn" class="text-button strong" type="button">保存预设</button>
                   <button id="resetProgramBtn" class="text-button" type="button">恢复默认</button>
@@ -342,7 +342,7 @@
               <span id="elapsedTime">00:00</span>
               <span id="durationTime">00:00</span>
             </div>
-            <div class="progress-track" id="progressTrack">
+            <div class="progress-track" id="progressTrack" role="slider" tabindex="0" aria-label="播放进度" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0" aria-valuetext="00:00 / --:--" aria-disabled="true">
               <div id="progressBar"></div>
             </div>
           </div>
@@ -435,7 +435,7 @@
 
     <audio id="audioDeckA" preload="auto" autoplay></audio>
     <audio id="audioDeckB" preload="auto"></audio>
-    <script src="./library-data.js?v=20260714-live-sound-v2"></script>
-    <script src="./app.js?v=20260714-cloud-audio-v2"></script>
+    <script src="./library-data.js?v=20260714-audio-recovery-v2"></script>
+    <script src="./app.js?v=20260714-audio-recovery-v2"></script>
   </body>
 </html>

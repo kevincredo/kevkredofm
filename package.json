@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "python3 radio_app/build_portable.py",
+    "test:audio-recovery": "node radio_app/test_audio_recovery.mjs",
     "metadata:enrich": "python3 radio_app/enrich_catalog.py",
     "metadata:sample": "python3 radio_app/enrich_catalog.py --limit 3 --workers 2 --no-audio-analysis --musicbrainz-all",
     "metadata:full": ".venv-enrichment/bin/python radio_app/enrich_catalog.py --workers 5 --refresh",

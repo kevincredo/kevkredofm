@@ -19,11 +19,12 @@ export default async (request) => {
   }
 
   try {
-    if (request.method === "GET") return handleGet(request);
-    if (request.method === "POST") return handlePost(request);
+    if (request.method === "GET") return await handleGet(request);
+    if (request.method === "POST") return await handlePost(request);
     return json({ error: "Method not allowed" }, 405);
   } catch (error) {
-    return json({ error: error.message || "Unexpected server error" }, 500);
+    const status = Number(error.status) || (error instanceof SyntaxError ? 400 : 500);
+    return json({ error: error.message || "Unexpected server error" }, status);
   }
 };
 
@@ -85,7 +86,9 @@ function normalizeUsername(username) {
 
 function assertUsername(username) {
   if (!USERNAME_PATTERN.test(username)) {
-    throw new Error("Invalid username. Use 2-24 lowercase letters, numbers, underscores, or hyphens.");
+    const error = new Error("Invalid username. Use 2-24 lowercase letters, numbers, underscores, or hyphens.");
+    error.status = 400;
+    throw error;
   }
 }
 
