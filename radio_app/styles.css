@@ -409,6 +409,11 @@ body:not(.is-playing) .on-air {
   border-radius: 6px;
 }
 
+.program-button:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+  min-height: 68px;
+}
+
 .program-button:hover {
   border-color: rgba(255, 255, 255, 0.22);
   transform: none;

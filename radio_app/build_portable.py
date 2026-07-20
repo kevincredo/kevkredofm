@@ -166,7 +166,7 @@ def build_netlify_project() -> Path:
   (NETLIFY_PROJECT / "radio_app").mkdir(parents=True)
   (NETLIFY_PROJECT / "netlify" / "functions").mkdir(parents=True)
 
-  for name in ["index.html", "styles.css", "app.js", "library-data.js", "library.json", "netease-local-helper.mjs", "test_audio_recovery.mjs"]:
+  for name in ["index.html", "styles.css", "app.js", "library-data.js", "library.json", "netease-local-helper.mjs", "test_audio_recovery.mjs", "test_program_presets.mjs"]:
     shutil.copy2(ROOT / name, NETLIFY_PROJECT / "radio_app" / name)
   copy_assets(NETLIFY_PROJECT / "radio_app")
   for function_name in ["loved.mjs", "netease.mjs"]:

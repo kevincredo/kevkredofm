@@ -376,72 +376,80 @@ const GENRE_MATCH_GROUPS = {
   electronica: new Set(["electronica", "indie_dance", "synthwave", "breakbeat", "garage", "drum_bass"]),
 };
 
+const PROGRAM_BLOCKED_GENRES = new Set([
+  "hiphop_rap",
+  "techno",
+  "acid_techno",
+  "drum_bass",
+  "edm",
+]);
+const PROGRAM_BLOCKED_ARTISTS = new Set([
+  "bassnectar",
+  "chase & status",
+  "excision",
+  "flux pavilion",
+  "griz",
+  "knife party",
+  "modestep",
+  "nero",
+  "netsky",
+  "noisia",
+  "pendulum",
+  "rezz",
+  "rusko",
+  "skrillex",
+  "sub focus",
+  "the glitch mob",
+  "virtual riot",
+  "zeds dead",
+]);
+const PROGRAM_BLOCKED_STYLE_PATTERN = /\b(hip[\s_-]?hop|rap|trap|drill|dubstep|brostep|riddim|drumstep|deep[\s_-]?techno|hard[\s_-]?techno|industrial[\s_-]?techno|raw[\s_-]?techno|peak[\s_-]?time|hardstyle|gabber|big[\s_-]?room|bass[\s_-]?music|rave)\b/i;
+
 const RADIO_PROGRAMS = [
   {
     id: "day_cafe",
     name: "DAY CAFÉ",
     schedule: "10:00–18:00",
-    bpmLabel: "82–118 BPM",
-    minBpm: 82,
+    bpmLabel: "84–118 BPM",
+    minBpm: 84,
     maxBpm: 118,
+    minEnergy: 0.32,
+    maxEnergy: 0.68,
     vocalPreference: true,
     facets: {
-      genre: ["pop", "rnb_soul", "funk_soul", "jazz", "nu_disco", "indie_rock", "deep_house", "house", "latin_world"],
-      mood: ["warm", "groovy", "playful", "romantic", "chill"],
+      genre: ["pop", "rnb_soul", "funk_soul", "jazz", "nu_disco", "indie_rock", "house", "latin_world"],
+      mood: ["warm", "groovy", "playful", "romantic"],
       context: ["lounge", "dinner", "summer", "travel"],
-    },
-  },
-  {
-    id: "blue_hour",
-    name: "BLUE HOUR",
-    schedule: "18:00–21:00",
-    bpmLabel: "90–116 BPM",
-    minBpm: 90,
-    maxBpm: 116,
-    facets: {
-      genre: ["deep_house", "melodic_house", "afro_house", "nu_disco", "indie_dance", "electronica", "downtempo"],
-      mood: ["warm", "groovy", "dreamy", "romantic", "melancholic"],
-      context: ["sunset", "lounge", "dinner", "night_drive"],
     },
   },
   {
     id: "cocktail",
     name: "COCKTAIL",
-    schedule: "21:00–23:00",
-    bpmLabel: "115–120 BPM",
-    minBpm: 115,
-    maxBpm: 120,
+    schedule: "18:00–23:00",
+    bpmLabel: "96–122 BPM",
+    minBpm: 96,
+    maxBpm: 122,
+    minEnergy: 0.34,
+    maxEnergy: 0.70,
     facets: {
-      genre: ["house", "deep_house", "nu_disco", "indie_dance", "afro_house", "melodic_house", "tech_house"],
-      mood: ["groovy", "warm", "playful", "euphoric"],
-      context: ["lounge", "club", "night_drive"],
+      genre: ["house", "deep_house", "nu_disco", "indie_dance", "afro_house", "melodic_house", "funk_soul", "jazz", "latin_world"],
+      mood: ["groovy", "warm", "playful", "romantic", "dreamy", "hypnotic"],
+      context: ["sunset", "lounge", "dinner", "night_drive", "club"],
     },
   },
   {
     id: "after_hours",
     name: "AFTER HOURS",
     schedule: "23:00–10:00",
-    bpmLabel: "75–118 BPM",
-    minBpm: 70,
+    bpmLabel: "72–118 BPM",
+    minBpm: 72,
     maxBpm: 118,
+    minEnergy: 0.20,
+    maxEnergy: 0.64,
     facets: {
-      genre: ["ambient", "downtempo", "electronica", "minimal", "indie_dance", "synthwave", "lofi"],
+      genre: ["deep_house", "melodic_house", "afro_house", "indie_dance", "electronica", "downtempo", "ambient", "synthwave", "lofi", "jazz"],
       mood: ["dark", "hypnotic", "atmospheric", "dreamy", "chill"],
-      context: ["afterhours", "night_drive", "focus"],
-    },
-  },
-  {
-    id: "peak_crowd",
-    name: "PEAK CROWD",
-    schedule: "MANUAL",
-    bpmLabel: "125+ BPM",
-    minBpm: 125,
-    maxBpm: Infinity,
-    noisePolicy: "allow_high",
-    facets: {
-      genre: ["house", "tech_house", "techno", "acid_techno", "edm", "progressive_house", "melodic_house", "afro_house", "indie_dance", "drum_bass"],
-      mood: ["energetic", "euphoric", "hypnotic"],
-      context: ["club", "workout"],
+      context: ["afterhours", "night_drive", "lounge", "focus"],
     },
   },
 ];
@@ -486,6 +494,8 @@ const NETEASE_HELPER_TOKEN_SESSION_KEY = "echo-room-fm-netease-helper-token-v1";
 const AUTO_PROGRAM_STORAGE_KEY = "echo-room-fm-auto-program";
 const ACTIVE_PROGRAM_STORAGE_KEY = "echo-room-fm-active-program";
 const PROGRAM_OVERRIDES_STORAGE_KEY = "echo-room-fm-program-overrides";
+const PROGRAM_PRESET_VERSION_STORAGE_KEY = "echo-room-fm-program-preset-version";
+const PROGRAM_PRESET_VERSION = "three-period-bar-safe-20260720";
 const SAVED_MIXES_STORAGE_KEY = "echo-room-fm-saved-mixes-v1";
 const SOUND_PROFILE_STORAGE_KEY = "echo-room-fm-sound-profile-v1";
 const BLOCKED_TRACKS_STORAGE_KEY = "echo-room-fm-user-blocked-track-ids-v1";
@@ -606,6 +616,7 @@ async function init() {
     state.tracks = state.allTracks.filter(isFrontendPlayable);
     state.lovedIds = loadLovedIds();
     state.programOverrides = loadProgramOverrides();
+    applyProgramPresetMigration();
     state.savedMixes = loadSavedMixes();
     Object.assign(state, loadSoundProfile());
     state.blockedIds = loadBlockedIds();
@@ -1271,6 +1282,29 @@ function applyEntryModeMigration() {
   }
 }
 
+function applyProgramPresetMigration() {
+  const validProgramIds = new Set(RADIO_PROGRAMS.map((program) => program.id));
+  const savedVersion = readLocalPreference(PROGRAM_PRESET_VERSION_STORAGE_KEY);
+  if (savedVersion !== PROGRAM_PRESET_VERSION) {
+    state.programOverrides = {};
+    persistProgramOverrides();
+    const activeProgramId = readLocalPreference(ACTIVE_PROGRAM_STORAGE_KEY) || "";
+    if (activeProgramId && !validProgramIds.has(activeProgramId)) {
+      removeLocalPreference(ACTIVE_PROGRAM_STORAGE_KEY);
+    }
+    writeLocalPreference(PROGRAM_PRESET_VERSION_STORAGE_KEY, PROGRAM_PRESET_VERSION);
+    return;
+  }
+
+  const validOverrides = Object.fromEntries(
+    Object.entries(state.programOverrides).filter(([programId]) => validProgramIds.has(programId))
+  );
+  if (Object.keys(validOverrides).length !== Object.keys(state.programOverrides).length) {
+    state.programOverrides = validOverrides;
+    persistProgramOverrides();
+  }
+}
+
 function startProgramClock() {
   if (state.programTimer) window.clearInterval(state.programTimer);
   state.programTimer = window.setInterval(() => {
@@ -1524,7 +1558,9 @@ function normalizeProgramFacets(facets) {
   return ["genre", "mood", "context"].reduce((result, dimension) => {
     if (!Array.isArray(facets[dimension])) return result;
     const allowed = new Set(TAXONOMY[dimension]?.order || []);
-    result[dimension] = uniqueStrings(facets[dimension]).filter((key) => allowed.has(key));
+    result[dimension] = uniqueStrings(facets[dimension]).filter((key) => (
+      allowed.has(key) && (dimension !== "genre" || !PROGRAM_BLOCKED_GENRES.has(key))
+    ));
     return result;
   }, {});
 }
@@ -1561,6 +1597,7 @@ function applyProgramOverride(program) {
   };
   merged.minBpm = Number.isFinite(Number(merged.minBpm)) ? Number(merged.minBpm) : 70;
   merged.maxBpm = Number.isFinite(Number(merged.maxBpm)) ? Number(merged.maxBpm) : Infinity;
+  merged.facets.genre = merged.facets.genre.filter((key) => !PROGRAM_BLOCKED_GENRES.has(key));
   if (merged.maxBpm < merged.minBpm) merged.maxBpm = merged.minBpm;
   merged.bpmLabel = formatProgramBpm(merged);
   return merged;
@@ -1578,16 +1615,36 @@ function getActiveProgram() {
 function getScheduledProgram(now = new Date()) {
   const hour = now.getHours();
   if (hour >= 10 && hour < 18) return getProgramById("day_cafe");
-  if (hour >= 18 && hour < 21) return getProgramById("blue_hour");
-  if (hour >= 21 && hour < 23) return getProgramById("cocktail");
+  if (hour >= 18 && hour < 23) return getProgramById("cocktail");
   return getProgramById("after_hours");
 }
 
 function programFacetMatches(track, program) {
   return ["genre", "mood", "context"].filter((dimension) => {
     const accepted = program.facets[dimension] || [];
-    return accepted.some((key) => facetValueMatches(track, dimension, key));
+    return accepted.some((key) => programFacetValueMatches(track, dimension, key));
   });
+}
+
+function programFacetValueMatches(track, dimension, key) {
+  if (dimension === "genre") {
+    if (key === "jazz") return isStrictJazzTrack(track);
+    return getTrackFacetValues(track, dimension).includes(key);
+  }
+  return facetValueMatches(track, dimension, key);
+}
+
+function programTrackHasBlockedStyle(track) {
+  const artists = (track.artists || []).map((artist) => String(artist || "").trim().toLowerCase());
+  if (artists.some((artist) => PROGRAM_BLOCKED_ARTISTS.has(artist))) return true;
+  if (getTrackFacetValues(track, "genre").some((key) => PROGRAM_BLOCKED_GENRES.has(key))) return true;
+  const styleText = [
+    ...(track.styleTags || []),
+    ...(track.onlineGenres || []),
+    ...(track.onlineTags || []),
+    ...(track.barNoiseRisk?.reasons || []),
+  ].filter(Boolean).join(" ").toLowerCase().replace(/[_-]+/g, " ");
+  return PROGRAM_BLOCKED_STYLE_PATTERN.test(styleText);
 }
 
 function vocalAffinityScore(track) {
@@ -1625,15 +1682,19 @@ function getVocalBalanceScore(track) {
 
 function programMatchesTrack(track, program) {
   if (!trackPassesPlaybackGuards(track)) return false;
+  if (programTrackHasBlockedStyle(track)) return false;
   const bpm = Number(track.estimatedBpm);
   if (!Number.isFinite(bpm) || bpm < program.minBpm || bpm > program.maxBpm) return false;
+  const energy = Number(track.energy);
+  if (Number.isFinite(energy) && Number.isFinite(program.minEnergy) && energy < program.minEnergy) return false;
+  if (Number.isFinite(energy) && Number.isFinite(program.maxEnergy) && energy > program.maxEnergy) return false;
   if (!programAllowsTrackNoise(track, program)) return false;
   if (program.vocalPreference && vocalAffinityScore(track) < 1) return false;
-  return programFacetMatches(track, program).length >= 2;
+  const facetMatches = programFacetMatches(track, program);
+  return facetMatches.includes("genre") && facetMatches.length >= 2;
 }
 
-function programAllowsTrackNoise(track, program) {
-  if (program?.noisePolicy === "allow_high") return true;
+function programAllowsTrackNoise(track) {
   const level = track?.barNoiseRisk?.level || "";
   return level !== "high";
 }
@@ -1704,7 +1765,9 @@ function renderProgramEditor(program = getActiveProgram()) {
 
   const dimension = state.activeProgramEditorFacet;
   const selected = new Set(active.facets[dimension] || []);
-  const filters = state.filterGroups[dimension] || [];
+  const filters = (state.filterGroups[dimension] || []).filter((filter) => (
+    dimension !== "genre" || !PROGRAM_BLOCKED_GENRES.has(filter.key)
+  ));
   elements.programTagEditor.innerHTML = filters.map((filter) => `
     <button
       type="button"
@@ -1730,6 +1793,7 @@ function switchProgramEditorFacet(dimension) {
 function toggleActiveProgramFacet(dimension, key) {
   const program = getActiveProgram();
   if (!program || !program.facets[dimension]) return;
+  if (dimension === "genre" && PROGRAM_BLOCKED_GENRES.has(key)) return;
   const next = cloneProgramConfig(program);
   const values = new Set(next.facets[dimension]);
   if (values.has(key)) {
