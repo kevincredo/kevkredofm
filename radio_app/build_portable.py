@@ -40,6 +40,9 @@ def build_standalone() -> Path:
   index = re.sub(r'    <link rel="stylesheet" href="\./styles\.css\?v=[^"]+">\n', lambda _: f"    <style>\n{css}\n    </style>\n", index)
   index = re.sub(r'    <script src="\./library-data\.js\?v=[^"]+"></script>\n', lambda _: f"    <script>\n{escape_script(library)}\n    </script>\n", index)
   index = re.sub(r'    <script src="\./app\.js\?v=[^"]+"></script>\n', lambda _: f"    <script>\n{escape_script(app)}\n    </script>\n", index)
+  index = re.sub(r'    <link rel="stylesheet" href="\./room\.css\?v=[^"]+">\n', lambda _: f"    <style>\n{read_text(ROOT / 'room.css')}\n    </style>\n", index)
+  for name in ["transition-engine.js", "room-ui.js", "assets/lucide.min.js"]:
+    index = re.sub(r'    <script src="\./' + re.escape(name) + r'(?:\?v=[^"]+)?"></script>\n', lambda _, name=name: f"    <script>\n{escape_script(read_text(ROOT / name))}\n    </script>\n", index)
   index = index.replace(f'src="./{LOGO_ASSET}"', f'src="{logo_data_url}"')
   index = index.replace("<title>Echo Room FM</title>", "<title>Echo Room FM Portable</title>")
 
@@ -53,7 +56,7 @@ def build_site() -> Path:
     shutil.rmtree(SITE)
   SITE.mkdir(parents=True)
 
-  for name in ["index.html", "styles.css", "app.js", "library-data.js", "library.json", "netease-local-helper.mjs"]:
+  for name in ["index.html", "styles.css", "room.css", "room-ui.js", "transition-engine.js", "app.js", "library-data.js", "library.json", "netease-local-helper.mjs"]:
     shutil.copy2(ROOT / name, SITE / name)
   copy_assets(SITE)
 
@@ -76,6 +79,10 @@ const APP_SHELL = [
   "./",
   "./index.html",
   "./styles.css?v=__CACHE_VERSION__",
+  "./room.css?v=__CACHE_VERSION__",
+  "./room-ui.js?v=__CACHE_VERSION__",
+  "./transition-engine.js?v=__CACHE_VERSION__",
+  "./assets/lucide.min.js",
   "./app.js?v=__CACHE_VERSION__",
   "./library-data.js?v=__CACHE_VERSION__",
   "./assets/echo-room-logo-white.svg",
@@ -166,13 +173,16 @@ def build_netlify_project() -> Path:
   (NETLIFY_PROJECT / "radio_app").mkdir(parents=True)
   (NETLIFY_PROJECT / "netlify" / "functions").mkdir(parents=True)
 
-  for name in ["index.html", "styles.css", "app.js", "library-data.js", "library.json", "netease-local-helper.mjs", "test_audio_recovery.mjs", "test_program_presets.mjs"]:
+  for name in ["index.html", "styles.css", "room.css", "room-ui.js", "transition-engine.js", "app.js", "library-data.js", "library.json", "netease-local-helper.mjs", "test_audio_recovery.mjs", "test_program_presets.mjs", "test_transitions.mjs"]:
     shutil.copy2(ROOT / name, NETLIFY_PROJECT / "radio_app" / name)
   copy_assets(NETLIFY_PROJECT / "radio_app")
   for function_name in ["loved.mjs", "netease.mjs"]:
     shutil.copy2(WORKSPACE / "netlify" / "functions" / function_name, NETLIFY_PROJECT / "netlify" / "functions" / function_name)
   shutil.copy2(WORKSPACE / "package.json", NETLIFY_PROJECT / "package.json")
   shutil.copy2(WORKSPACE / "netlify.toml", NETLIFY_PROJECT / "netlify.toml")
+  release_notes = WORKSPACE / "docs" / "room-v2-refactor.md"
+  if release_notes.exists():
+    shutil.copy2(release_notes, NETLIFY_PROJECT / "RELEASE_NOTES.md")
 
   deploy_readme = """Echo Room FM - Netlify 云同步部署包
 

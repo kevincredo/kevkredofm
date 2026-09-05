@@ -586,6 +586,9 @@ const state = {
   previous: null,
   currentMixPlan: null,
   activeMixTransition: null,
+  mixTimer: null,
+  preloadRequestId: 0,
+  preloaded: null,
   decks: [],
   activeDeckIndex: 0,
   isPlaying: false,
@@ -600,6 +603,8 @@ const state = {
 };
 
 document.addEventListener("DOMContentLoaded", init);
+
+const audioOutput = typeof EchoTransition !== "undefined" ? new EchoTransition.Output() : null;
 
 async function init() {
   bindElements();
@@ -930,57 +935,74 @@ function wireEvents() {
   });
 
   state.decks.forEach((deck, index) => {
-    deck.volume = index === state.activeDeckIndex ? state.masterVolume : 0;
-    deck.addEventListener("play", () => {
+    wireDeckEvents(deck, index);
+  });
+}
+
+function wireDeckEvents(deck, index) {
+    const listen = (type, handler) => deck.addEventListener(type, (...args) => {
+      if (state.decks[index] === deck) handler(...args);
+    });
+    deck.autoplay = false;
+    deck.removeAttribute("autoplay");
+    setDeckVolume(deck, index === state.activeDeckIndex ? state.masterVolume : 0);
+    listen("play", () => {
       if (index === state.activeDeckIndex) setPlaying(true);
     });
-    deck.addEventListener("playing", () => {
+    listen("playing", () => {
       if (index === state.activeDeckIndex) handleAudioPlaying(deck);
     });
-    deck.addEventListener("pause", () => {
+    listen("pause", () => {
       if (index === state.activeDeckIndex && !state.isMixing) setPlaying(false);
     });
-    deck.addEventListener("timeupdate", () => {
+    listen("timeupdate", () => {
+      if (state.isMixing) tickMixTransition();
       if (index !== state.activeDeckIndex) return;
       recordAudioProgress(deck);
       updateProgress();
       maybeAutoMix();
     });
-    deck.addEventListener("loadedmetadata", () => {
+    listen("loadedmetadata", () => {
       if (index === state.activeDeckIndex) updateProgress();
     });
-    deck.addEventListener("waiting", () => {
+    listen("waiting", () => {
       if (index === state.activeDeckIndex) handleAudioBuffering("waiting");
     });
-    deck.addEventListener("stalled", () => {
+    listen("stalled", () => {
       if (index === state.activeDeckIndex) handleAudioBuffering("stalled");
     });
-    deck.addEventListener("canplay", () => {
+    listen("canplay", () => {
       if (index === state.activeDeckIndex) clearAudioStallTimer();
     });
-    deck.addEventListener("ended", () => {
-      if (index === state.activeDeckIndex && !state.isMixing) {
+    listen("ended", () => {
+      if (index === state.activeDeckIndex && !state.isMixing && state.shouldBePlaying) {
         clearAudioRecovery();
         playNext({ automatic: true, reason: "ended" });
       }
     });
-    deck.addEventListener("error", () => {
+    listen("error", () => {
       if (index === state.activeDeckIndex && state.current && !state.isMixing) {
         handleAudioError(state.current);
       }
     });
-  });
 }
 
 function applyVolumeControl() {
   state.masterVolume = Number(elements.volumeSlider.value);
   if (!state.isMixing) {
-    getActiveDeck().volume = state.masterVolume;
-    getInactiveDeck().volume = 0;
+    setDeckVolume(getActiveDeck(), state.masterVolume);
+    setDeckVolume(getInactiveDeck(), 0);
+  } else {
+    const transition = state.activeMixTransition;
+    if (transition?.playStarted) {
+      transition.scheduled = false;
+      tickMixTransition();
+    }
   }
 }
 
 function scrollToNowPlaying() {
+  if (typeof EchoRoomUI !== "undefined") EchoRoomUI.view("now", false);
   const target = document.querySelector(".now-panel");
   if (!target) return;
   target.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -1055,6 +1077,7 @@ function dismissOnboardingGuide() {
 }
 
 function startOnboardingSelection() {
+  if (typeof EchoRoomUI !== "undefined") { EchoRoomUI.view("mix", false); EchoRoomUI.collection("styles"); }
   markOnboardingComplete({ restoreFocus: false });
   const target = document.querySelector(".music-control-section");
   if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -1267,6 +1290,7 @@ function restoreProgramState() {
     Object.values(state.selectedFacets).forEach((set) => set.clear());
   }
   elements.autoProgramToggle.checked = state.autoProgram;
+  if (typeof EchoRoomUI !== "undefined") EchoRoomUI.collection(state.activeProgramId ? "programs" : "styles");
   persistProgramState();
   startProgramClock();
 }
@@ -1334,6 +1358,7 @@ function toggleAutoProgram() {
 }
 
 function activateProgram(programId, options = {}) {
+  if (typeof EchoRoomUI !== "undefined") EchoRoomUI.collection("programs");
   const program = getProgramById(programId);
   if (!program) return;
   markOnboardingComplete();
@@ -1351,6 +1376,7 @@ function activateProgram(programId, options = {}) {
 }
 
 function setCustomProgramMode() {
+  if (typeof EchoRoomUI !== "undefined") EchoRoomUI.collection("styles");
   state.activeProgramId = "";
   state.autoProgram = false;
   elements.autoProgramToggle.checked = false;
@@ -2225,6 +2251,7 @@ function generateStyleSequence() {
   fillQueue(true);
   renderAll();
   setStatus(`已按 ${getMixLabel()} 生成播放列表`);
+  if (typeof EchoRoomUI !== "undefined") EchoRoomUI.view("now");
   playNext({ user: true, reason: "style-sequence", force: true });
 }
 
@@ -2721,6 +2748,7 @@ function renderNeteaseAudioAuth() {
 }
 
 function focusNeteaseAudioPanel() {
+  if (typeof EchoRoomUI !== "undefined") EchoRoomUI.openDialog("accountDialog");
   elements.accountPanel.open = true;
   elements.neteaseAudioPanel.open = true;
   elements.neteaseAudioPanel.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -3470,7 +3498,11 @@ function pickTrack(reference = null) {
 }
 
 async function playNext(options = {}) {
-  if (state.isMixing) return;
+  if (state.isMixing) {
+    if (!options.user && !options.force) return;
+    cancelMixTransition();
+  }
+  if (options.user) audioOutput?.unlock();
   if (!hasPlaybackScope()) {
     state.shouldBePlaying = false;
     state.queue = [];
@@ -3493,12 +3525,13 @@ async function playNext(options = {}) {
     return;
   }
 
-  if (!state.current || options.force || !elements.mixToggle.checked) {
+  const active = getActiveDeck();
+  if (!state.current || active.error || (active.paused && !active.ended) || (!elements.mixToggle.checked && !active.ended)) {
     await switchToTrack(nextTrack, options);
     return;
   }
 
-  await crossfadeToTrack(nextTrack, getTransitionEightCounts());
+  await crossfadeToTrack(nextTrack, getTransitionEightCounts(), options);
 }
 
 async function switchToTrack(track, options = {}) {
@@ -3506,7 +3539,8 @@ async function switchToTrack(track, options = {}) {
   state.shouldBePlaying = true;
   const sourceRequestId = ++state.audioSourceRequestId;
   const oldTrack = state.current;
-  const deck = getActiveDeck();
+  let deck = getActiveDeck();
+  invalidatePreload();
   deck.pause();
   delete deck.dataset.audioTrackId;
   delete deck.dataset.audioSourceKind;
@@ -3536,25 +3570,34 @@ async function switchToTrack(track, options = {}) {
   const audioSource = await resolveNeteasePlaybackSource(track);
   if (sourceRequestId !== state.audioSourceRequestId || state.current !== track) return;
   state.currentAudioSource = audioSource;
-  applyAudioSourceToDeck(deck, audioSource);
-  deck.volume = state.masterVolume;
+  deck = await applyAudioSourceToDeck(deck, audioSource, () => sourceRequestId === state.audioSourceRequestId && state.shouldBePlaying);
+  if (!deck) return;
+  setDeckVolume(deck, state.masterVolume);
   setAudioQualityBadge(audioSource);
 
   try {
     await deck.play();
+    if (sourceRequestId !== state.audioSourceRequestId || !state.shouldBePlaying) {
+      if (deck.dataset.audioTrackId === trackId(track) && !state.shouldBePlaying) deck.pause();
+      return;
+    }
     clearAudioRecovery();
     elements.autoplayGate.hidden = true;
     setStatus("正在播放");
     setPlaying(true);
     prefetchNextNeteaseSource();
   } catch (error) {
+    if (sourceRequestId !== state.audioSourceRequestId || !state.shouldBePlaying) return;
     if (audioSource.member && deck.dataset.audioSourceKind === "member" && !isAutoplayRejection(error)) {
       const fallbackSource = publicNeteasePlaybackSource(track);
       state.currentAudioSource = fallbackSource;
-      applyAudioSourceToDeck(deck, fallbackSource);
+      deck = await applyAudioSourceToDeck(deck, fallbackSource, () => sourceRequestId === state.audioSourceRequestId && state.shouldBePlaying);
+      if (!deck) return;
+      setDeckVolume(deck, state.masterVolume);
       setAudioQualityBadge(fallbackSource, "会员音源不可用，已降级");
       try {
         await deck.play();
+        if (sourceRequestId !== state.audioSourceRequestId || !state.shouldBePlaying) return;
         clearAudioRecovery();
         setStatus("会员音源不可用，已降级到 MP3 128K");
         setPlaying(true);
@@ -3578,149 +3621,212 @@ async function switchToTrack(track, options = {}) {
   }
 }
 
-async function crossfadeToTrack(nextTrack, eightCounts) {
+async function crossfadeToTrack(nextTrack, eightCounts, options = {}) {
   clearAudioRecovery();
   state.shouldBePlaying = true;
   const oldDeck = getActiveDeck();
   const newDeckIndex = 1 - state.activeDeckIndex;
-  const newDeck = state.decks[newDeckIndex];
   const oldTrack = state.current;
-  const oldAudioSource = state.currentAudioSource;
   const plan = getMixPlan(oldTrack, nextTrack, eightCounts);
-
+  const transition = {
+    oldDeck, newDeck: state.decks[newDeckIndex], newDeckIndex, oldTrack,
+    oldAudioSource: state.currentAudioSource, nextTrack, plan,
+    playStarted: false, scheduled: false, progress: 0,
+  };
   state.isMixing = true;
-  state.current = nextTrack;
-  state.currentMixPlan = plan;
-  state.activeMixTransition = {
-    oldDeck,
-    newDeck,
-    newDeckIndex,
-    oldTrack,
-    oldAudioSource,
-    nextTrack,
-    playStarted: false,
-  };
-  rememberRecent(nextTrack.id);
-  renderTrack(nextTrack, "MIXING IN");
-  updateMixText(oldTrack, nextTrack, "crossfade", plan);
-  renderQueue();
-  setStatus(`正在按 ${plan.phraseLabel} 对齐过渡 · ${formatSeconds(plan.transitionSeconds)}`);
-
-  let audioSource = await resolveNeteasePlaybackSource(nextTrack);
-  state.currentAudioSource = audioSource;
-  applyAudioSourceToDeck(newDeck, audioSource);
-  newDeck.volume = 0;
-  setDeckPlaybackRate(oldDeck, 1);
-  setDeckPlaybackRate(newDeck, plan.playbackRate);
-  setAudioQualityBadge(audioSource);
-
+  state.activeMixTransition = transition;
+  const valid = () => state.activeMixTransition === transition && state.shouldBePlaying;
+  setStatus("正在准备下一首");
   try {
-    await newDeck.play();
-    if (state.activeMixTransition) state.activeMixTransition.playStarted = true;
-  } catch (error) {
-    if (audioSource.member && !isAutoplayRejection(error)) {
-      audioSource = publicNeteasePlaybackSource(nextTrack);
-      state.currentAudioSource = audioSource;
-      applyAudioSourceToDeck(newDeck, audioSource);
-      newDeck.volume = 0;
+    const prepared = state.preloaded;
+    let source = prepared?.trackId === trackId(nextTrack) ? await prepared.promise : null;
+    if (!source) source = await resolveNeteasePlaybackSource(nextTrack);
+    if (!valid()) return;
+    let newDeck = state.decks[newDeckIndex];
+    transition.newDeck = newDeck;
+    if (newDeck.dataset.audioTrackId !== trackId(nextTrack) || newDeck.src !== source.url || newDeck.error) {
+      newDeck = await applyAudioSourceToDeck(newDeck, source, valid);
+      if (!newDeck || !valid()) return;
+      transition.newDeck = newDeck;
+    }
+    invalidatePreload();
+    setDeckVolume(newDeck, 0);
+    setDeckPlaybackRate(newDeck, plan.playbackRate);
+    const startIncoming = async () => {
+      await EchoTransition.waitUntilReady(newDeck, valid);
+      if (!valid()) return;
+      const canBlend = (audioOutput?.has(oldDeck) || EchoTransition.supportsVolume(oldDeck))
+        && (audioOutput?.has(newDeck) || EchoTransition.supportsVolume(newDeck));
+      if (!canBlend) {
+        // Some iOS native media paths ignore volume. Never overlap two full-volume songs.
+        if (!options.force && !oldDeck.ended) await EchoTransition.waitUntilEnded(oldDeck, valid);
+        if (!valid()) return;
+        oldDeck.pause();
+        setDeckVolume(newDeck, state.masterVolume);
+        transition.nativeHandoff = true;
+      }
+      // Timing starts only once audio is actually running, not when play is requested.
+      await Promise.race([
+        newDeck.play(),
+        new Promise((_, reject) => { transition.playTimeout = window.setTimeout(() => reject(new Error("Playback timeout")), 8000); }),
+      ]).finally(() => window.clearTimeout(transition.playTimeout));
+    };
+    try {
+      await startIncoming();
+    } catch (error) {
+      if (!valid() || error.name === "AbortError" || isAutoplayRejection(error)) throw error;
+      if (audioOutput?.has(newDeck)) {
+        audioOutput.cors.set(source.url, false);
+        source = { ...source, native: true };
+      } else if (source.member) source = publicNeteasePlaybackSource(nextTrack);
+      else throw error;
+      newDeck = await applyAudioSourceToDeck(newDeck, source, valid);
+      if (!newDeck || !valid()) return;
+      transition.newDeck = newDeck;
+      setDeckVolume(newDeck, 0);
       setDeckPlaybackRate(newDeck, plan.playbackRate);
-      setAudioQualityBadge(audioSource, "会员音源不可用，已降级");
-      try {
-        await newDeck.play();
-        if (state.activeMixTransition) state.activeMixTransition.playStarted = true;
-      } catch (fallbackError) {
-        error = fallbackError;
-      }
+      await startIncoming();
     }
-    if (!newDeck.paused) {
-      // The fallback source started successfully; continue with the transition.
+    if (!valid()) return;
+    const remaining = (oldDeck.duration - oldDeck.currentTime) / (oldDeck.playbackRate || 1);
+    transition.duration = EchoTransition.duration({
+      seconds: elements.mixToggle.checked ? plan.transitionSeconds : .08, remaining, incomingDuration: newDeck.duration,
+      rate: plan.playbackRate, matched: plan.tempoMatched,
+      clash: plan.harmonic.score < 0,
+      vocals: isLikelyVocal(oldTrack) && isLikelyVocal(nextTrack),
+      manual: Boolean(options.force),
+    });
+    transition.incomingStart = newDeck.currentTime;
+    transition.lastProgressAt = Date.now();
+    transition.playStarted = true;
+    transition.source = source;
+    state.currentMixPlan = plan;
+    state.currentAudioSource = source;
+    state.current = nextTrack;
+    rememberRecent(nextTrack.id);
+    renderTrack(nextTrack, "MIXING IN");
+    updateMixText(oldTrack, nextTrack, "crossfade", { ...plan, transitionSeconds: transition.duration });
+    renderQueue();
+    setStatus("正在平滑过渡");
+    if (transition.nativeHandoff) { completeMixTransition(); return; }
+    tickMixTransition();
+  } catch (error) {
+    if (!valid()) return;
+    cancelMixTransition({ keepIncoming: false });
+    if (error.name === "AbortError") return;
+    if (error.name === "OutgoingStall") {
+      state.queue = uniqueTracksById([nextTrack, ...state.queue]);
+      scheduleAudioRecovery(oldTrack, "handoff-stall", 0);
+    } else if (isAutoplayRejection(error)) {
+      state.queue = uniqueTracksById([nextTrack, ...state.queue]);
+      elements.autoplayGate.hidden = false;
+      setStatus("需要点击继续播放");
+    } else if (!navigator.onLine) {
+      state.queue = uniqueTracksById([nextTrack, ...state.queue]);
+      captureAudioRecoveryPosition(oldTrack, oldDeck);
+      waitForNetworkRecovery(oldTrack);
     } else {
-      state.isMixing = false;
-      state.current = oldTrack;
-      state.currentAudioSource = oldAudioSource;
-      state.currentMixPlan = null;
-      state.activeMixTransition = null;
-      renderTrack(oldTrack, "NOW PLAYING");
-      setAudioQualityBadge(oldAudioSource);
-      if (!navigator.onLine) {
-        state.queue = uniqueTracksById([nextTrack, ...state.queue]);
-        renderQueue();
-        captureAudioRecoveryPosition(oldTrack, oldDeck);
-        waitForNetworkRecovery(oldTrack);
-        return;
-      }
       state.failedIds.add(trackId(nextTrack));
-      setStatus("下一首无法直接播放，正在重新选歌");
-      playNext({ automatic: true, reason: "error" });
-      return;
+      setStatus("下一首连接失败，已保留当前歌曲");
+      fillQueue();
+      prefetchNextNeteaseSource();
+      if (oldDeck.ended) playNext({ automatic: true, reason: "error" });
     }
+    renderQueue();
   }
-
-  if (document.hidden) {
-    completeMixTransition({ background: true });
-    return;
-  }
-
-  const start = performance.now();
-  const durationMs = Math.max(1, plan.transitionSeconds) * 1000;
-  const fade = () => {
-    if (document.hidden) {
-      completeMixTransition({ background: true });
-      return;
-    }
-    const ratio = Math.min(1, (performance.now() - start) / durationMs);
-    oldDeck.volume = state.masterVolume * Math.cos((ratio * Math.PI) / 2);
-    newDeck.volume = state.masterVolume * Math.sin((ratio * Math.PI) / 2);
-
-    if (ratio < 1) {
-      window.requestAnimationFrame(fade);
-      return;
-    }
-
-    completeMixTransition({ background: false });
-  };
-  window.requestAnimationFrame(fade);
 }
 
-function completeMixTransition(options = {}) {
-  const transition = state.activeMixTransition;
-  if (!transition) return;
+function tickMixTransition() {
+  const t = state.activeMixTransition;
+  if (!t?.playStarted || !state.shouldBePlaying) return;
+  window.clearTimeout(state.mixTimer);
+  const elapsed = Math.max(0, (t.newDeck.currentTime - t.incomingStart) / (t.newDeck.playbackRate || 1));
+  const progress = clamp(elapsed / t.duration, 0, 1);
+  if (progress > t.progress + .001) t.lastProgressAt = Date.now();
+  const stalled = t.newDeck.readyState < 3 || t.newDeck.paused || Boolean(t.newDeck.error);
+  if (stalled || Date.now() - t.lastProgressAt > 6500) {
+    // A stalled incoming deck must never fade a still-healthy outgoing deck to silence.
+    const next = t.nextTrack;
+    cancelMixTransition({ keepIncoming: false });
+    state.queue = uniqueTracksById([next, ...state.queue]);
+    state.mixRetryAt = Date.now() + 2500;
+    renderQueue();
+    setStatus("下一首缓冲中，继续当前歌曲");
+    if (t.oldDeck.ended || t.oldDeck.paused) ensurePlaybackContinuity("mix-buffer");
+    return;
+  }
+  t.progress = progress;
+  if (progress >= 1 || t.oldDeck.ended) { completeMixTransition(); return; }
+  if (!t.scheduled) {
+    t.scheduled = audioOutput?.schedule(t.oldDeck, t.newDeck, t.duration * (1 - progress), state.masterVolume, progress) || false;
+    if (!t.scheduled) {
+      const [outGain, inGain] = EchoTransition.gains(progress);
+      setDeckVolume(t.oldDeck, state.masterVolume * outGain);
+      setDeckVolume(t.newDeck, state.masterVolume * inGain);
+    }
+  }
+  state.mixTimer = window.setTimeout(tickMixTransition, 40);
+}
+
+function completeMixTransition() {
+  const t = state.activeMixTransition;
+  if (!t?.playStarted) return;
+  window.clearTimeout(state.mixTimer);
+  state.mixTimer = null;
   clearAudioRecovery();
-  const { oldDeck, newDeck, newDeckIndex, oldTrack, nextTrack } = transition;
-  oldDeck.pause();
-  oldDeck.removeAttribute("src");
-  oldDeck.volume = 0;
-  setDeckPlaybackRate(oldDeck, 1);
-  oldDeck.load();
-  newDeck.volume = state.masterVolume;
-  state.activeDeckIndex = newDeckIndex;
+  t.oldDeck.pause();
+  setDeckVolume(t.oldDeck, 0);
+  t.oldDeck.removeAttribute("src");
+  t.oldDeck.load();
+  setDeckPlaybackRate(t.oldDeck, 1);
+  setDeckVolume(t.newDeck, state.masterVolume);
+  state.activeDeckIndex = t.newDeckIndex;
+  state.current = t.nextTrack;
+  state.currentAudioSource = t.source;
   state.isMixing = false;
-  state.shouldBePlaying = true;
-  state.lastAudioTrackId = trackId(nextTrack);
-  state.lastAudioPosition = Number.isFinite(newDeck.currentTime) ? newDeck.currentTime : 0;
-  state.lastAudioProgressAt = Date.now();
   state.activeMixTransition = null;
-  if (oldTrack) pushHistory(oldTrack);
-  renderTrack(nextTrack, "NOW PLAYING");
+  state.lastAudioTrackId = trackId(t.nextTrack);
+  state.lastAudioPosition = t.newDeck.currentTime || 0;
+  state.lastAudioProgressAt = Date.now();
+  if (t.oldTrack) pushHistory(t.oldTrack);
+  renderTrack(t.nextTrack, "NOW PLAYING");
   renderHistory();
   updateProgress();
-  setPlaying(true);
+  setPlaying(state.shouldBePlaying && !t.newDeck.paused);
   prefetchNextNeteaseSource();
-  if (options.background) {
-    setDeckPlaybackRate(newDeck, 1);
-    setStatus("后台播放中");
-  } else {
-    easeDeckRateTo(newDeck, 1, 12000);
-    setStatus("正在播放");
-  }
+  easeDeckRateTo(t.newDeck, 1, 20000);
+  setStatus(state.shouldBePlaying ? "正在播放" : "已暂停");
+}
+
+function cancelMixTransition({ keepIncoming } = {}) {
+  const t = state.activeMixTransition;
+  if (!t) return;
+  window.clearTimeout(state.mixTimer);
+  window.clearTimeout(t.playTimeout);
+  state.mixTimer = null;
+  invalidatePreload();
+  const incoming = keepIncoming ?? (t.playStarted && t.progress >= .5);
+  if (incoming) { completeMixTransition(); return; }
+  state.activeMixTransition = null;
+  state.isMixing = false;
+  t.newDeck.pause();
+  setDeckVolume(t.newDeck, 0);
+  t.newDeck.removeAttribute("src");
+  t.newDeck.load();
+  setDeckPlaybackRate(t.newDeck, 1);
+  setDeckVolume(t.oldDeck, state.masterVolume);
+  state.current = t.oldTrack;
+  state.currentAudioSource = t.oldAudioSource;
+  state.currentMixPlan = null;
+  if (t.oldTrack) renderTrack(t.oldTrack, "NOW PLAYING");
+  setPlaying(state.shouldBePlaying && !t.oldDeck.paused);
 }
 
 function handleVisibilityChange() {
-  if (document.hidden && state.isMixing && state.activeMixTransition?.playStarted) {
-    completeMixTransition({ background: true });
-    return;
-  }
+  // AudioParam automation survives a hidden page; native media uses timeupdate too.
+  if (state.isMixing) tickMixTransition();
   if (!document.hidden) {
+    audioOutput?.unlock();
     window.setTimeout(() => ensurePlaybackContinuity("foreground"), 250);
   }
 }
@@ -3746,6 +3852,7 @@ function configureMediaSession() {
 }
 
 function resumeFromMediaSession() {
+  audioOutput?.unlock();
   state.userStarted = true;
   state.shouldBePlaying = true;
   const deck = getActiveDeck();
@@ -3763,6 +3870,8 @@ function resumeFromMediaSession() {
 
 function pauseFromMediaSession() {
   state.shouldBePlaying = false;
+  cancelMixTransition();
+  state.audioSourceRequestId += 1;
   clearAudioRecovery();
   state.decks.forEach((deck) => deck.pause());
   setPlaying(false);
@@ -3770,12 +3879,14 @@ function pauseFromMediaSession() {
 }
 
 function seekFromMediaSession(offset) {
+  if (state.isMixing) cancelMixTransition();
   const deck = getActiveDeck();
   if (!Number.isFinite(deck.duration)) return;
   deck.currentTime = clamp((deck.currentTime || 0) + offset, 0, deck.duration);
 }
 
 function seekToFromMediaSession(time) {
+  if (state.isMixing) cancelMixTransition();
   const deck = getActiveDeck();
   if (!Number.isFinite(deck.duration) || !Number.isFinite(time)) return;
   deck.currentTime = clamp(time, 0, deck.duration);
@@ -3813,6 +3924,7 @@ function updateMediaSessionPosition(current, duration) {
 }
 
 function startFromGate() {
+  audioOutput?.unlock();
   state.userStarted = true;
   state.shouldBePlaying = true;
   elements.autoplayGate.hidden = true;
@@ -3833,8 +3945,10 @@ function startFromGate() {
 }
 
 function maybeAutoMix() {
-  if (!elements.mixToggle.checked || state.isMixing || !state.current) return;
+  if (Date.now() < (state.mixRetryAt || 0)) return;
+  if (!elements.mixToggle.checked || state.isMixing || !state.current || !state.shouldBePlaying) return;
   const deck = getActiveDeck();
+  if (deck.paused || deck.seeking) return;
   if (!Number.isFinite(deck.duration) || deck.duration <= 0) return;
   if (!state.queue.length) fillQueue();
   const nextTrack = state.queue[0];
@@ -3848,6 +3962,7 @@ function maybeAutoMix() {
 function handleAudioError(track) {
   const deck = getActiveDeck();
   if (!track || !state.shouldBePlaying || state.current !== track || deck.dataset.audioTrackId !== trackId(track)) return;
+  if (audioOutput?.has(deck)) audioOutput.cors.set(deck.src, false);
   captureAudioRecoveryPosition(track, deck);
   setPlaying(false);
   if (!navigator.onLine) {
@@ -3885,6 +4000,7 @@ function handleAudioPlaying(deck) {
   state.audioAwaitingOnline = false;
   state.audioHealthySince = Date.now();
   setPlaying(true);
+  prefetchNextNeteaseSource();
   if (state.audioRecoveryAttempt > 0) {
     setStatus(`已恢复当前歌曲 · ${formatTime(deck.currentTime || state.audioRecoveryPosition)}`);
   }
@@ -3949,7 +4065,7 @@ async function recoverCurrentTrack(track, reason) {
     return;
   }
 
-  const deck = getActiveDeck();
+  let deck = getActiveDeck();
   const resumeAt = captureAudioRecoveryPosition(track, deck);
   const wasMemberSource = deck.dataset.audioSourceKind === "member" || Boolean(state.currentAudioSource?.member);
   const attempt = state.audioRecoveryAttempt + 1;
@@ -3972,8 +4088,9 @@ async function recoverCurrentTrack(track, reason) {
     if (!isCurrentAudioRequest(track, sourceRequestId)) return;
 
     state.currentAudioSource = source;
-    applyAudioSourceToDeck(deck, source);
-    deck.volume = state.masterVolume;
+    deck = await applyAudioSourceToDeck(deck, source, () => isCurrentAudioRequest(track, sourceRequestId));
+    if (!deck) return;
+    setDeckVolume(deck, state.masterVolume);
     setDeckPlaybackRate(deck, 1);
     setAudioQualityBadge(source, attempt > 1 && !source.member ? "恢复时已切换到兼容音源" : "正在恢复当前歌曲");
     await waitForAudioMetadata(deck, id, AUDIO_RECOVERY_METADATA_TIMEOUT_MS);
@@ -4101,6 +4218,7 @@ function waitForNetworkRecovery(track) {
 }
 
 function handleNetworkOffline() {
+  if (state.isMixing) cancelMixTransition();
   if (!state.current || !state.shouldBePlaying) return;
   captureAudioRecoveryPosition(state.current, getActiveDeck());
   waitForNetworkRecovery(state.current);
@@ -4115,6 +4233,15 @@ function handleNetworkOnline() {
 function ensurePlaybackContinuity(reason) {
   if (!state.current || !state.shouldBePlaying || state.isMixing) return;
   const deck = getActiveDeck();
+  if (audioOutput?.has(deck) && audioOutput.context.state !== "running") {
+    audioOutput.unlock()?.then(() => {
+      if (!state.shouldBePlaying || getActiveDeck() !== deck) return;
+      if (audioOutput.context.state !== "running") {
+        elements.autoplayGate.hidden = false;
+        setStatus("点击继续恢复音频输出");
+      }
+    });
+  }
   if (deck.ended) {
     playNext({ automatic: true, reason: `${reason}-ended`, force: true });
     return;
@@ -4144,9 +4271,14 @@ function ensurePlaybackContinuity(reason) {
 }
 
 function checkAudioContinuity() {
-  if (document.hidden || !state.current || !state.shouldBePlaying || state.isMixing) return;
+  if (state.isMixing) { tickMixTransition(); return; }
+  if (!state.current || !state.shouldBePlaying) return;
   if (state.audioRecoveryInFlight || state.audioRecoveryTimer || state.audioStallTimer) return;
   const deck = getActiveDeck();
+  if (audioOutput?.has(deck) && audioOutput.context.state !== "running") {
+    ensurePlaybackContinuity("audio-context");
+    return;
+  }
   if (deck.seeking || deck.ended) return;
   const position = Number(deck.currentTime);
   if (Number.isFinite(position) && Math.abs(position - state.lastAudioPosition) >= 0.1) {
@@ -4201,7 +4333,9 @@ function clearAudioRecovery() {
 }
 
 function togglePlayPause() {
+  audioOutput?.unlock();
   state.userStarted = true;
+  if (state.isMixing) { pauseFromMediaSession(); return; }
   const active = getActiveDeck();
   if (!state.current) {
     state.shouldBePlaying = true;
@@ -4216,15 +4350,12 @@ function togglePlayPause() {
       setStatus("正在播放");
     }).catch((error) => handlePlaybackRequestFailure(error, "play-button"));
   } else {
-    state.shouldBePlaying = false;
-    clearAudioRecovery();
-    state.decks.forEach((deck) => deck.pause());
-    setStatus("已暂停");
-    setPlaying(false);
+    pauseFromMediaSession();
   }
 }
 
 function playPrevious() {
+  if (state.isMixing) cancelMixTransition();
   if (!state.previous) return;
   state.queue.unshift(state.current);
   const target = state.previous;
@@ -4242,8 +4373,7 @@ async function playListedTrack(event) {
   const item = event.target.closest("[data-track-id]");
   if (!item || !event.currentTarget.contains(item)) return;
   if (state.isMixing) {
-    setStatus("正在完成当前过渡，请稍候再选歌");
-    return;
+    cancelMixTransition();
   }
   const track = state.tracks.find((candidate) => trackId(candidate) === item.dataset.trackId);
   if (!track) return;
@@ -4310,6 +4440,7 @@ function toggleLovedOnly() {
 }
 
 function seekAudio(event) {
+  if (state.isMixing) cancelMixTransition();
   const active = getActiveDeck();
   if (!Number.isFinite(active.duration)) return;
   const rect = elements.progressTrack.getBoundingClientRect();
@@ -4320,6 +4451,7 @@ function seekAudio(event) {
 
 function seekAudioWithKeyboard(event) {
   if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+  if (state.isMixing) cancelMixTransition();
   const active = getActiveDeck();
   if (!Number.isFinite(active.duration) || active.duration <= 0) return;
   event.preventDefault();
@@ -4331,7 +4463,7 @@ function seekAudioWithKeyboard(event) {
 }
 
 function updateProgress() {
-  const active = getActiveDeck();
+  const active = state.activeMixTransition?.playStarted ? state.activeMixTransition.newDeck : getActiveDeck();
   const current = active.currentTime || 0;
   const duration = active.duration || 0;
   elements.elapsedTime.textContent = formatTime(current);
@@ -4443,9 +4575,11 @@ function renderQueue() {
   elements.queueList.innerHTML = state.queue.length
     ? state.queue.map(renderSmallTrack).join("")
     : `<div class="empty-list">选择音乐标签并生成播放列表，接下来播放的歌曲会出现在这里。</div>`;
+  prefetchNextNeteaseSource();
 }
 
 function renderHistory() {
+  [elements.prevBtn, elements.miniPrevBtn].filter(Boolean).forEach((button) => { button.disabled = !state.previous; });
   elements.historyList.innerHTML = state.history.length
     ? state.history.slice(0, 5).map(renderSmallTrack).join("")
     : `<div class="empty-list compact-empty-list">播放过的歌曲会保留在这里。</div>`;
@@ -4480,9 +4614,11 @@ function updateLoveButton() {
   const loved = Boolean(state.current && state.lovedIds.has(trackId(state.current)));
   [elements.loveCurrentBtn, elements.miniLoveBtn].filter(Boolean).forEach((button) => {
     button.classList.toggle("active", loved);
+    button.disabled = !state.current;
     button.setAttribute("aria-pressed", String(loved));
     button.setAttribute("aria-label", loved ? "取消当前歌曲红心" : "红心收藏当前歌曲");
     button.textContent = loved ? "♥" : "♡";
+    if (typeof EchoRoomUI !== "undefined") EchoRoomUI.icon(button, "heart");
     button.title = loved ? "取消红心" : "红心收藏当前歌曲";
   });
 }
@@ -4528,7 +4664,8 @@ function updateMixText(fromTrack, toTrack, mode = "planned", plan = null) {
     : mode === "manual cut"
       ? "manual cut"
       : `${mixPlan.phraseLabel} planned`;
-  elements.mixText.textContent = `${formatBpm(mixPlan.fromBpm)} → ${formatBpm(mixPlan.toBpm)} BPM · Δ${formatBpm(mixPlan.bpmDelta)} · ${mixPlan.tempoShiftLabel} · ${mixPlan.harmonicLabel} · ${shared || getMixLabel()} · ${transition} · ${mixPlan.gridLabel}。`;
+  elements.mixText.title = `${formatBpm(mixPlan.fromBpm)} → ${formatBpm(mixPlan.toBpm)} BPM · ${mixPlan.tempoShiftLabel} · ${mixPlan.harmonicLabel} · ${shared || getMixLabel()} · ${transition} · ${mixPlan.gridLabel}`;
+  elements.mixText.textContent = `${formatBpm(mixPlan.fromBpm)} → ${formatBpm(mixPlan.toBpm)} BPM · ${mixPlan.tempoMatched ? "近速衔接" : "自然淡化"} · ${formatSeconds(mixPlan.transitionSeconds)}${mixPlan.harmonic.score >= 29 ? " · 调性相容" : ""}`;
 }
 
 function pushHistory(track) {
@@ -4547,6 +4684,11 @@ function setPlaying(isPlaying) {
   document.body.classList.toggle("is-playing", isPlaying);
   elements.playPauseBtn.textContent = isPlaying ? "Ⅱ" : "▶";
   if (elements.miniPlayPauseBtn) elements.miniPlayPauseBtn.textContent = isPlaying ? "Ⅱ" : "▶";
+  [elements.playPauseBtn, elements.miniPlayPauseBtn].filter(Boolean).forEach((button) => {
+    button.setAttribute?.("aria-label", isPlaying ? "暂停" : "播放");
+    button.title = isPlaying ? "暂停" : "播放";
+    if (typeof EchoRoomUI !== "undefined") EchoRoomUI.icon(button, isPlaying ? "pause" : "play");
+  });
   elements.onAirState.textContent = isPlaying ? "ON AIR" : "STANDBY";
   if ("mediaSession" in navigator) {
     try {
@@ -4565,23 +4707,23 @@ function getMixPlan(fromTrack, toTrack, targetEightCounts = getTransitionEightCo
   const tempo = getTempoMatch(fromTrack, toTrack);
   const phrase = choosePhraseTransition(tempo.fromBpm, targetEightCounts);
   const harmonic = getHarmonicScore(fromTrack, toTrack);
-  const playbackRate = tempo.hasTempo
-    ? clamp(tempo.rate, 1 - DJ_TEMPO_RATE_LIMIT, 1 + DJ_TEMPO_RATE_LIMIT)
-    : 1;
+  const tempoMatched = tempo.hasTempo && Math.abs(tempo.rate - 1) <= DJ_TEMPO_RATE_LIMIT;
+  const playbackRate = tempoMatched ? tempo.rate : 1;
   const shiftPercent = (playbackRate - 1) * 100;
-  const gridLabel = fromTrack?.beatGridAvailable && toTrack?.beatGridAvailable
-    ? "beat grid"
-    : "estimated phrase grid";
+  const gridLabel = "BPM-based fade; beat grid unverified";
 
   return {
     fromBpm: tempo.fromBpm,
     toBpm: tempo.toBpm,
     bpmDelta: tempo.delta,
     hasTempo: tempo.hasTempo,
+    tempoMatched,
     playbackRate,
     tempoShiftPercent: shiftPercent,
     tempoShiftLabel: Math.abs(shiftPercent) < 0.1 ? "tempo locked" : `tempo ${formatSignedPercent(shiftPercent)}`,
-    transitionSeconds: phrase.seconds,
+    transitionSeconds: typeof EchoTransition !== "undefined"
+      ? EchoTransition.duration({ seconds: phrase.seconds, matched: tempoMatched, clash: harmonic.score < 0, vocals: isLikelyVocal(fromTrack) && isLikelyVocal(toTrack) })
+      : phrase.seconds,
     phraseBeats: phrase.beats,
     eightCounts: phrase.eightCounts,
     beatSeconds: phrase.beatSeconds,
@@ -4685,13 +4827,8 @@ function formatEightCountLabel(eightCounts = 1) {
 
 function shouldStartAutoMix(deck, plan) {
   if (!Number.isFinite(deck.duration) || deck.duration <= 0 || deck.currentTime <= 12) return false;
-  const remaining = deck.duration - deck.currentTime;
-  if (remaining <= plan.transitionSeconds + 0.15) return true;
-  if (!Number.isFinite(plan.beatSeconds) || plan.beatSeconds <= 0) return false;
-
-  const phraseLookahead = plan.transitionSeconds + plan.beatSeconds * DJ_DEFAULT_BEATS_PER_BAR;
-  if (remaining > phraseLookahead) return false;
-  return isNearPhraseBoundary(deck.currentTime, plan);
+  const remaining = (deck.duration - deck.currentTime) / (deck.playbackRate || 1);
+  return remaining <= plan.transitionSeconds + 0.25;
 }
 
 function isNearPhraseBoundary(currentTime, plan) {
@@ -4810,7 +4947,11 @@ function easeDeckRateTo(deck, targetRate = 1, durationMs = 12000) {
   }
 
   const startedAt = performance.now();
+  const sourceTrackId = deck.dataset.audioTrackId;
+  const rampId = Symbol("rate-ramp");
+  deck._rateRampId = rampId;
   const step = () => {
+    if (deck._rateRampId !== rampId || deck.dataset.audioTrackId !== sourceTrackId) return;
     if (deck !== getActiveDeck() || deck.paused) {
       setDeckPlaybackRate(deck, target);
       return;
@@ -4818,9 +4959,9 @@ function easeDeckRateTo(deck, targetRate = 1, durationMs = 12000) {
     const ratio = Math.min(1, (performance.now() - startedAt) / durationMs);
     const eased = 1 - Math.pow(1 - ratio, 3);
     setDeckPlaybackRate(deck, startRate + (target - startRate) * eased);
-    if (ratio < 1) window.requestAnimationFrame(step);
+    if (ratio < 1) window.setTimeout(step, 100);
   };
-  window.requestAnimationFrame(step);
+  window.setTimeout(step, 100);
 }
 
 function mixScore(fromTrack, toTrack) {
@@ -5142,7 +5283,7 @@ async function activateProfile(rawUsername, options = {}) {
   state.profileUsername = username;
   elements.profileUsernameInput.value = username;
   writeLocalPreference(PROFILE_USERNAME_STORAGE_KEY, username);
-  if (elements.accountPanel) elements.accountPanel.open = false;
+  if (elements.accountPanel) elements.accountPanel.open = true;
   state.lovedIds = loadLovedIds(username);
   renderAll();
 
@@ -5330,11 +5471,29 @@ async function resolveNeteasePlaybackSource(track) {
 }
 
 function prefetchNextNeteaseSource() {
-  if (!state.neteaseLoggedIn || !state.neteaseHelperUnlocked || !state.queue.length) return;
+  if (!state.current || state.isMixing || state.audioRecoveryInFlight || !state.shouldBePlaying) return;
   const nextTrack = state.queue[0];
-  window.setTimeout(() => {
-    resolveNeteasePlaybackSource(nextTrack).catch(() => {});
-  }, 0);
+  if (!nextTrack) { invalidatePreload(); return; }
+  if (state.preloaded?.trackId === trackId(nextTrack)) return;
+  const requestId = ++state.preloadRequestId;
+  const record = { trackId: trackId(nextTrack), promise: null };
+  const currentTrack = state.current;
+  state.preloaded = record;
+  const valid = () => requestId === state.preloadRequestId && state.current === currentTrack
+    && (state.queue[0] === nextTrack || state.activeMixTransition?.nextTrack === nextTrack);
+  record.promise = (async () => {
+    const source = await resolveNeteasePlaybackSource(nextTrack);
+    if (!valid()) return null;
+    const deck = await applyAudioSourceToDeck(getInactiveDeck(), source, valid);
+    if (!deck || !valid()) return null;
+    setDeckVolume(deck, 0);
+    return source;
+  })().catch(() => null);
+}
+
+function invalidatePreload() {
+  state.preloadRequestId += 1;
+  state.preloaded = null;
 }
 
 function isNeteaseTrialSource(item) {
@@ -5375,14 +5534,50 @@ function normalizeRemoteImageUrl(value) {
   return url.startsWith("http://") ? `https://${url.slice(7)}` : url;
 }
 
-function applyAudioSourceToDeck(deck, source) {
+async function applyAudioSourceToDeck(deck, source, valid = () => true) {
+  const canRoute = audioOutput && !source.native ? await audioOutput.canRoute(source.url) : false;
+  if (!valid()) return null;
+  // A media element cannot be disconnected back to its native output. Replace
+  // only that deck when the next CDN disallows CORS, keeping all event handlers.
+  if (audioOutput?.has(deck) && !canRoute) {
+    const index = state.decks.indexOf(deck);
+    const fresh = document.createElement("audio");
+    fresh.id = deck.id;
+    fresh.preload = "auto";
+    deck.pause();
+    audioOutput.disconnect(deck);
+    deck.removeAttribute("src");
+    deck.load();
+    deck.replaceWith(fresh);
+    state.decks[index] = fresh;
+    elements[index === 0 ? "audioDeckA" : "audioDeckB"] = fresh;
+    deck = fresh;
+    wireDeckEvents(deck, index);
+  }
   deck.pause();
+  deck._rateRampId = null;
+  deck.autoplay = false;
+  deck.removeAttribute("autoplay");
+  setDeckPlaybackRate(deck, 1);
+  if (canRoute) deck.crossOrigin = "anonymous";
+  else deck.removeAttribute("crossorigin");
   deck.src = source.url;
   deck.currentTime = 0;
   deck.dataset.audioSourceKind = source.member ? "member" : "public";
   deck.dataset.audioTrackId = source.trackId;
   deck.dataset.fallbackAttempted = source.member ? "false" : "true";
   deck.load();
+  if (canRoute) {
+    try { audioOutput.attach(deck); } catch { /* Native output remains available if graph creation fails. */ }
+  }
+  deck.dataset.outputMode = audioOutput?.has(deck) ? "audio-clock" : "native";
+  return deck;
+}
+
+function setDeckVolume(deck, value) {
+  if (!deck) return;
+  if (audioOutput) audioOutput.set(deck, value);
+  else deck.volume = clamp(Number(value) || 0, 0, 1);
 }
 
 function setAudioQualityBadge(source, note = "") {

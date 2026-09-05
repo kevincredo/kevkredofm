@@ -3,14 +3,15 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#16f4d0">
+    <meta name="theme-color" content="#101213">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="Echo Room FM">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Echo Room FM</title>
-    <link rel="stylesheet" href="./styles.css?v=20260720-programs-v1">
+    <link rel="stylesheet" href="./styles.css?v=20260905-room-v2">
+    <link rel="stylesheet" href="./room.css?v=20260905-room-v2">
   </head>
-  <body>
+  <body data-mobile-view="mix">
     <div class="backdrop" id="backdrop"></div>
     <div class="app-shell">
       <header class="topbar">
@@ -29,13 +30,22 @@
           <span id="statusLine" role="status" aria-live="polite">Preparing station</span>
         </div>
         <div class="topbar-actions">
-          <button id="nextTopBtn" class="text-button top-next-button" data-action="next" type="button" aria-label="下一首" title="跳过当前歌曲">下一首</button>
           <button id="openNeteaseBtn" class="text-button" type="button">网易云打开</button>
+          <button class="icon-button" type="button" data-dialog="soundDialog" aria-label="声音与接歌设置" title="声音与接歌设置" data-icon="sliders-horizontal"></button>
+          <button class="icon-button account-trigger" type="button" data-dialog="accountDialog" aria-label="账户与网易云" title="账户与网易云" data-icon="user-round"></button>
         </div>
       </header>
+      <nav class="workspace-nav" aria-label="音乐导航">
+        <button type="button" data-view="mix" aria-pressed="true"><span data-icon="disc-3"></span>选音乐</button>
+        <button type="button" data-view="now" aria-pressed="false"><span data-icon="audio-lines"></span>正在播放</button>
+        <button type="button" data-view="queue" aria-pressed="false"><span data-icon="list-music"></span>播放队列</button>
+        <span class="workspace-edition">ECHO ROOM / PERSONAL RADIO</span>
+      </nav>
 
       <main class="radio-layout">
         <aside class="filter-panel" aria-label="电台控制">
+          <dialog id="accountDialog" class="settings-dialog" aria-labelledby="accountDialogTitle">
+            <div class="dialog-heading"><div><span class="eyebrow">YOUR ACCOUNT</span><h2 id="accountDialogTitle">账户与网易云</h2></div><button class="icon-button" type="button" data-close-dialog aria-label="关闭账户设置" data-icon="x"></button></div>
           <details id="accountPanel" class="control-section account-control-section" open aria-label="用户与同步">
             <summary class="account-summary">
               <span class="account-summary-copy">
@@ -188,10 +198,17 @@
               </details>
             </div>
           </details>
+          </dialog>
 
           <section class="control-section music-control-section" aria-label="音乐筛选">
+            <div class="section-intro"><span class="eyebrow">YOUR MIX</span><h2>音乐组合</h2></div>
+            <div class="collection-tabs" role="tablist" aria-label="音乐来源">
+              <button id="stylesSourceTab" type="button" role="tab" aria-selected="true" aria-controls="stylesCollection" data-collection="styles">自选风格</button>
+              <button id="programsSourceTab" type="button" role="tab" aria-selected="false" aria-controls="programsCollection" tabindex="-1" data-collection="programs">时段节目</button>
+            </div>
+            <div id="stylesCollection" class="collection-pane" role="tabpanel" aria-labelledby="stylesSourceTab">
             <div class="panel-heading">
-              <span>STYLE MIX</span>
+              <span>当前组合</span>
               <strong id="channelName">All Styles</strong>
             </div>
             <div id="selectedStylesSummary" class="mix-summary" role="status" aria-live="polite">0 selected</div>
@@ -201,12 +218,12 @@
               <button id="facetTabContext" class="facet-tab" type="button" data-facet="context" role="tab" aria-controls="styleFilters" aria-selected="false" tabindex="-1">CONTEXT</button>
             </div>
             <div id="selectedFacetList" class="selected-facet-list" aria-label="已选择标签"></div>
-            <div id="styleFilters" class="filter-list taxonomy-filter-list" role="tabpanel" aria-labelledby="facetTabGenre"></div>
             <div class="selector-actions">
               <button id="generateMixBtn" class="text-button strong selector-button" type="button">生成播放列表</button>
               <button id="saveMixBtn" class="text-button selector-button save-mix-button" type="button">保存组合</button>
               <button id="clearMixBtn" class="text-button selector-button" type="button">清空</button>
             </div>
+            <div id="styleFilters" class="filter-list taxonomy-filter-list" role="tabpanel" aria-labelledby="facetTabGenre"></div>
             <section id="savedMixesSection" class="saved-mixes-section" hidden aria-label="已保存的音乐组合">
               <div class="saved-mixes-heading">
                 <span>MY MIXES</span>
@@ -214,6 +231,8 @@
               </div>
               <div id="savedMixesList" class="saved-mixes-list"></div>
             </section>
+            </div>
+            <div id="programsCollection" class="collection-pane" role="tabpanel" aria-labelledby="programsSourceTab" hidden>
             <div class="program-heading">
               <span>PROGRAMS</span>
               <label class="program-auto">
@@ -256,6 +275,7 @@
                 </div>
               </div>
             </details>
+            </div>
             <div class="mini-stats">
               <div>
                 <span>Unique Pool</span>
@@ -266,6 +286,8 @@
                 <strong id="statQueue">0</strong>
               </div>
             </div>
+            <dialog id="soundDialog" class="settings-dialog" aria-labelledby="soundDialogTitle">
+              <div class="dialog-heading"><div><span class="eyebrow">LISTENING PREFERENCES</span><h2 id="soundDialogTitle">声音与接歌</h2></div><button class="icon-button" type="button" data-close-dialog aria-label="关闭声音设置" data-icon="x"></button></div>
             <details id="soundProfilePanel" class="sound-profile-panel" open>
               <summary>
                 <span>LIVE SOUND</span>
@@ -290,20 +312,22 @@
             </details>
             <label class="toggle-row">
               <input id="mixToggle" type="checkbox" checked>
-              <span>DJ 平滑接歌</span>
+              <span>智能平滑接歌</span>
             </label>
             <label class="range-row">
-              <span>DJ 过渡基准 <strong id="crossfadeValue">1 x 8拍</strong></span>
-              <input id="crossfadeSlider" type="range" min="1" max="4" step="1" value="1">
+              <span>过渡长度 <strong id="crossfadeValue">2 x 8拍</strong></span>
+              <input id="crossfadeSlider" type="range" min="1" max="4" step="1" value="2">
             </label>
             <label class="range-row">
               <span>音量</span>
               <input id="volumeSlider" type="range" min="0" max="1" step="0.01" value="0.78">
             </label>
+            </dialog>
           </section>
         </aside>
 
         <section class="now-panel" aria-label="正在播放">
+          <div class="now-heading"><span class="eyebrow">THE LISTENING ROOM</span><button class="compact-action" type="button" data-dialog="soundDialog"><span data-icon="blend"></span>接歌设置</button></div>
           <div class="album-stage" id="albumStage">
             <img id="coverArt" alt="" src="">
             <div class="fallback-cover" id="fallbackCover">ER</div>
@@ -315,8 +339,8 @@
 
           <div class="track-copy">
             <span class="eyebrow" id="trackMode">COMING UP</span>
-            <h1 id="trackTitle">调台中</h1>
-            <p id="trackArtist">从你的 3841 首基准曲库里抽取下一首</p>
+            <h1 id="trackTitle">还没有播放歌曲</h1>
+            <p id="trackArtist">Echo Room Music FM</p>
             <p id="trackAlbum"></p>
             <div class="playback-quality-row" aria-label="当前音源质量">
               <span id="audioQualityBadge" class="audio-quality-badge">MP3 128K</span>
@@ -333,8 +357,8 @@
           </div>
 
           <div class="mix-strip">
-            <span>MIX PLAN</span>
-            <p id="mixText">正在按风格和估算 BPM 选择下一首。</p>
+            <span data-icon="blend" aria-hidden="true"></span>
+            <div><span class="mix-kicker">SMART TRANSITION</span><p id="mixText">等待播放列表</p></div>
           </div>
 
           <div class="progress-area">
@@ -433,9 +457,12 @@
       <div id="miniProgressBar" class="mini-progress"></div>
     </div>
 
-    <audio id="audioDeckA" preload="auto" autoplay></audio>
+    <audio id="audioDeckA" preload="auto"></audio>
     <audio id="audioDeckB" preload="auto"></audio>
-    <script src="./library-data.js?v=20260720-programs-v1"></script>
-    <script src="./app.js?v=20260720-programs-v1"></script>
+    <script src="./assets/lucide.min.js"></script>
+    <script src="./transition-engine.js?v=20260905-room-v2"></script>
+    <script src="./room-ui.js?v=20260905-room-v2"></script>
+    <script src="./library-data.js?v=20260905-room-v2"></script>
+    <script src="./app.js?v=20260905-room-v2"></script>
   </body>
 </html>
